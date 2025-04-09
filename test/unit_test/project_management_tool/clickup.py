@@ -13,14 +13,67 @@ def mock_successful_response() -> Dict:
     """Fixture for successful API response data"""
     return {
         "id": "abc123",
+        "custom_id": None,
         "name": "Test Task",
+        "text_content": "This is a test task",
         "description": "Test Description",
         "status": {
             "status": "in progress",
-            "color": "#yellow"
+            "color": "#yellow",
+            "type": "custom",
+            "orderindex": 1
+        },
+        "orderindex": "1",
+        "date_created": "1683900000000",
+        "date_updated": "1683900000000",
+        "date_closed": None,
+        "creator": {
+            "id": 123,
+            "username": "Test User",
+            "email": "test@example.com",
+            "color": "#ff0000",
+            "profilePicture": "https://example.com/picture.jpg"
         },
         "assignees": [],
-        "due_date": "1234567890"
+        "watchers": [],
+        "checklists": [],
+        "tags": [],
+        "parent": None,
+        "priority": {
+            "priority": "normal",
+            "color": "#ffff00"
+        },
+        "due_date": "1684500000000",
+        "start_date": "1683900000000",
+        "points": None,
+        "time_estimate": "3600000",  # 1 hour in milliseconds
+        "time_spent": "1800000",     # 30 minutes in milliseconds
+        "custom_fields": [],
+        "dependencies": [],
+        "linked_tasks": [],
+        "team_id": "team123",
+        "url": "https://app.clickup.com/t/abc123",
+        "permission_level": "read",
+        "list": {
+            "id": "list123",
+            "name": "Test List",
+            "access": True
+        },
+        "project": {
+            "id": "proj123",
+            "name": "Test Project",
+            "hidden": False,
+            "access": True
+        },
+        "folder": {
+            "id": "folder123",
+            "name": "Test Folder",
+            "hidden": False,
+            "access": True
+        },
+        "space": {
+            "id": "space123"
+        }
     }
 
 
