@@ -1,21 +1,27 @@
+"""Unit tests for ClickUp API client."""
+
 import pytest
 import json
 from unittest.mock import Mock, patch
-from typing import Dict
+from datetime import datetime
 
 import urllib3
 
 from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
+from create_pr_bot.project_management_tool.clickup.model import (
+    ClickUpTask,
+    ClickUpStatus,
+    ClickUpUser
+)
 
 
 @pytest.fixture
-def mock_successful_response() -> Dict:
+def mock_successful_response() -> dict:
     """Fixture for successful API response data"""
     return {
         "id": "abc123",
-        "custom_id": None,
         "name": "Test Task",
-        "text_content": "This is a test task",
+        "text_content": "Test Content",
         "description": "Test Description",
         "status": {
             "status": "in progress",
@@ -24,56 +30,20 @@ def mock_successful_response() -> Dict:
             "orderindex": 1
         },
         "orderindex": "1",
-        "date_created": "1683900000000",
-        "date_updated": "1683900000000",
-        "date_closed": None,
+        "date_created": "1625097600000",
+        "date_updated": "1625097600000",
         "creator": {
             "id": 123,
-            "username": "Test User",
+            "username": "test_user",
             "email": "test@example.com",
-            "color": "#ff0000",
-            "profilePicture": "https://example.com/picture.jpg"
+            "color": "#FF0000"
         },
         "assignees": [],
         "watchers": [],
         "checklists": [],
         "tags": [],
-        "parent": None,
-        "priority": {
-            "priority": "normal",
-            "color": "#ffff00"
-        },
-        "due_date": "1684500000000",
-        "start_date": "1683900000000",
-        "points": None,
-        "time_estimate": "3600000",  # 1 hour in milliseconds
-        "time_spent": "1800000",     # 30 minutes in milliseconds
-        "custom_fields": [],
-        "dependencies": [],
-        "linked_tasks": [],
-        "team_id": "team123",
         "url": "https://app.clickup.com/t/abc123",
-        "permission_level": "read",
-        "list": {
-            "id": "list123",
-            "name": "Test List",
-            "access": True
-        },
-        "project": {
-            "id": "proj123",
-            "name": "Test Project",
-            "hidden": False,
-            "access": True
-        },
-        "folder": {
-            "id": "folder123",
-            "name": "Test Folder",
-            "hidden": False,
-            "access": True
-        },
-        "space": {
-            "id": "space123"
-        }
+        "permission_level": "read"
     }
 
 
@@ -86,7 +56,7 @@ def clickup_client() -> ClickUpClient:
 class TestClickUpClient:
     """Test suite for ClickUpClient class"""
 
-    def test_successful_task_details_retrieval(self, clickup_client: ClickUpClient, mock_successful_response: Dict):
+    def test_successful_task_details_retrieval(self, clickup_client: ClickUpClient, mock_successful_response: dict):
         """Test successful retrieval of task details"""
         with patch('urllib3.PoolManager.request') as mock_request:
             # Setup mock response
@@ -99,7 +69,26 @@ class TestClickUpClient:
             result = clickup_client.get_task_details("abc123")
 
             # Verify results
-            assert result == mock_successful_response
+            assert isinstance(result, ClickUpTask)
+            assert result.id == "abc123"
+            assert result.name == "Test Task"
+            assert result.text_content == "Test Content"
+            assert result.description == "Test Description"
+            
+            # Verify nested objects
+            assert isinstance(result.status, ClickUpStatus)
+            assert result.status.status == "in progress"
+            assert result.status.color == "#yellow"
+            
+            assert isinstance(result.creator, ClickUpUser)
+            assert result.creator.username == "test_user"
+            assert result.creator.email == "test@example.com"
+            
+            # Verify datetime conversion
+            assert isinstance(result.date_created, datetime)
+            assert isinstance(result.date_updated, datetime)
+
+            # Verify request was made correctly
             mock_request.assert_called_once_with(
                 "GET",
                 "https://api.clickup.com/api/v2/task/abc123",
@@ -173,10 +162,5 @@ class TestClickUpClient:
     @pytest.mark.parametrize("task_id", ["", None, "   "])
     def test_task_details_invalid_task_id(self, clickup_client: ClickUpClient, task_id):
         """Test handling of invalid task IDs"""
-        with patch('urllib3.PoolManager.request') as mock_request:
-            # Execute test
-            result = clickup_client.get_task_details(task_id)
-
-            # Verify results
-            assert result is None
-            mock_request.assert_called_once()
+        result = clickup_client.get_task_details(task_id)
+        assert result is None

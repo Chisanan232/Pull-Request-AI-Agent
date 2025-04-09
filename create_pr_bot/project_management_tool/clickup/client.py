@@ -1,9 +1,16 @@
+"""ClickUp API client implementation."""
+
 import urllib3
 import json
-from typing import Dict, Optional
+from typing import Optional
+from datetime import datetime
+
+from create_pr_bot.project_management_tool.clickup.model import ClickUpTask
 
 
 class ClickUpClient:
+    """ClickUp API client for interacting with ClickUp services."""
+    
     BASE_URL = "https://api.clickup.com/api/v2"
     
     def __init__(self, api_token: str):
@@ -15,19 +22,23 @@ class ClickUpClient:
         self.api_token = api_token
         self.http = urllib3.PoolManager()
         
-    def get_task_details(self, task_id: str) -> Optional[Dict]:
+    def get_task_details(self, task_id: str) -> Optional[ClickUpTask]:
         """Fetch task details from ClickUp by task ID.
         
         Args:
             task_id (str): The ID of the task to retrieve
             
         Returns:
-            Optional[Dict]: Task details as a dictionary or None if request fails
+            Optional[ClickUpTask]: Task details as a ClickUpTask object or None if request fails
             
         Raises:
             urllib3.exceptions.HTTPError: If the HTTP request fails
             json.JSONDecodeError: If the response cannot be parsed as JSON
         """
+        if not task_id or not isinstance(task_id, str) or not task_id.strip():
+            print("Error: Invalid task ID provided")
+            return None
+            
         headers = {
             "Authorization": self.api_token,
             "Content-Type": "application/json"
@@ -41,7 +52,8 @@ class ClickUpClient:
             )
             
             if response.status == 200:
-                return json.loads(response.data.decode('utf-8'))
+                response_data = json.loads(response.data.decode('utf-8'))
+                return ClickUpTask.deserialize(response_data)
             else:
                 print(f"Error: Request failed with status {response.status}")
                 print(f"Response: {response.data.decode('utf-8')}")
