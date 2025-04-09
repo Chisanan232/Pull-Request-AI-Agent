@@ -5,7 +5,7 @@ from typing import Dict
 
 import urllib3
 
-from create_pr_bot.project_management_tool.service import ClickUpClient
+from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
 
 
 @pytest.fixture

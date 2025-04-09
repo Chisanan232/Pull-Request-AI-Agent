@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime
-from create_pr_bot.project_management_tool.model import (
+from create_pr_bot.project_management_tool.clickup.model import (
     ClickUpUser,
     ClickUpStatus,
     ClickUpPriority,
