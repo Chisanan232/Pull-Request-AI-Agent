@@ -1,17 +1,17 @@
 """Unit tests for ClickUp API client."""
 
-import pytest
 import json
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
 
+import pytest
 import urllib3
 
 from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
 from create_pr_bot.project_management_tool.clickup.model import (
-    ClickUpTask,
     ClickUpStatus,
-    ClickUpUser
+    ClickUpTask,
+    ClickUpUser,
 )
 
 
@@ -23,27 +23,17 @@ def mock_successful_response() -> dict:
         "name": "Test Task",
         "text_content": "Test Content",
         "description": "Test Description",
-        "status": {
-            "status": "in progress",
-            "color": "#yellow",
-            "type": "custom",
-            "orderindex": 1
-        },
+        "status": {"status": "in progress", "color": "#yellow", "type": "custom", "orderindex": 1},
         "orderindex": "1",
         "date_created": "1625097600000",
         "date_updated": "1625097600000",
-        "creator": {
-            "id": 123,
-            "username": "test_user",
-            "email": "test@example.com",
-            "color": "#FF0000"
-        },
+        "creator": {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"},
         "assignees": [],
         "watchers": [],
         "checklists": [],
         "tags": [],
         "url": "https://app.clickup.com/t/abc123",
-        "permission_level": "read"
+        "permission_level": "read",
     }
 
 
@@ -58,11 +48,11 @@ class TestClickUpClient:
 
     def test_successful_task_details_retrieval(self, clickup_client: ClickUpClient, mock_successful_response: dict):
         """Test successful retrieval of task details"""
-        with patch('urllib3.PoolManager.request') as mock_request:
+        with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response
             mock_response = Mock()
             mock_response.status = 200
-            mock_response.data = json.dumps(mock_successful_response).encode('utf-8')
+            mock_response.data = json.dumps(mock_successful_response).encode("utf-8")
             mock_request.return_value = mock_response
 
             # Execute test
@@ -74,16 +64,16 @@ class TestClickUpClient:
             assert result.name == "Test Task"
             assert result.text_content == "Test Content"
             assert result.description == "Test Description"
-            
+
             # Verify nested objects
             assert isinstance(result.status, ClickUpStatus)
             assert result.status.status == "in progress"
             assert result.status.color == "#yellow"
-            
+
             assert isinstance(result.creator, ClickUpUser)
             assert result.creator.username == "test_user"
             assert result.creator.email == "test@example.com"
-            
+
             # Verify datetime conversion
             assert isinstance(result.date_created, datetime)
             assert isinstance(result.date_updated, datetime)
@@ -92,15 +82,12 @@ class TestClickUpClient:
             mock_request.assert_called_once_with(
                 "GET",
                 "https://api.clickup.com/api/v2/task/abc123",
-                headers={
-                    "Authorization": "test_token",
-                    "Content-Type": "application/json"
-                }
+                headers={"Authorization": "test_token", "Content-Type": "application/json"},
             )
 
     def test_task_details_http_error(self, clickup_client: ClickUpClient):
         """Test handling of HTTP errors"""
-        with patch('urllib3.PoolManager.request') as mock_request:
+        with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock to raise HTTP error
             mock_request.side_effect = urllib3.exceptions.HTTPError("Mock HTTP Error")
 
@@ -113,11 +100,11 @@ class TestClickUpClient:
 
     def test_task_details_invalid_json(self, clickup_client: ClickUpClient):
         """Test handling of invalid JSON response"""
-        with patch('urllib3.PoolManager.request') as mock_request:
+        with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with invalid JSON
             mock_response = Mock()
             mock_response.status = 200
-            mock_response.data = "Invalid JSON".encode('utf-8')
+            mock_response.data = "Invalid JSON".encode("utf-8")
             mock_request.return_value = mock_response
 
             # Execute test
@@ -129,11 +116,11 @@ class TestClickUpClient:
 
     def test_task_details_non_200_response(self, clickup_client: ClickUpClient):
         """Test handling of non-200 HTTP response"""
-        with patch('urllib3.PoolManager.request') as mock_request:
+        with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with 404 status
             mock_response = Mock()
             mock_response.status = 404
-            mock_response.data = json.dumps({"err": "Task not found"}).encode('utf-8')
+            mock_response.data = json.dumps({"err": "Task not found"}).encode("utf-8")
             mock_request.return_value = mock_response
 
             # Execute test
@@ -145,11 +132,11 @@ class TestClickUpClient:
 
     def test_task_details_empty_response(self, clickup_client: ClickUpClient):
         """Test handling of empty response"""
-        with patch('urllib3.PoolManager.request') as mock_request:
+        with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with empty data
             mock_response = Mock()
             mock_response.status = 200
-            mock_response.data = "".encode('utf-8')
+            mock_response.data = "".encode("utf-8")
             mock_request.return_value = mock_response
 
             # Execute test

@@ -1,15 +1,17 @@
-import pytest
 from datetime import datetime
+
+import pytest
+
 from create_pr_bot.project_management_tool.clickup.model import (
-    ClickUpUser,
-    ClickUpStatus,
-    ClickUpPriority,
-    ClickUpTag,
-    ClickUpChecklistItem,
     ClickUpChecklist,
+    ClickUpChecklistItem,
     ClickUpCustomField,
     ClickUpLocation,
-    ClickUpTask
+    ClickUpPriority,
+    ClickUpStatus,
+    ClickUpTag,
+    ClickUpTask,
+    ClickUpUser,
 )
 
 
@@ -20,7 +22,7 @@ class TestClickUpUser:
             "username": "test_user",
             "email": "test@example.com",
             "color": "#FF0000",
-            "profilePicture": "https://example.com/pic.jpg"
+            "profilePicture": "https://example.com/pic.jpg",
         }
         user = ClickUpUser.deserialize(data)
         assert user.id == 123
@@ -30,24 +32,14 @@ class TestClickUpUser:
         assert user.profile_picture == "https://example.com/pic.jpg"
 
     def test_deserialize_minimal_data(self):
-        data = {
-            "id": 123,
-            "username": "test_user",
-            "email": "test@example.com",
-            "color": "#FF0000"
-        }
+        data = {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"}
         user = ClickUpUser.deserialize(data)
         assert user.profile_picture is None
 
 
 class TestClickUpStatus:
     def test_deserialize_complete_data(self):
-        data = {
-            "status": "in progress",
-            "color": "#YELLOW",
-            "type": "custom",
-            "orderindex": 1
-        }
+        data = {"status": "in progress", "color": "#YELLOW", "type": "custom", "orderindex": 1}
         status = ClickUpStatus.deserialize(data)
         assert status.status == "in progress"
         assert status.color == "#YELLOW"
@@ -55,21 +47,14 @@ class TestClickUpStatus:
         assert status.orderindex == 1
 
     def test_deserialize_with_default_orderindex(self):
-        data = {
-            "status": "in progress",
-            "color": "#YELLOW",
-            "type": "custom"
-        }
+        data = {"status": "in progress", "color": "#YELLOW", "type": "custom"}
         status = ClickUpStatus.deserialize(data)
         assert status.orderindex == 0
 
 
 class TestClickUpPriority:
     def test_deserialize_complete_data(self):
-        data = {
-            "priority": "high",
-            "color": "#FF0000"
-        }
+        data = {"priority": "high", "color": "#FF0000"}
         priority = ClickUpPriority.deserialize(data)
         assert priority.priority == "high"
         assert priority.color == "#FF0000"
@@ -81,12 +66,7 @@ class TestClickUpPriority:
 
 class TestClickUpTag:
     def test_deserialize_complete_data(self):
-        data = {
-            "name": "test_tag",
-            "tag_fg": "#FFFFFF",
-            "tag_bg": "#000000",
-            "creator": 123
-        }
+        data = {"name": "test_tag", "tag_fg": "#FFFFFF", "tag_bg": "#000000", "creator": 123}
         tag = ClickUpTag.deserialize(data)
         assert tag.name == "test_tag"
         assert tag.tag_fg == "#FFFFFF"
@@ -100,14 +80,9 @@ class TestClickUpChecklistItem:
             "id": "item123",
             "name": "Test Item",
             "orderindex": 1,
-            "assignee": {
-                "id": 123,
-                "username": "test_user",
-                "email": "test@example.com",
-                "color": "#FF0000"
-            },
+            "assignee": {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"},
             "checked": True,
-            "date_created": 1625097600000  # 2021-07-01 00:00:00 UTC
+            "date_created": 1625097600000,  # 2021-07-01 00:00:00 UTC
         }
         item = ClickUpChecklistItem.deserialize(data)
         assert item.id == "item123"
@@ -118,13 +93,7 @@ class TestClickUpChecklistItem:
         assert isinstance(item.date_created, datetime)
 
     def test_deserialize_without_assignee(self):
-        data = {
-            "id": "item123",
-            "name": "Test Item",
-            "orderindex": 1,
-            "checked": True,
-            "date_created": 1625097600000
-        }
+        data = {"id": "item123", "name": "Test Item", "orderindex": 1, "checked": True, "date_created": 1625097600000}
         item = ClickUpChecklistItem.deserialize(data)
         assert item.assignee is None
 
@@ -136,14 +105,8 @@ class TestClickUpChecklist:
             "name": "Test Checklist",
             "orderindex": 1,
             "items": [
-                {
-                    "id": "item123",
-                    "name": "Test Item",
-                    "orderindex": 1,
-                    "checked": True,
-                    "date_created": 1625097600000
-                }
-            ]
+                {"id": "item123", "name": "Test Item", "orderindex": 1, "checked": True, "date_created": 1625097600000}
+            ],
         }
         checklist = ClickUpChecklist.deserialize(data)
         assert checklist.id == "checklist123"
@@ -163,7 +126,7 @@ class TestClickUpCustomField:
             "date_created": 1625097600000,
             "hide_from_guests": False,
             "value": "test value",
-            "required": True
+            "required": True,
         }
         field = ClickUpCustomField.deserialize(data)
         assert field.id == "field123"
@@ -178,12 +141,7 @@ class TestClickUpCustomField:
 
 class TestClickUpLocation:
     def test_deserialize_complete_data(self):
-        data = {
-            "id": "loc123",
-            "name": "Test Location",
-            "hidden": True,
-            "access": False
-        }
+        data = {"id": "loc123", "name": "Test Location", "hidden": True, "access": False}
         location = ClickUpLocation.deserialize(data)
         assert location.id == "loc123"
         assert location.name == "Test Location"
@@ -203,31 +161,18 @@ class TestClickUpTask:
             "name": "Test Task",
             "text_content": "Test Content",
             "description": "Test Description",
-            "status": {
-                "status": "in progress",
-                "color": "#YELLOW",
-                "type": "custom",
-                "orderindex": 1
-            },
+            "status": {"status": "in progress", "color": "#YELLOW", "type": "custom", "orderindex": 1},
             "orderindex": "1",
             "date_created": 1625097600000,
             "date_updated": 1625097600000,
             "date_closed": None,
-            "creator": {
-                "id": 123,
-                "username": "test_user",
-                "email": "test@example.com",
-                "color": "#FF0000"
-            },
+            "creator": {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"},
             "assignees": [],
             "watchers": [],
             "checklists": [],
             "tags": [],
             "parent": None,
-            "priority": {
-                "priority": "high",
-                "color": "#FF0000"
-            },
+            "priority": {"priority": "high", "color": "#FF0000"},
             "due_date": 1625184000000,
             "start_date": 1625097600000,
             "points": 5,
@@ -237,24 +182,10 @@ class TestClickUpTask:
             "custom_id": "TASK-123",
             "url": "https://app.clickup.com/t/task123",
             "permission_level": "read",
-            "list": {
-                "id": "list123",
-                "name": "Test List",
-                "access": True
-            },
-            "project": {
-                "id": "proj123",
-                "name": "Test Project",
-                "access": True
-            },
-            "folder": {
-                "id": "folder123",
-                "name": "Test Folder",
-                "access": True
-            },
-            "space": {
-                "id": "space123"
-            }
+            "list": {"id": "list123", "name": "Test List", "access": True},
+            "project": {"id": "proj123", "name": "Test Project", "access": True},
+            "folder": {"id": "folder123", "name": "Test Folder", "access": True},
+            "space": {"id": "space123"},
         }
 
     def test_deserialize_complete_data(self, complete_task_data):
@@ -293,23 +224,13 @@ class TestClickUpTask:
         minimal_data = {
             "id": "task123",
             "name": "Test Task",
-            "status": {
-                "status": "in progress",
-                "color": "#YELLOW",
-                "type": "custom",
-                "orderindex": 1
-            },
+            "status": {"status": "in progress", "color": "#YELLOW", "type": "custom", "orderindex": 1},
             "orderindex": "1",
             "date_created": 1625097600000,
             "date_updated": 1625097600000,
-            "creator": {
-                "id": 123,
-                "username": "test_user",
-                "email": "test@example.com",
-                "color": "#FF0000"
-            },
+            "creator": {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"},
             "url": "https://app.clickup.com/t/task123",
-            "permission_level": "read"
+            "permission_level": "read",
         }
         task = ClickUpTask.deserialize(minimal_data)
         assert task.id == "task123"

@@ -2,26 +2,26 @@
 
 from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
 from create_pr_bot.project_management_tool.clickup.model import (
+    ClickUpChecklist,
+    ClickUpChecklistItem,
+    ClickUpCustomField,
+    ClickUpLocation,
+    ClickUpPriority,
+    ClickUpStatus,
+    ClickUpTag,
     ClickUpTask,
     ClickUpUser,
-    ClickUpStatus,
-    ClickUpPriority,
-    ClickUpTag,
-    ClickUpChecklistItem,
-    ClickUpChecklist,
-    ClickUpCustomField,
-    ClickUpLocation
 )
 
 __all__ = [
-    'ClickUpClient',
-    'ClickUpTask',
-    'ClickUpUser',
-    'ClickUpStatus',
-    'ClickUpPriority',
-    'ClickUpTag',
-    'ClickUpChecklistItem',
-    'ClickUpChecklist',
-    'ClickUpCustomField',
-    'ClickUpLocation'
+    "ClickUpClient",
+    "ClickUpTask",
+    "ClickUpUser",
+    "ClickUpStatus",
+    "ClickUpPriority",
+    "ClickUpTag",
+    "ClickUpChecklistItem",
+    "ClickUpChecklist",
+    "ClickUpCustomField",
+    "ClickUpLocation",
 ]
