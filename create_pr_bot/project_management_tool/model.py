@@ -18,7 +18,7 @@ class ClickUpUser:
     profile_picture: Optional[str] = None
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpUser':
+    def deserialize(cls, data: dict) -> 'ClickUpUser':
         return cls(
             id=data.get('id'),
             username=data.get('username'),
@@ -37,7 +37,7 @@ class ClickUpStatus:
     orderindex: int
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpStatus':
+    def deserialize(cls, data: dict) -> 'ClickUpStatus':
         return cls(
             status=data.get('status'),
             color=data.get('color'),
@@ -53,7 +53,7 @@ class ClickUpPriority:
     color: str
 
     @classmethod
-    def from_dict(cls, data: dict) -> Optional['ClickUpPriority']:
+    def deserialize(cls, data: dict) -> Optional['ClickUpPriority']:
         if not data:
             return None
         return cls(
@@ -71,7 +71,7 @@ class ClickUpTag:
     creator: int
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpTag':
+    def deserialize(cls, data: dict) -> 'ClickUpTag':
         return cls(
             name=data.get('name'),
             tag_fg=data.get('tag_fg'),
@@ -91,12 +91,12 @@ class ClickUpChecklistItem:
     date_created: datetime
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpChecklistItem':
+    def deserialize(cls, data: dict) -> 'ClickUpChecklistItem':
         return cls(
             id=data.get('id'),
             name=data.get('name'),
             orderindex=data.get('orderindex', 0),
-            assignee=ClickUpUser.from_dict(data['assignee']) if data.get('assignee') else None,
+            assignee=ClickUpUser.deserialize(data['assignee']) if data.get('assignee') else None,
             checked=data.get('checked', False),
             date_created=datetime.fromtimestamp(int(data.get('date_created', 0)) / 1000)
         )
@@ -111,12 +111,12 @@ class ClickUpChecklist:
     items: List[ClickUpChecklistItem]
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpChecklist':
+    def deserialize(cls, data: dict) -> 'ClickUpChecklist':
         return cls(
             id=data.get('id'),
             name=data.get('name'),
             orderindex=data.get('orderindex', 0),
-            items=[ClickUpChecklistItem.from_dict(item) for item in data.get('items', [])]
+            items=[ClickUpChecklistItem.deserialize(item) for item in data.get('items', [])]
         )
 
 
@@ -133,7 +133,7 @@ class ClickUpCustomField:
     required: bool
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpCustomField':
+    def deserialize(cls, data: dict) -> 'ClickUpCustomField':
         return cls(
             id=data.get('id'),
             name=data.get('name'),
@@ -155,7 +155,7 @@ class ClickUpLocation:
     access: bool = True
 
     @classmethod
-    def from_dict(cls, data: dict) -> Optional['ClickUpLocation']:
+    def deserialize(cls, data: dict) -> Optional['ClickUpLocation']:
         if not data:
             return None
         return cls(
@@ -203,7 +203,7 @@ class ClickUpTask:
     space: Optional[ClickUpLocation]
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ClickUpTask':
+    def deserialize(cls, data: dict) -> 'ClickUpTask':
         """
         Create a ClickUpTask instance from a dictionary (typically from API response).
         
@@ -218,29 +218,29 @@ class ClickUpTask:
             name=data.get('name'),
             text_content=data.get('text_content'),
             description=data.get('description'),
-            status=ClickUpStatus.from_dict(data.get('status', {})),
+            status=ClickUpStatus.deserialize(data.get('status', {})),
             orderindex=data.get('orderindex', '0'),
             date_created=datetime.fromtimestamp(int(data.get('date_created', 0)) / 1000),
             date_updated=datetime.fromtimestamp(int(data.get('date_updated', 0)) / 1000),
             date_closed=datetime.fromtimestamp(int(data.get('date_closed', 0)) / 1000) if data.get('date_closed') else None,
-            creator=ClickUpUser.from_dict(data.get('creator', {})),
-            assignees=[ClickUpUser.from_dict(u) for u in data.get('assignees', [])],
-            watchers=[ClickUpUser.from_dict(u) for u in data.get('watchers', [])],
-            checklists=[ClickUpChecklist.from_dict(c) for c in data.get('checklists', [])],
-            tags=[ClickUpTag.from_dict(t) for t in data.get('tags', [])],
+            creator=ClickUpUser.deserialize(data.get('creator', {})),
+            assignees=[ClickUpUser.deserialize(u) for u in data.get('assignees', [])],
+            watchers=[ClickUpUser.deserialize(u) for u in data.get('watchers', [])],
+            checklists=[ClickUpChecklist.deserialize(c) for c in data.get('checklists', [])],
+            tags=[ClickUpTag.deserialize(t) for t in data.get('tags', [])],
             parent=data.get('parent'),
-            priority=ClickUpPriority.from_dict(data.get('priority')) if data.get('priority') else None,
+            priority=ClickUpPriority.deserialize(data.get('priority')) if data.get('priority') else None,
             due_date=datetime.fromtimestamp(int(data.get('due_date', 0)) / 1000) if data.get('due_date') else None,
             start_date=datetime.fromtimestamp(int(data.get('start_date', 0)) / 1000) if data.get('start_date') else None,
             points=data.get('points'),
             time_estimate=data.get('time_estimate'),
             time_spent=data.get('time_spent'),
-            custom_fields=[ClickUpCustomField.from_dict(f) for f in data.get('custom_fields', [])],
+            custom_fields=[ClickUpCustomField.deserialize(f) for f in data.get('custom_fields', [])],
             custom_id=data.get('custom_id'),
             url=data.get('url'),
             permission_level=data.get('permission_level'),
-            list=ClickUpLocation.from_dict(data.get('list')) if data.get('list') else None,
-            project=ClickUpLocation.from_dict(data.get('project')) if data.get('project') else None,
-            folder=ClickUpLocation.from_dict(data.get('folder')) if data.get('folder') else None,
-            space=ClickUpLocation.from_dict(data.get('space')) if data.get('space') else None
+            list=ClickUpLocation.deserialize(data.get('list')) if data.get('list') else None,
+            project=ClickUpLocation.deserialize(data.get('project')) if data.get('project') else None,
+            folder=ClickUpLocation.deserialize(data.get('folder')) if data.get('folder') else None,
+            space=ClickUpLocation.deserialize(data.get('space')) if data.get('space') else None
         )
