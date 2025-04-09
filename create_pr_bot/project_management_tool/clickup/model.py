@@ -3,9 +3,11 @@ ClickUp data models for task details and related entities.
 This module contains dataclasses that represent the ClickUp API response structures.
 """
 
+from __future__ import annotations  # Enable forward references
+
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -19,13 +21,15 @@ class ClickUpUser:
     profile_picture: Optional[str] = None
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpUser":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpUser:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"),
-            username=data.get("username"),
-            email=data.get("email"),
-            color=data.get("color"),
-            profile_picture=data.get("profilePicture"),
+            id=int(data.get("id", 0)),  # Ensure int type
+            username=str(data.get("username", "")),
+            email=str(data.get("email", "")),
+            color=str(data.get("color", "")),
+            profile_picture=str(data.get("profilePicture")) if data.get("profilePicture") else None,
         )
 
 
@@ -39,12 +43,14 @@ class ClickUpStatus:
     orderindex: int
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpStatus":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpStatus:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            status=data.get("status"),
-            color=data.get("color"),
-            type=data.get("type"),
-            orderindex=data.get("orderindex", 0),
+            status=str(data.get("status", "")),
+            color=str(data.get("color", "")),
+            type=str(data.get("type", "")),
+            orderindex=int(data.get("orderindex", 0)),
         )
 
 
@@ -56,10 +62,13 @@ class ClickUpPriority:
     color: str
 
     @classmethod
-    def deserialize(cls, data: dict) -> Optional["ClickUpPriority"]:
+    def deserialize(cls, data: Optional[Dict[str, Any]]) -> Optional[ClickUpPriority]:
         if not data:
             return None
-        return cls(priority=data.get("priority"), color=data.get("color"))
+        return cls(
+            priority=str(data.get("priority", "")),
+            color=str(data.get("color", "")),
+        )
 
 
 @dataclass
@@ -72,9 +81,14 @@ class ClickUpTag:
     creator: int
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpTag":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpTag:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            name=data.get("name"), tag_fg=data.get("tag_fg"), tag_bg=data.get("tag_bg"), creator=data.get("creator")
+            name=str(data.get("name", "")),
+            tag_fg=str(data.get("tag_fg", "")),
+            tag_bg=str(data.get("tag_bg", "")),
+            creator=int(data.get("creator", 0)),
         )
 
 
@@ -90,13 +104,15 @@ class ClickUpChecklistItem:
     date_created: datetime
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpChecklistItem":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpChecklistItem:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"),
-            name=data.get("name"),
-            orderindex=data.get("orderindex", 0),
+            id=str(data.get("id", "")),
+            name=str(data.get("name", "")),
+            orderindex=int(data.get("orderindex", 0)),
             assignee=ClickUpUser.deserialize(data["assignee"]) if data.get("assignee") else None,
-            checked=data.get("checked", False),
+            checked=bool(data.get("checked", False)),
             date_created=datetime.fromtimestamp(int(data.get("date_created", 0)) / 1000),
         )
 
@@ -111,11 +127,13 @@ class ClickUpChecklist:
     items: List[ClickUpChecklistItem]
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpChecklist":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpChecklist:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"),
-            name=data.get("name"),
-            orderindex=data.get("orderindex", 0),
+            id=str(data.get("id", "")),
+            name=str(data.get("name", "")),
+            orderindex=int(data.get("orderindex", 0)),
             items=[ClickUpChecklistItem.deserialize(item) for item in data.get("items", [])],
         )
 
@@ -127,23 +145,25 @@ class ClickUpCustomField:
     id: str
     name: str
     type: str
-    type_config: dict
+    type_config: Dict[str, Any]
     date_created: datetime
     hide_from_guests: bool
     value: Any
     required: bool
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpCustomField":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpCustomField:
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"),
-            name=data.get("name"),
-            type=data.get("type"),
-            type_config=data.get("type_config", {}),
+            id=str(data.get("id", "")),
+            name=str(data.get("name", "")),
+            type=str(data.get("type", "")),
+            type_config=dict(data.get("type_config", {})),
             date_created=datetime.fromtimestamp(int(data.get("date_created", 0)) / 1000),
-            hide_from_guests=data.get("hide_from_guests", False),
+            hide_from_guests=bool(data.get("hide_from_guests", False)),
             value=data.get("value"),
-            required=data.get("required", False),
+            required=bool(data.get("required", False)),
         )
 
 
@@ -157,11 +177,16 @@ class ClickUpLocation:
     access: bool = True
 
     @classmethod
-    def deserialize(cls, data: dict) -> Optional["ClickUpLocation"]:
+    def deserialize(cls, data: Optional[Dict[str, Any]]) -> Optional[ClickUpLocation]:
         if not data:
             return None
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"), name=data.get("name"), hidden=data.get("hidden", False), access=data.get("access", True)
+            id=str(data.get("id", "")),
+            name=str(data.get("name", "")),
+            hidden=bool(data.get("hidden", False)),
+            access=bool(data.get("access", True)),
         )
 
 
@@ -203,23 +228,28 @@ class ClickUpTask:
     space: Optional[ClickUpLocation]
 
     @classmethod
-    def deserialize(cls, data: dict) -> "ClickUpTask":
+    def deserialize(cls, data: Dict[str, Any]) -> ClickUpTask:
         """
         Create a ClickUpTask instance from a dictionary (typically from API response).
 
         Args:
-            data (dict): The task data from the ClickUp API
+            data: The task data from the ClickUp API
 
         Returns:
-            ClickUpTask: A new instance with the provided data
+            A new instance with the provided data
+
+        Raises:
+            ValueError: If input data is not a dictionary
         """
+        if not isinstance(data, dict):
+            raise ValueError("Input data must be a dictionary")
         return cls(
-            id=data.get("id"),
-            name=data.get("name"),
-            text_content=data.get("text_content"),
-            description=data.get("description"),
+            id=str(data.get("id", "")),
+            name=str(data.get("name", "")),
+            text_content=str(data.get("text_content")) if data.get("text_content") else None,
+            description=str(data.get("description")) if data.get("description") else None,
             status=ClickUpStatus.deserialize(data.get("status", {})),
-            orderindex=data.get("orderindex", "0"),
+            orderindex=str(data.get("orderindex", "0")),
             date_created=datetime.fromtimestamp(int(data.get("date_created", 0)) / 1000),
             date_updated=datetime.fromtimestamp(int(data.get("date_updated", 0)) / 1000),
             date_closed=(
@@ -230,19 +260,19 @@ class ClickUpTask:
             watchers=[ClickUpUser.deserialize(u) for u in data.get("watchers", [])],
             checklists=[ClickUpChecklist.deserialize(c) for c in data.get("checklists", [])],
             tags=[ClickUpTag.deserialize(t) for t in data.get("tags", [])],
-            parent=data.get("parent"),
+            parent=str(data.get("parent")) if data.get("parent") else None,
             priority=ClickUpPriority.deserialize(data.get("priority")) if data.get("priority") else None,
             due_date=datetime.fromtimestamp(int(data.get("due_date", 0)) / 1000) if data.get("due_date") else None,
             start_date=(
                 datetime.fromtimestamp(int(data.get("start_date", 0)) / 1000) if data.get("start_date") else None
             ),
-            points=data.get("points"),
-            time_estimate=data.get("time_estimate"),
-            time_spent=data.get("time_spent"),
+            points=float(data.get("points")) if data.get("points") is not None else None,
+            time_estimate=int(data.get("time_estimate")) if data.get("time_estimate") is not None else None,
+            time_spent=int(data.get("time_spent")) if data.get("time_spent") is not None else None,
             custom_fields=[ClickUpCustomField.deserialize(f) for f in data.get("custom_fields", [])],
-            custom_id=data.get("custom_id"),
-            url=data.get("url"),
-            permission_level=data.get("permission_level"),
+            custom_id=str(data.get("custom_id")) if data.get("custom_id") else None,
+            url=str(data.get("url", "")),
+            permission_level=str(data.get("permission_level", "")),
             list=ClickUpLocation.deserialize(data.get("list")) if data.get("list") else None,
             project=ClickUpLocation.deserialize(data.get("project")) if data.get("project") else None,
             folder=ClickUpLocation.deserialize(data.get("folder")) if data.get("folder") else None,
