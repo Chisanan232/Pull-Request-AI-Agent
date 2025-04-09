@@ -266,9 +266,9 @@ class ClickUpTask:
             start_date=(
                 datetime.fromtimestamp(int(data.get("start_date", 0)) / 1000) if data.get("start_date") else None
             ),
-            points=float(data.get("points")) if data.get("points") is not None else None,
-            time_estimate=int(data.get("time_estimate")) if data.get("time_estimate") is not None else None,
-            time_spent=int(data.get("time_spent")) if data.get("time_spent") is not None else None,
+            points=float(str(data.get("points", 0.0))) if data.get("points") is not None else None,
+            time_estimate=int(data.get("time_estimate", 0)) if data.get("time_estimate") is not None else None,
+            time_spent=int(data.get("time_spent", 0)) if data.get("time_spent") is not None else None,
             custom_fields=[ClickUpCustomField.deserialize(f) for f in data.get("custom_fields", [])],
             custom_id=str(data.get("custom_id")) if data.get("custom_id") else None,
             url=str(data.get("url", "")),
