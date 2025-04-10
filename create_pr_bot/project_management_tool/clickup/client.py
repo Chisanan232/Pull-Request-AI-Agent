@@ -22,7 +22,7 @@ class ClickUpClient:
         self.api_token = api_token
         self.http = urllib3.PoolManager()
 
-    def get_task_details(self, task_id: str) -> Optional[ClickUpTask]:
+    def get_ticket(self, task_id: str) -> Optional[ClickUpTask]:
         """Fetch task details from ClickUp by task ID.
 
         Args:
