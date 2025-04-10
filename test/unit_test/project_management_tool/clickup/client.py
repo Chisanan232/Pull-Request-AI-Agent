@@ -2,12 +2,13 @@
 
 import json
 from datetime import datetime
+from http import HTTPMethod
 from unittest.mock import Mock, patch
 
 import pytest
 import urllib3
 
-from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
+from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
 from create_pr_bot.project_management_tool.clickup.model import (
     ClickUpStatus,
     ClickUpTask,
@@ -38,15 +39,15 @@ def mock_successful_response() -> dict:
 
 
 @pytest.fixture
-def clickup_client() -> ClickUpClient:
+def clickup_client() -> ClickUpAPIClient:
     """Fixture for ClickUpClient instance"""
-    return ClickUpClient(api_token="test_token")
+    return ClickUpAPIClient(api_token="test_token")
 
 
-class TestClickUpClient:
+class TestClickUpAPIClient:
     """Test suite for ClickUpClient class"""
 
-    def test_successful_task_details_retrieval(self, clickup_client: ClickUpClient, mock_successful_response: dict):
+    def test_successful_get_ticket_retrieval(self, clickup_client: ClickUpAPIClient, mock_successful_response: dict):
         """Test successful retrieval of task details"""
         with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response
@@ -56,7 +57,7 @@ class TestClickUpClient:
             mock_request.return_value = mock_response
 
             # Execute test
-            result = clickup_client.get_task_details("abc123")
+            result = clickup_client.get_ticket("abc123")
 
             # Verify results
             assert isinstance(result, ClickUpTask)
@@ -80,25 +81,25 @@ class TestClickUpClient:
 
             # Verify request was made correctly
             mock_request.assert_called_once_with(
-                "GET",
+                HTTPMethod.GET,
                 "https://api.clickup.com/api/v2/task/abc123",
                 headers={"Authorization": "test_token", "Content-Type": "application/json"},
             )
 
-    def test_task_details_http_error(self, clickup_client: ClickUpClient):
+    def test_get_ticket_http_error(self, clickup_client: ClickUpAPIClient):
         """Test handling of HTTP errors"""
         with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock to raise HTTP error
             mock_request.side_effect = urllib3.exceptions.HTTPError("Mock HTTP Error")
 
             # Execute test
-            result = clickup_client.get_task_details("abc123")
+            result = clickup_client.get_ticket("abc123")
 
             # Verify results
             assert result is None
             mock_request.assert_called_once()
 
-    def test_task_details_invalid_json(self, clickup_client: ClickUpClient):
+    def test_get_ticket_invalid_json(self, clickup_client: ClickUpAPIClient):
         """Test handling of invalid JSON response"""
         with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with invalid JSON
@@ -108,13 +109,13 @@ class TestClickUpClient:
             mock_request.return_value = mock_response
 
             # Execute test
-            result = clickup_client.get_task_details("abc123")
+            result = clickup_client.get_ticket("abc123")
 
             # Verify results
             assert result is None
             mock_request.assert_called_once()
 
-    def test_task_details_non_200_response(self, clickup_client: ClickUpClient):
+    def test_get_ticket_non_200_response(self, clickup_client: ClickUpAPIClient):
         """Test handling of non-200 HTTP response"""
         with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with 404 status
@@ -124,13 +125,13 @@ class TestClickUpClient:
             mock_request.return_value = mock_response
 
             # Execute test
-            result = clickup_client.get_task_details("abc123")
+            result = clickup_client.get_ticket("abc123")
 
             # Verify results
             assert result is None
             mock_request.assert_called_once()
 
-    def test_task_details_empty_response(self, clickup_client: ClickUpClient):
+    def test_get_ticket_empty_response(self, clickup_client: ClickUpAPIClient):
         """Test handling of empty response"""
         with patch("urllib3.PoolManager.request") as mock_request:
             # Setup mock response with empty data
@@ -140,14 +141,14 @@ class TestClickUpClient:
             mock_request.return_value = mock_response
 
             # Execute test
-            result = clickup_client.get_task_details("abc123")
+            result = clickup_client.get_ticket("abc123")
 
             # Verify results
             assert result is None
             mock_request.assert_called_once()
 
     @pytest.mark.parametrize("task_id", ["", None, "   "])
-    def test_task_details_invalid_task_id(self, clickup_client: ClickUpClient, task_id):
+    def test_get_ticket_invalid_task_id(self, clickup_client: ClickUpAPIClient, task_id):
         """Test handling of invalid task IDs"""
-        result = clickup_client.get_task_details(task_id)
+        result = clickup_client.get_ticket(task_id)
         assert result is None

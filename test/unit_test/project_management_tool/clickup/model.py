@@ -24,7 +24,7 @@ class TestClickUpUser:
             "color": "#FF0000",
             "profilePicture": "https://example.com/pic.jpg",
         }
-        user = ClickUpUser.deserialize(data)
+        user = ClickUpUser.serialize(data)
         assert user.id == 123
         assert user.username == "test_user"
         assert user.email == "test@example.com"
@@ -33,21 +33,21 @@ class TestClickUpUser:
 
     def test_deserialize_minimal_data(self):
         data = {"id": 123, "username": "test_user", "email": "test@example.com", "color": "#FF0000"}
-        user = ClickUpUser.deserialize(data)
+        user = ClickUpUser.serialize(data)
         assert user.profile_picture is None
 
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize(None)
+            ClickUpUser.serialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize([])
+            ClickUpUser.serialize([])
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize("invalid")
+            ClickUpUser.serialize("invalid")
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        user = ClickUpUser.deserialize({})
+        user = ClickUpUser.serialize({})
         assert user.id == 0
         assert user.username == ""
         assert user.email == ""
@@ -57,15 +57,13 @@ class TestClickUpUser:
     def test_deserialize_invalid_id_type(self):
         """Test deserialize with invalid ID type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpUser.deserialize(
-                {"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"}
-            )
+            ClickUpUser.serialize({"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"})
 
 
 class TestClickUpStatus:
     def test_deserialize_complete_data(self):
         data = {"status": "in progress", "color": "#YELLOW", "type": "custom", "orderindex": 1}
-        status = ClickUpStatus.deserialize(data)
+        status = ClickUpStatus.serialize(data)
         assert status.status == "in progress"
         assert status.color == "#YELLOW"
         assert status.type == "custom"
@@ -73,19 +71,19 @@ class TestClickUpStatus:
 
     def test_deserialize_with_default_orderindex(self):
         data = {"status": "in progress", "color": "#YELLOW", "type": "custom"}
-        status = ClickUpStatus.deserialize(data)
+        status = ClickUpStatus.serialize(data)
         assert status.orderindex == 0
 
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpStatus.deserialize(None)
+            ClickUpStatus.serialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpStatus.deserialize([])
+            ClickUpStatus.serialize([])
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        status = ClickUpStatus.deserialize({})
+        status = ClickUpStatus.serialize({})
         assert status.status == ""
         assert status.color == ""
         assert status.type == ""
@@ -94,37 +92,35 @@ class TestClickUpStatus:
     def test_deserialize_invalid_orderindex_type(self):
         """Test deserialize with invalid orderindex type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpStatus.deserialize(
-                {"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"}
-            )
+            ClickUpStatus.serialize({"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"})
 
 
 class TestClickUpPriority:
     def test_deserialize_complete_data(self):
         data = {"priority": "high", "color": "#FF0000"}
-        priority = ClickUpPriority.deserialize(data)
+        priority = ClickUpPriority.serialize(data)
         assert priority.priority == "high"
         assert priority.color == "#FF0000"
 
     def test_deserialize_none_data(self):
-        priority = ClickUpPriority.deserialize(None)
+        priority = ClickUpPriority.serialize(None)
         assert priority is None
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        priority = ClickUpPriority.deserialize({})
+        priority = ClickUpPriority.serialize({})
         assert priority is None
 
     def test_deserialize_invalid_data_types(self):
         """Test deserialize with invalid data types"""
-        assert ClickUpPriority.deserialize(None) is None
-        assert ClickUpPriority.deserialize({}) is None
+        assert ClickUpPriority.serialize(None) is None
+        assert ClickUpPriority.serialize({}) is None
 
 
 class TestClickUpTag:
     def test_deserialize_complete_data(self):
         data = {"name": "test_tag", "tag_fg": "#FFFFFF", "tag_bg": "#000000", "creator": 123}
-        tag = ClickUpTag.deserialize(data)
+        tag = ClickUpTag.serialize(data)
         assert tag.name == "test_tag"
         assert tag.tag_fg == "#FFFFFF"
         assert tag.tag_bg == "#000000"
@@ -141,7 +137,7 @@ class TestClickUpChecklistItem:
             "checked": True,
             "date_created": 1625097600000,  # 2021-07-01 00:00:00 UTC
         }
-        item = ClickUpChecklistItem.deserialize(data)
+        item = ClickUpChecklistItem.serialize(data)
         assert item.id == "item123"
         assert item.name == "Test Item"
         assert item.orderindex == 1
@@ -151,15 +147,15 @@ class TestClickUpChecklistItem:
 
     def test_deserialize_without_assignee(self):
         data = {"id": "item123", "name": "Test Item", "orderindex": 1, "checked": True, "date_created": 1625097600000}
-        item = ClickUpChecklistItem.deserialize(data)
+        item = ClickUpChecklistItem.serialize(data)
         assert item.assignee is None
 
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpChecklistItem.deserialize(None)
+            ClickUpChecklistItem.serialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpChecklistItem.deserialize([])
+            ClickUpChecklistItem.serialize([])
 
     def test_deserialize_invalid_date_type(self):
         """Test deserialize with invalid date should raise ValueError"""
@@ -171,7 +167,7 @@ class TestClickUpChecklistItem:
             "date_created": "not_a_timestamp",
         }
         with pytest.raises(ValueError):
-            ClickUpChecklistItem.deserialize(data)
+            ClickUpChecklistItem.serialize(data)
 
     def test_deserialize_invalid_assignee_type(self):
         """Test deserialize with invalid assignee data should raise ValueError"""
@@ -184,11 +180,11 @@ class TestClickUpChecklistItem:
             "date_created": 1625097600000,
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpChecklistItem.deserialize(data)
+            ClickUpChecklistItem.serialize(data)
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        item = ClickUpChecklistItem.deserialize({})
+        item = ClickUpChecklistItem.serialize({})
         assert item.id == ""
         assert item.name == ""
         assert item.orderindex == 0
@@ -207,7 +203,7 @@ class TestClickUpChecklist:
                 {"id": "item123", "name": "Test Item", "orderindex": 1, "checked": True, "date_created": 1625097600000}
             ],
         }
-        checklist = ClickUpChecklist.deserialize(data)
+        checklist = ClickUpChecklist.serialize(data)
         assert checklist.id == "checklist123"
         assert checklist.name == "Test Checklist"
         assert checklist.orderindex == 1
@@ -227,7 +223,7 @@ class TestClickUpCustomField:
             "value": "test value",
             "required": True,
         }
-        field = ClickUpCustomField.deserialize(data)
+        field = ClickUpCustomField.serialize(data)
         assert field.id == "field123"
         assert field.name == "Test Field"
         assert field.type == "text"
@@ -240,13 +236,13 @@ class TestClickUpCustomField:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpCustomField.deserialize(None)
+            ClickUpCustomField.serialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpCustomField.deserialize([])
+            ClickUpCustomField.serialize([])
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        field = ClickUpCustomField.deserialize({})
+        field = ClickUpCustomField.serialize({})
         assert field.id == ""
         assert field.name == ""
         assert field.type == ""
@@ -261,14 +257,14 @@ class TestClickUpCustomField:
 class TestClickUpLocation:
     def test_deserialize_complete_data(self):
         data = {"id": "loc123", "name": "Test Location", "hidden": True, "access": False}
-        location = ClickUpLocation.deserialize(data)
+        location = ClickUpLocation.serialize(data)
         assert location.id == "loc123"
         assert location.name == "Test Location"
         assert location.hidden is True
         assert location.access is False
 
     def test_deserialize_none_data(self):
-        location = ClickUpLocation.deserialize(None)
+        location = ClickUpLocation.serialize(None)
         assert location is None
 
 
@@ -308,7 +304,7 @@ class TestClickUpTask:
         }
 
     def test_deserialize_complete_data(self, complete_task_data):
-        task = ClickUpTask.deserialize(complete_task_data)
+        task = ClickUpTask.serialize(complete_task_data)
         assert task.id == "task123"
         assert task.name == "Test Task"
         assert task.text_content == "Test Content"
@@ -351,7 +347,7 @@ class TestClickUpTask:
             "url": "https://app.clickup.com/t/task123",
             "permission_level": "read",
         }
-        task = ClickUpTask.deserialize(minimal_data)
+        task = ClickUpTask.serialize(minimal_data)
         assert task.id == "task123"
         assert task.text_content is None
         assert task.description is None
@@ -373,9 +369,9 @@ class TestClickUpTask:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize(None)
+            ClickUpTask.serialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize([])
+            ClickUpTask.serialize([])
 
     def test_deserialize_invalid_status_type(self):
         """Test deserialize with invalid status data should raise ValueError"""
@@ -391,7 +387,7 @@ class TestClickUpTask:
             "permission_level": "read",
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_creator_type(self):
         """Test deserialize with invalid creator data should raise ValueError"""
@@ -407,7 +403,7 @@ class TestClickUpTask:
             "permission_level": "read",
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_numeric_values(self):
         """Test deserialize with invalid numeric values should raise ValueError"""
@@ -426,7 +422,7 @@ class TestClickUpTask:
             "time_spent": "not_a_number",
         }
         with pytest.raises(ValueError):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_dates(self):
         """Test deserialize with invalid dates should raise ValueError"""
@@ -442,7 +438,7 @@ class TestClickUpTask:
             "permission_level": "read",
         }
         with pytest.raises(ValueError):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_optional_dates(self):
         """Test deserialize with invalid optional dates should raise ValueError"""
@@ -461,7 +457,7 @@ class TestClickUpTask:
             "date_closed": "invalid_date",
         }
         with pytest.raises(ValueError):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_nested_objects(self):
         """Test deserialize with invalid nested objects should raise ValueError"""
@@ -482,7 +478,7 @@ class TestClickUpTask:
             "permission_level": "read",
         }
         with pytest.raises(ValueError):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_invalid_list_items(self):
         """Test deserialize with invalid items in lists should raise ValueError"""
@@ -501,11 +497,11 @@ class TestClickUpTask:
             ],
         }
         with pytest.raises(ValueError):
-            ClickUpTask.deserialize(data)
+            ClickUpTask.serialize(data)
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
-        task = ClickUpTask.deserialize({})
+        task = ClickUpTask.serialize({})
         assert task.id == ""
         assert task.name == ""
         assert task.text_content is None

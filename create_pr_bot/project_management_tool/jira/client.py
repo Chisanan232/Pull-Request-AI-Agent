@@ -1,13 +1,18 @@
 import base64
 import json
+from http import HTTPMethod
 from typing import Optional
 
 import urllib3
 
+from create_pr_bot.project_management_tool._base.client import (
+    BaseProjectManagementAPIClient,
+)
+
 from .model import JiraTicket
 
 
-class JiraApiClient:
+class JiraAPIClient(BaseProjectManagementAPIClient):
     """Client for interacting with JIRA REST API."""
 
     def __init__(self, base_url: str, email: str, api_token: str):
@@ -19,11 +24,11 @@ class JiraApiClient:
             email: Email address associated with your JIRA account
             api_token: JIRA API token for authentication
         """
+        super().__init__(api_token=api_token)
         self.base_url = base_url.rstrip("/")
-        self.http = urllib3.PoolManager()
 
         # Create auth header manually
-        auth_string = f"{email}:{api_token}"
+        auth_string = f"{email}:{self.api_token}"
         auth_bytes = auth_string.encode("ascii")
         auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
 
@@ -51,7 +56,7 @@ class JiraApiClient:
         url = f"{self.base_url}/rest/api/2/issue/{ticket_id}"
 
         try:
-            response = self.http.request("GET", url, headers=self.headers)
+            response = self.http.request(HTTPMethod.GET, url, headers=self.headers)
 
             if response.status == 404:
                 return None
@@ -85,7 +90,7 @@ class JiraApiClient:
 
         try:
             response = self.http.request(
-                "GET", url, headers=self.headers, fields={"jql": jql, "maxResults": max_results}
+                HTTPMethod.GET, url, headers=self.headers, fields={"jql": jql, "maxResults": max_results}
             )
 
             if response.status != 200:
