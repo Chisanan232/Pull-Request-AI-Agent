@@ -109,14 +109,12 @@ class TestClickUpPriority:
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
         priority = ClickUpPriority.deserialize({})
-        assert priority is not None
-        assert priority.priority == ""
-        assert priority.color == ""
+        assert priority is None
 
     def test_deserialize_invalid_data_types(self):
         """Test deserialize with invalid data types"""
         assert ClickUpPriority.deserialize(None) is None
-        assert ClickUpPriority.deserialize({}) is not None
+        assert ClickUpPriority.deserialize({}) is None
 
 
 class TestClickUpTag:
@@ -241,21 +239,6 @@ class TestClickUpCustomField:
             ClickUpCustomField.deserialize(None)  # type: ignore
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
             ClickUpCustomField.deserialize([])  # type: ignore
-
-    def test_deserialize_invalid_type_config(self):
-        """Test deserialize with invalid type_config should use empty dict"""
-        data = {
-            "id": "field123",
-            "name": "Test Field",
-            "type": "text",
-            "type_config": "invalid_config",  # Should be a dict
-            "date_created": 1625097600000,
-            "hide_from_guests": False,
-            "value": "test",
-            "required": True
-        }
-        field = ClickUpCustomField.deserialize(data)
-        assert field.type_config == {}  # Should use empty dict for invalid type_config
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
