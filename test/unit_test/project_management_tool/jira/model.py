@@ -119,7 +119,7 @@ class TestJiraTicket:
 
     def test_serialize_list_empty(self) -> None:
         """Test list serialization with empty results."""
-        data = {"issues": []}
+        data: Dict[str, Any] = {"issues": []}
         tickets = JiraTicket.serialize_list(data)
         assert len(tickets) == 0
         assert isinstance(tickets, list)
@@ -146,7 +146,9 @@ class TestJiraTicket:
             ({"displayName": None}, None),  # None display name should be treated as no assignee
         ],
     )
-    def test_serialize_assignee_variations(self, field_value: Any, expected: Optional[str]) -> None:
+    def test_serialize_assignee_variations(
+        self, field_value: Optional[Dict[str, Optional[str]]], expected: Optional[str]
+    ) -> None:
         """Test different variations of assignee field values."""
         data = {
             "key": "TEST-123",
@@ -167,4 +169,5 @@ class TestJiraTicket:
         ticket = JiraTicket.serialize(sample_ticket_data)
 
         with pytest.raises(AttributeError):
-            ticket.id = "NEW-ID"  # Should raise error if JiraTicket is frozen
+            # Use type: ignore to suppress mypy error for intentional attribute error test
+            ticket.id = "NEW-ID"  # type: ignore
