@@ -1,101 +1,100 @@
-import urllib3
-import json
 import base64
-from typing import Dict, Optional
-from urllib3.util import make_headers
+import json
+from typing import Optional
+
+import urllib3
+
 from .model import JiraTicket
+
 
 class JiraApiClient:
     """Client for interacting with JIRA REST API."""
-    
+
     def __init__(self, base_url: str, email: str, api_token: str):
         """
         Initialize JIRA API client.
-        
+
         Args:
             base_url: Base URL of your JIRA instance (e.g., 'https://your-domain.atlassian.net')
             email: Email address associated with your JIRA account
             api_token: JIRA API token for authentication
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.http = urllib3.PoolManager()
-        
+
         # Create auth header manually
         auth_string = f"{email}:{api_token}"
-        auth_bytes = auth_string.encode('ascii')
-        auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
-        
+        auth_bytes = auth_string.encode("ascii")
+        auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
+
         # Combine all required headers
         self.headers = {
-            'Authorization': f'Basic {auth_b64}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'JiraApiClient/1.0'
+            "Authorization": f"Basic {auth_b64}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "JiraApiClient/1.0",
         }
 
     def get_ticket(self, ticket_id: str) -> Optional[JiraTicket]:
         """
         Fetch details of a JIRA ticket by its ID.
-        
+
         Args:
             ticket_id: The JIRA ticket ID (e.g., 'PROJ-123')
-            
+
         Returns:
             JiraTicket object if found, None if not found
-            
+
         Raises:
             urllib3.exceptions.HTTPError: If the API request fails
         """
         url = f"{self.base_url}/rest/api/2/issue/{ticket_id}"
-        
+
         try:
-            response = self.http.request('GET', url, headers=self.headers)
-            
+            response = self.http.request("GET", url, headers=self.headers)
+
             if response.status == 404:
                 return None
-                
+
             if response.status != 200:
                 response.drain_conn()
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
-            
-            data = json.loads(response.data.decode('utf-8'))
+
+            data = json.loads(response.data.decode("utf-8"))
             return JiraTicket.serialize(data)
-            
+
         finally:
-            if 'response' in locals():
+            if "response" in locals():
                 response.drain_conn()
 
     def search_tickets(self, jql: str, max_results: int = 50) -> list[JiraTicket]:
         """
         Search for JIRA tickets using JQL (JIRA Query Language).
-        
+
         Args:
             jql: JQL search string
             max_results: Maximum number of results to return
-            
+
         Returns:
             List of JiraTicket objects matching the search criteria
-            
+
         Raises:
             urllib3.exceptions.HTTPError: If the API request fails
         """
         url = f"{self.base_url}/rest/api/2/search"
-        
+
         try:
             response = self.http.request(
-                'GET',
-                url,
-                headers=self.headers,
-                fields={'jql': jql, 'maxResults': max_results}
+                "GET", url, headers=self.headers, fields={"jql": jql, "maxResults": max_results}
             )
-            
+
             if response.status != 200:
                 response.drain_conn()
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
-            
-            data = json.loads(response.data.decode('utf-8'))
+
+            data = json.loads(response.data.decode("utf-8"))
             return JiraTicket.serialize_list(data)
-            
+
         finally:
-            if 'response' in locals():
+            if "response" in locals():
                 response.drain_conn()
