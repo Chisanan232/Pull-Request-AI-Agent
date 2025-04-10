@@ -3,6 +3,7 @@
 import json
 from datetime import datetime
 from unittest.mock import Mock, patch
+from http import HTTPMethod
 
 import pytest
 import urllib3
@@ -80,7 +81,7 @@ class TestClickUpClient:
 
             # Verify request was made correctly
             mock_request.assert_called_once_with(
-                "GET",
+                HTTPMethod.GET,
                 "https://api.clickup.com/api/v2/task/abc123",
                 headers={"Authorization": "test_token", "Content-Type": "application/json"},
             )

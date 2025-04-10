@@ -2,6 +2,7 @@
 
 import json
 from typing import Optional
+from http import HTTPMethod
 
 import urllib3
 
@@ -34,7 +35,7 @@ class ClickUpClient(BaseProjectManagementAPIClient):
         headers = {"Authorization": self.api_token, "Content-Type": "application/json"}
 
         try:
-            response = self.http.request("GET", f"{self.BASE_URL}/task/{ticket_id}", headers=headers)
+            response = self.http.request(HTTPMethod.GET, f"{self.BASE_URL}/task/{ticket_id}", headers=headers)
 
             if response.status == 200:
                 response_data = json.loads(response.data.decode("utf-8"))

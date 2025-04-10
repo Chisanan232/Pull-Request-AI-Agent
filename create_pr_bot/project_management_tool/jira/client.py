@@ -1,6 +1,7 @@
 import base64
 import json
 from typing import Optional
+from http import HTTPMethod
 
 import urllib3
 
@@ -52,7 +53,7 @@ class JiraApiClient(BaseProjectManagementAPIClient):
         url = f"{self.base_url}/rest/api/2/issue/{ticket_id}"
 
         try:
-            response = self.http.request("GET", url, headers=self.headers)
+            response = self.http.request(HTTPMethod.GET, url, headers=self.headers)
 
             if response.status == 404:
                 return None
@@ -86,7 +87,7 @@ class JiraApiClient(BaseProjectManagementAPIClient):
 
         try:
             response = self.http.request(
-                "GET", url, headers=self.headers, fields={"jql": jql, "maxResults": max_results}
+                HTTPMethod.GET, url, headers=self.headers, fields={"jql": jql, "maxResults": max_results}
             )
 
             if response.status != 200:
