@@ -53,14 +53,7 @@ class JiraApiClient:
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
             
             data = json.loads(response.data.decode('utf-8'))
-            return JiraTicket(
-                id=data['key'],
-                title=data['fields']['summary'],
-                description=data['fields']['description'] or '',
-                status=data['fields']['status']['name'],
-                assignee=data['fields']['assignee']['displayName'] if data['fields']['assignee'] else None,
-                project_key=data['fields']['project']['key']
-            )
+            return JiraTicket.from_api_response(data)
             
         finally:
             if 'response' in locals():
@@ -95,17 +88,7 @@ class JiraApiClient:
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
             
             data = json.loads(response.data.decode('utf-8'))
-            return [
-                JiraTicket(
-                    id=issue['key'],
-                    title=issue['fields']['summary'],
-                    description=issue['fields']['description'] or '',
-                    status=issue['fields']['status']['name'],
-                    assignee=issue['fields']['assignee']['displayName'] if issue['fields']['assignee'] else None,
-                    project_key=issue['fields']['project']['key']
-                )
-                for issue in data['issues']
-            ]
+            return JiraTicket.from_api_response_list(data)
             
         finally:
             if 'response' in locals():
