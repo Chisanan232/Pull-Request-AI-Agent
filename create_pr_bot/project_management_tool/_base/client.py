@@ -8,8 +8,6 @@ from .model import BaseImmutableModel
 
 class BaseProjectManagementAPIClient(metaclass=ABCMeta):
 
-    BASE_URL = "https://api.clickup.com/api/v2"
-
     def __init__(self, api_token: str):
         """Initialize project management service client with API token.
 
