@@ -57,7 +57,9 @@ class TestClickUpUser:
     def test_deserialize_invalid_id_type(self):
         """Test deserialize with invalid ID type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpUser.deserialize({"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"})
+            ClickUpUser.deserialize(
+                {"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"}
+            )
 
 
 class TestClickUpStatus:
@@ -92,7 +94,9 @@ class TestClickUpStatus:
     def test_deserialize_invalid_orderindex_type(self):
         """Test deserialize with invalid orderindex type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpStatus.deserialize({"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"})
+            ClickUpStatus.deserialize(
+                {"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"}
+            )
 
 
 class TestClickUpPriority:
@@ -164,7 +168,7 @@ class TestClickUpChecklistItem:
             "name": "Test Item",
             "orderindex": 1,
             "checked": True,
-            "date_created": "not_a_timestamp"
+            "date_created": "not_a_timestamp",
         }
         with pytest.raises(ValueError):
             ClickUpChecklistItem.deserialize(data)
@@ -177,7 +181,7 @@ class TestClickUpChecklistItem:
             "orderindex": 1,
             "assignee": "invalid_assignee",  # Should be a dict
             "checked": True,
-            "date_created": 1625097600000
+            "date_created": 1625097600000,
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
             ClickUpChecklistItem.deserialize(data)
@@ -384,7 +388,7 @@ class TestClickUpTask:
             "date_updated": 1625097600000,
             "creator": {"id": 123, "username": "test", "email": "test@test.com", "color": "#000"},
             "url": "https://app.clickup.com/t/task123",
-            "permission_level": "read"
+            "permission_level": "read",
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
             ClickUpTask.deserialize(data)
@@ -400,7 +404,7 @@ class TestClickUpTask:
             "date_updated": 1625097600000,
             "creator": "invalid_creator",  # Should be a dict
             "url": "https://app.clickup.com/t/task123",
-            "permission_level": "read"
+            "permission_level": "read",
         }
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
             ClickUpTask.deserialize(data)
@@ -419,7 +423,7 @@ class TestClickUpTask:
             "permission_level": "read",
             "points": "not_a_number",
             "time_estimate": "not_a_number",
-            "time_spent": "not_a_number"
+            "time_spent": "not_a_number",
         }
         with pytest.raises(ValueError):
             ClickUpTask.deserialize(data)
@@ -435,7 +439,7 @@ class TestClickUpTask:
             "date_updated": "invalid_date",
             "creator": {"id": 123, "username": "test", "email": "test@test.com", "color": "#000"},
             "url": "https://app.clickup.com/t/task123",
-            "permission_level": "read"
+            "permission_level": "read",
         }
         with pytest.raises(ValueError):
             ClickUpTask.deserialize(data)
@@ -454,7 +458,7 @@ class TestClickUpTask:
             "permission_level": "read",
             "due_date": "invalid_date",
             "start_date": "invalid_date",
-            "date_closed": "invalid_date"
+            "date_closed": "invalid_date",
         }
         with pytest.raises(ValueError):
             ClickUpTask.deserialize(data)
@@ -464,13 +468,18 @@ class TestClickUpTask:
         data = {
             "id": "task123",
             "name": "Test Task",
-            "status": {"status": "test", "color": "#000", "type": "custom", "orderindex": "invalid"},  # Invalid orderindex
+            "status": {
+                "status": "test",
+                "color": "#000",
+                "type": "custom",
+                "orderindex": "invalid",
+            },  # Invalid orderindex
             "orderindex": "1",
             "date_created": 1625097600000,
             "date_updated": 1625097600000,
             "creator": {"id": "invalid", "username": "test", "email": "test@test.com", "color": "#000"},  # Invalid id
             "url": "https://app.clickup.com/t/task123",
-            "permission_level": "read"
+            "permission_level": "read",
         }
         with pytest.raises(ValueError):
             ClickUpTask.deserialize(data)
@@ -489,7 +498,7 @@ class TestClickUpTask:
             "permission_level": "read",
             "assignees": [
                 {"id": "invalid", "username": "test", "email": "test@test.com", "color": "#000"}  # Invalid id
-            ]
+            ],
         }
         with pytest.raises(ValueError):
             ClickUpTask.deserialize(data)
