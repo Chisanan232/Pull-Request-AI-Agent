@@ -2,8 +2,8 @@
 
 import json
 from datetime import datetime
-from unittest.mock import Mock, patch
 from http import HTTPMethod
+from unittest.mock import Mock, patch
 
 import pytest
 import urllib3
