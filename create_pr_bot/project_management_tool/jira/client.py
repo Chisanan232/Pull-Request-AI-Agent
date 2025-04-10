@@ -1,5 +1,6 @@
 import urllib3
 import json
+import base64
 from typing import Dict, Optional
 from urllib3.util import make_headers
 from .model import JiraTicket
@@ -19,13 +20,18 @@ class JiraApiClient:
         self.base_url = base_url.rstrip('/')
         self.http = urllib3.PoolManager()
         
-        # Create basic auth headers
-        self.headers = make_headers(
-            basic_auth=f"{email}:{api_token}",
-            user_agent="JiraApiClient/1.0",
-            accept="application/json",
-            content_type="application/json"
-        )
+        # Create auth header manually
+        auth_string = f"{email}:{api_token}"
+        auth_bytes = auth_string.encode('ascii')
+        auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+        
+        # Combine all required headers
+        self.headers = {
+            'Authorization': f'Basic {auth_b64}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'JiraApiClient/1.0'
+        }
 
     def get_ticket(self, ticket_id: str) -> Optional[JiraTicket]:
         """
