@@ -4,8 +4,8 @@ from unittest.mock import Mock
 import json
 import urllib3
 from pytest import MonkeyPatch
-from .client import JiraApiClient
-from .model import JiraTicket
+from create_pr_bot.project_management_tool.jira.client import JiraApiClient
+from create_pr_bot.project_management_tool.jira.model import JiraTicket
 
 
 class TestJIRAApiClient:

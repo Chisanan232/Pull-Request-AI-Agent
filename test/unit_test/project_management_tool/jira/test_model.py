@@ -1,6 +1,6 @@
 import pytest
 from typing import Any, Dict
-from .model import JiraTicket
+from create_pr_bot.project_management_tool.jira.model import JiraTicket
 
 class TestJiraTicket:
     """Test cases for JiraTicket model."""
