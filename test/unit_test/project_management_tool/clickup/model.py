@@ -39,11 +39,11 @@ class TestClickUpUser:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize(None)  # type: ignore
+            ClickUpUser.deserialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize([])  # type: ignore
+            ClickUpUser.deserialize([])
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpUser.deserialize("invalid")  # type: ignore
+            ClickUpUser.deserialize("invalid")
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
@@ -79,9 +79,9 @@ class TestClickUpStatus:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpStatus.deserialize(None)  # type: ignore
+            ClickUpStatus.deserialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpStatus.deserialize([])  # type: ignore
+            ClickUpStatus.deserialize([])
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
@@ -157,9 +157,9 @@ class TestClickUpChecklistItem:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpChecklistItem.deserialize(None)  # type: ignore
+            ClickUpChecklistItem.deserialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpChecklistItem.deserialize([])  # type: ignore
+            ClickUpChecklistItem.deserialize([])
 
     def test_deserialize_invalid_date_type(self):
         """Test deserialize with invalid date should raise ValueError"""
@@ -240,9 +240,9 @@ class TestClickUpCustomField:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpCustomField.deserialize(None)  # type: ignore
+            ClickUpCustomField.deserialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpCustomField.deserialize([])  # type: ignore
+            ClickUpCustomField.deserialize([])
 
     def test_deserialize_empty_dict(self):
         """Test deserialize with empty dictionary"""
@@ -373,9 +373,9 @@ class TestClickUpTask:
     def test_deserialize_invalid_data_type(self):
         """Test deserialize with invalid data types should raise ValueError"""
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize(None)  # type: ignore
+            ClickUpTask.deserialize(None)
         with pytest.raises(ValueError, match="Input data must be a dictionary"):
-            ClickUpTask.deserialize([])  # type: ignore
+            ClickUpTask.deserialize([])
 
     def test_deserialize_invalid_status_type(self):
         """Test deserialize with invalid status data should raise ValueError"""
