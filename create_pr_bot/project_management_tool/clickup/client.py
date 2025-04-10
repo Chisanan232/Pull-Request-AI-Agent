@@ -46,7 +46,7 @@ class ClickUpClient:
 
             if response.status == 200:
                 response_data = json.loads(response.data.decode("utf-8"))
-                return ClickUpTask.deserialize(response_data)
+                return ClickUpTask.serialize(response_data)
             else:
                 print(f"Error: Request failed with status {response.status}")
                 print(f"Response: {response.data.decode('utf-8')}")
