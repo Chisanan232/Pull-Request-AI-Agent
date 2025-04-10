@@ -1,5 +1,5 @@
 import pytest
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from create_pr_bot.project_management_tool.jira.model import JiraTicket
 
 class TestJiraTicket:
