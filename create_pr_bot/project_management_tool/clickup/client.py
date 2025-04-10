@@ -6,21 +6,13 @@ from typing import Optional
 import urllib3
 
 from .model import ClickUpTask
+from create_pr_bot.project_management_tool._base.client import BaseProjectManagementAPIClient
 
 
-class ClickUpClient:
+class ClickUpClient(BaseProjectManagementAPIClient):
     """ClickUp API client for interacting with ClickUp services."""
 
     BASE_URL = "https://api.clickup.com/api/v2"
-
-    def __init__(self, api_token: str):
-        """Initialize ClickUp client with API token.
-
-        Args:
-            api_token (str): Your ClickUp API personal token
-        """
-        self.api_token = api_token
-        self.http = urllib3.PoolManager()
 
     def get_ticket(self, ticket_id: str) -> Optional[ClickUpTask]:
         """Fetch task details from ClickUp by task ID.

@@ -5,9 +5,10 @@ from typing import Optional
 import urllib3
 
 from .model import JiraTicket
+from create_pr_bot.project_management_tool._base.client import BaseProjectManagementAPIClient
 
 
-class JiraApiClient:
+class JiraApiClient(BaseProjectManagementAPIClient):
     """Client for interacting with JIRA REST API."""
 
     def __init__(self, base_url: str, email: str, api_token: str):
@@ -19,11 +20,11 @@ class JiraApiClient:
             email: Email address associated with your JIRA account
             api_token: JIRA API token for authentication
         """
+        super().__init__(api_token=api_token)
         self.base_url = base_url.rstrip("/")
-        self.http = urllib3.PoolManager()
 
         # Create auth header manually
-        auth_string = f"{email}:{api_token}"
+        auth_string = f"{email}:{self.api_token}"
         auth_bytes = auth_string.encode("ascii")
         auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
 
