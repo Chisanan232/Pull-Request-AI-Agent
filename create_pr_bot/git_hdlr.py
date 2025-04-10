@@ -1,6 +1,12 @@
+import ast
+import logging
+import os
+
 from git import Repo, Remote, Head, GitCommandError
 from typing import List, Optional, Set, Tuple
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class GitHandler:
@@ -16,11 +22,52 @@ class GitHandler:
         self.repo_path = Path(repo_path)
         self.repo = Repo(self.repo_path)
 
+    @property
+    def is_in_ci_env(self) -> bool:
+        """
+        Determine if the code is running in a Continuous Integration (CI) environment.
+
+        This method evaluates environment variables to determine if the script is
+        running in a CI environment such as GitHub Actions.
+
+        :return: A boolean indicating whether the script is running in a CI environment.
+        :rtype: bool
+        """
+        return ast.literal_eval(str(os.getenv("GITHUB_ACTIONS", "false")).capitalize())
+
+    @property
+    def _current_git_branch(self) -> str:
+        """
+        Get the name of the current active Git branch.
+
+        This method attempts to retrieve the name of the current active branch
+        from the Git repository associated with the object. If the repository
+        is in a detached HEAD state and running in a CI environment, it falls
+        back to an environment variable to determine the branch name.
+
+        :raises TypeError: If an exception is raised and the issue cannot be handled
+            (other than the detached HEAD state in CI environments).
+
+        :return: Name of the current active Git branch, or an environment variable
+            value if in CI with detached HEAD state.
+        :rtype: str
+        """
+        try:
+            current_git_branch = self.repo.active_branch.name
+        except TypeError as e:
+            # NOTE: Only for CI runtime environment
+            logger.error("Occur something wrong when trying to get git branch.")
+            if "HEAD" in str(e) and "detached" in str(e) and self.is_in_ci_env:
+                current_git_branch = os.getenv("GITHUB_REF", "")
+            else:
+                raise e
+        return current_git_branch
+
     def has_changes_between_branches(
         self,
-        current_branch: str,
-        default_branch: str,
-        remote_name: str = "origin"
+        current_branch: str = "",
+        default_branch: str = "master",
+        remote_name: str = "remote"
     ) -> Tuple[bool, int, int]:
         """
         Check if there are differences between current branch and remote default branch.
@@ -40,6 +87,8 @@ class GitHandler:
             GitCommandError: If Git operations fail
             ValueError: If specified branches don't exist
         """
+        if not current_branch:
+            current_branch = self._current_git_branch
         try:
             # Fetch the latest changes from remote
             remote: Remote = self.repo.remote(remote_name)
@@ -51,7 +100,7 @@ class GitHandler:
 
             # Get remote reference for default branch
             remote_ref = f"{remote_name}/{default_branch}"
-            if remote_ref not in self.repo.refs:
+            if remote_ref in [r.name for r in self.repo.refs]:
                 raise ValueError(f"Default branch '{default_branch}' not found in remote repository")
 
             # Get branch references
@@ -105,7 +154,7 @@ class GitHandler:
     def get_remote_branch_head_commit(
         self,
         branch_name: str,
-        remote_name: str = "origin"
+        remote_name: str = "remote"
     ) -> Optional[str]:
         """
         Get the head commit hash for a specific branch in the remote repository.
@@ -125,7 +174,7 @@ class GitHandler:
             remote.fetch()
             
             remote_ref = f"{remote_name}/{branch_name}"
-            if remote_ref in self.repo.refs:
+            if remote_ref in [r.name for r in self.repo.refs]:
                 return self.repo.refs[remote_ref].commit.hexsha
             return None
         except GitCommandError as e:
@@ -135,7 +184,7 @@ class GitHandler:
         self,
         current_branch: str,
         default_branch: str,
-        remote_name: str = "origin"
+        remote_name: str = "remote"
     ) -> Optional[str]:
         """
         Find the common ancestor commit between current branch and remote default branch.
@@ -157,7 +206,7 @@ class GitHandler:
                 raise ValueError(f"Current branch '{current_branch}' not found in local repository")
 
             remote_ref = f"{remote_name}/{default_branch}"
-            if remote_ref not in self.repo.refs:
+            if remote_ref not in [r.name for r in self.repo.refs]:
                 raise ValueError(f"Default branch '{default_branch}' not found in remote repository")
 
             merge_base = self.repo.merge_base(
