@@ -7,6 +7,8 @@ from create_pr_bot.git_hdlr import GitHandler
 
 
 class TestGitHandler:
+    """Test cases for GitHandler."""
+
     @pytest.fixture
     def mock_repo(self):
         """Fixture for mocked Git repository."""
@@ -28,6 +30,26 @@ class TestGitHandler:
             handler = GitHandler('./')
             return handler
 
+    @property
+    def current_branch(self) -> str:
+        return "feature"
+
+    @property
+    def default_branch(self) -> str:
+        return "main"
+
+    @property
+    def remote_name(self) -> str:
+        return "origin"
+
+    @property
+    def remote_ref(self) -> str:
+        return f"{self.remote_name}/{self.default_branch}"
+
+    @property
+    def commit_hash(self) -> str:
+        return "abc123"
+
     def test_has_changes_between_branches_with_differences(self, git_handler, mock_repo):
         """Test detecting changes between branches when differences exist."""
         # Mock remote
@@ -36,24 +58,28 @@ class TestGitHandler:
         
         # Mock current branch
         mock_current_branch = Mock()
-        mock_current_branch.name = 'feature'
-        mock_repo.heads = {'feature': mock_current_branch}
+        mock_current_branch.name = self.current_branch
+        mock_repo.heads = {self.current_branch: mock_current_branch}
         
         # Mock remote branch
         mock_remote_branch = Mock()
-        mock_remote_branch.name = 'origin/main'
-        mock_repo.refs = {'origin/main': mock_remote_branch}
+        mock_remote_branch.name = self.remote_ref
+        mock_repo.refs = {self.remote_ref: mock_remote_branch}
         
         # Mock commit iteration for behind and ahead counts
         def mock_iter_commits(*args, **kwargs):
-            if args[0] == 'feature..origin/main':  # behind count
+            if args[0] == f'{self.current_branch}..{self.remote_ref}':  # behind count
                 return [Mock()]
-            elif args[0] == 'origin/main..feature':  # ahead count
+            elif args[0] == f'{self.remote_ref}..{self.current_branch}':  # ahead count
                 return [Mock(), Mock()]
             return []
         mock_repo.iter_commits.side_effect = mock_iter_commits
         
-        has_changes, ahead, behind = git_handler.has_changes_between_branches('feature', 'main', 'remote')
+        has_changes, ahead, behind = git_handler.has_changes_between_branches(
+            self.current_branch,
+            self.default_branch,
+            self.remote_name
+        )
         assert has_changes is True
         assert ahead == 2
         assert behind == 1
@@ -67,18 +93,22 @@ class TestGitHandler:
         
         # Mock current branch
         mock_current_branch = Mock()
-        mock_current_branch.name = 'feature'
-        mock_repo.heads = {'feature': mock_current_branch}
+        mock_current_branch.name = self.current_branch
+        mock_repo.heads = {self.current_branch: mock_current_branch}
         
         # Mock remote branch
         mock_remote_branch = Mock()
-        mock_remote_branch.name = 'origin/main'
-        mock_repo.refs = {'origin/main': mock_remote_branch}
+        mock_remote_branch.name = self.remote_ref
+        mock_repo.refs = {self.remote_ref: mock_remote_branch}
         
         # Mock commit iteration with no differences
         mock_repo.iter_commits.return_value = []
         
-        has_changes, ahead, behind = git_handler.has_changes_between_branches('feature', 'main', 'remote')
+        has_changes, ahead, behind = git_handler.has_changes_between_branches(
+            self.current_branch,
+            self.default_branch,
+            self.remote_name
+        )
         assert has_changes is False
         assert ahead == 0
         assert behind == 0
@@ -93,8 +123,12 @@ class TestGitHandler:
         # Empty heads dictionary
         mock_repo.heads = {}
         
-        with pytest.raises(ValueError, match="Current branch 'feature' not found"):
-            git_handler.has_changes_between_branches('feature', 'main', 'remote')
+        with pytest.raises(ValueError, match=f"Current branch '{self.current_branch}' not found"):
+            git_handler.has_changes_between_branches(
+                self.current_branch,
+                self.default_branch,
+                self.remote_name
+            )
 
     def test_has_changes_between_branches_invalid_default(self, git_handler, mock_repo):
         """Test error handling for invalid default branch."""
@@ -104,14 +138,18 @@ class TestGitHandler:
         
         # Mock current branch exists
         mock_current_branch = Mock()
-        mock_current_branch.name = 'feature'
-        mock_repo.heads = {'feature': mock_current_branch}
+        mock_current_branch.name = self.current_branch
+        mock_repo.heads = {self.current_branch: mock_current_branch}
         
         # Empty refs dictionary
         mock_repo.refs = {}
         
-        with pytest.raises(ValueError, match="Default branch 'main' not found"):
-            git_handler.has_changes_between_branches('feature', 'main', 'remote')
+        with pytest.raises(ValueError, match=f"Default branch '{self.default_branch}' not found"):
+            git_handler.has_changes_between_branches(
+                self.current_branch,
+                self.default_branch,
+                self.remote_name
+            )
 
     def test_get_branch_head_commit_existing(self, git_handler, mock_repo):
         """Test getting head commit for existing branch."""
