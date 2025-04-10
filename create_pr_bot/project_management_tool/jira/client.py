@@ -53,7 +53,7 @@ class JiraApiClient:
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
             
             data = json.loads(response.data.decode('utf-8'))
-            return JiraTicket.from_api_response(data)
+            return JiraTicket.serialize(data)
             
         finally:
             if 'response' in locals():
@@ -88,7 +88,7 @@ class JiraApiClient:
                 raise urllib3.exceptions.HTTPError(f"Request failed with status {response.status}")
             
             data = json.loads(response.data.decode('utf-8'))
-            return JiraTicket.from_api_response_list(data)
+            return JiraTicket.serialize_list(data)
             
         finally:
             if 'response' in locals():

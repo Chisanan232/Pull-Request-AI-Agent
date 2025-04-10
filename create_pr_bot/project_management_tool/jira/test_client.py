@@ -225,9 +225,9 @@ class TestJIRAApiClient:
         assert ticket is not None
         assert ticket.assignee == expected_assignee
 
-    def test_ticket_from_api_response(self, sample_ticket_data: Dict[str, Any]) -> None:
-        """Test JiraTicket creation from API response data."""
-        ticket = JiraTicket.from_api_response(sample_ticket_data)
+    def test_ticket_serialize(self, sample_ticket_data: Dict[str, Any]) -> None:
+        """Test JiraTicket serialization from API response data."""
+        ticket = JiraTicket.serialize(sample_ticket_data)
         
         assert isinstance(ticket, JiraTicket)
         assert ticket.id == 'TEST-123'
@@ -237,9 +237,9 @@ class TestJIRAApiClient:
         assert ticket.assignee == 'John Doe'
         assert ticket.project_key == 'TEST'
 
-    def test_tickets_from_api_response_list(self, sample_search_data: Dict[str, list[Dict[str, Any]]]) -> None:
-        """Test JiraTicket list creation from API search response data."""
-        tickets = JiraTicket.from_api_response_list(sample_search_data)
+    def test_tickets_serialize_list(self, sample_search_data: Dict[str, list[Dict[str, Any]]]) -> None:
+        """Test JiraTicket list serialization from API search response data."""
+        tickets = JiraTicket.serialize_list(sample_search_data)
         
         assert len(tickets) == 2
         assert all(isinstance(ticket, JiraTicket) for ticket in tickets)

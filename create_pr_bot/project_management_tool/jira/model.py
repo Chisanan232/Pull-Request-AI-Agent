@@ -13,7 +13,7 @@ class JiraTicket:
     project_key: str
 
     @classmethod
-    def from_api_response(cls, data: Dict[str, Any]) -> "JiraTicket":
+    def serialize(cls, data: Dict[str, Any]) -> "JiraTicket":
         """
         Create a JiraTicket instance from JIRA API response data.
         
@@ -34,7 +34,7 @@ class JiraTicket:
         )
 
     @classmethod
-    def from_api_response_list(cls, data: Dict[str, Any]) -> list["JiraTicket"]:
+    def serialize_list(cls, data: Dict[str, Any]) -> list["JiraTicket"]:
         """
         Create a list of JiraTicket instances from JIRA API search response.
         
@@ -44,4 +44,4 @@ class JiraTicket:
         Returns:
             List of JiraTicket instances
         """
-        return [cls.from_api_response(issue) for issue in data['issues']]
+        return [cls.serialize(issue) for issue in data['issues']]
