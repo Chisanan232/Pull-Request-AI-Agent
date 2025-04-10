@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Any, Dict
 
-@dataclass
+@dataclass(frozen=True)
 class JiraTicket:
     """Represents a JIRA ticket with essential fields."""
     
