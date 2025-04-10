@@ -64,7 +64,7 @@ class ClickUpPriority(BaseImmutableModel):
     color: str
 
     @classmethod
-    def serialize(cls, data: Optional[Dict[str, Any]]) -> Optional[ClickUpPriority]:
+    def serialize(cls, data: Dict[str, Any]) -> Optional[ClickUpPriority]:
         if not data:
             return None
         return cls(
@@ -179,7 +179,7 @@ class ClickUpLocation(BaseImmutableModel):
     access: bool = True
 
     @classmethod
-    def serialize(cls, data: Optional[Dict[str, Any]]) -> Optional[ClickUpLocation]:
+    def serialize(cls, data: Dict[str, Any]) -> Optional[ClickUpLocation]:
         if not data:
             return None
         if not isinstance(data, dict):
@@ -263,7 +263,7 @@ class ClickUpTask(BaseImmutableModel):
             checklists=[ClickUpChecklist.serialize(c) for c in data.get("checklists", [])],
             tags=[ClickUpTag.serialize(t) for t in data.get("tags", [])],
             parent=str(data.get("parent")) if data.get("parent") else None,
-            priority=ClickUpPriority.serialize(data.get("priority")) if data.get("priority") else None,
+            priority=ClickUpPriority.serialize(data["priority"]) if data.get("priority") else None,
             due_date=datetime.fromtimestamp(int(data.get("due_date", 0)) / 1000) if data.get("due_date") else None,
             start_date=(
                 datetime.fromtimestamp(int(data.get("start_date", 0)) / 1000) if data.get("start_date") else None
@@ -275,8 +275,8 @@ class ClickUpTask(BaseImmutableModel):
             custom_id=str(data.get("custom_id")) if data.get("custom_id") else None,
             url=str(data.get("url", "")),
             permission_level=str(data.get("permission_level", "")),
-            list=ClickUpLocation.serialize(data.get("list")) if data.get("list") else None,
-            project=ClickUpLocation.serialize(data.get("project")) if data.get("project") else None,
-            folder=ClickUpLocation.serialize(data.get("folder")) if data.get("folder") else None,
-            space=ClickUpLocation.serialize(data.get("space")) if data.get("space") else None,
+            list=ClickUpLocation.serialize(data["list"]) if data.get("list") else None,
+            project=ClickUpLocation.serialize(data["project"]) if data.get("project") else None,
+            folder=ClickUpLocation.serialize(data["folder"]) if data.get("folder") else None,
+            space=ClickUpLocation.serialize(data["space"]) if data.get("space") else None,
         )
