@@ -5,7 +5,7 @@ from typing import Optional
 
 import urllib3
 
-from create_pr_bot.project_management_tool.clickup.model import ClickUpTask
+from .model import ClickUpTask
 
 
 class ClickUpClient:
