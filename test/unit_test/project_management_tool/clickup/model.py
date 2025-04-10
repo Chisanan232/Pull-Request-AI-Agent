@@ -57,9 +57,7 @@ class TestClickUpUser:
     def test_deserialize_invalid_id_type(self):
         """Test deserialize with invalid ID type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpUser.serialize(
-                {"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"}
-            )
+            ClickUpUser.serialize({"id": "not_a_number", "username": "test", "email": "test@test.com", "color": "#000"})
 
 
 class TestClickUpStatus:
@@ -94,9 +92,7 @@ class TestClickUpStatus:
     def test_deserialize_invalid_orderindex_type(self):
         """Test deserialize with invalid orderindex type should raise ValueError"""
         with pytest.raises(ValueError):
-            ClickUpStatus.serialize(
-                {"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"}
-            )
+            ClickUpStatus.serialize({"status": "test", "color": "#000", "type": "custom", "orderindex": "not_a_number"})
 
 
 class TestClickUpPriority:

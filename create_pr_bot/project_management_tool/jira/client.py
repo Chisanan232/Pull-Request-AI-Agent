@@ -1,12 +1,15 @@
 import base64
 import json
-from typing import Optional
 from http import HTTPMethod
+from typing import Optional
 
 import urllib3
 
+from create_pr_bot.project_management_tool._base.client import (
+    BaseProjectManagementAPIClient,
+)
+
 from .model import JiraTicket
-from create_pr_bot.project_management_tool._base.client import BaseProjectManagementAPIClient
 
 
 class JiraAPIClient(BaseProjectManagementAPIClient):

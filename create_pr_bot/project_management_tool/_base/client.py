@@ -33,4 +33,3 @@ class BaseProjectManagementAPIClient(metaclass=ABCMeta):
             urllib3.exceptions.HTTPError: If the HTTP request fails
             json.JSONDecodeError: If the response cannot be parsed as JSON
         """
-        pass
