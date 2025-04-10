@@ -1,6 +1,6 @@
 """ClickUp integration module."""
 
-from create_pr_bot.project_management_tool.clickup.client import ClickUpClient
+from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
 from create_pr_bot.project_management_tool.clickup.model import (
     ClickUpChecklist,
     ClickUpChecklistItem,
@@ -14,7 +14,7 @@ from create_pr_bot.project_management_tool.clickup.model import (
 )
 
 __all__ = [
-    "ClickUpClient",
+    "ClickUpAPIClient",
     "ClickUpTask",
     "ClickUpUser",
     "ClickUpStatus",

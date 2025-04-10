@@ -10,7 +10,7 @@ from .model import ClickUpTask
 from create_pr_bot.project_management_tool._base.client import BaseProjectManagementAPIClient
 
 
-class ClickUpClient(BaseProjectManagementAPIClient):
+class ClickUpAPIClient(BaseProjectManagementAPIClient):
     """ClickUp API client for interacting with ClickUp services."""
 
     BASE_URL = "https://api.clickup.com/api/v2"

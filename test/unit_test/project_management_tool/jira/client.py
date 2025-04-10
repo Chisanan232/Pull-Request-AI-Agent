@@ -6,17 +6,17 @@ import pytest
 import urllib3
 from pytest import MonkeyPatch
 
-from create_pr_bot.project_management_tool.jira.client import JiraApiClient
+from create_pr_bot.project_management_tool.jira.client import JiraAPIClient
 from create_pr_bot.project_management_tool.jira.model import JiraTicket
 
 
-class TestJIRAApiClient:
+class TestJIRAAPIClient:
     """Test cases for JIRA API client."""
 
     @pytest.fixture
-    def jira_client(self) -> JiraApiClient:
+    def jira_client(self) -> JiraAPIClient:
         """Fixture for creating a JiraApiClient instance."""
-        return JiraApiClient(base_url="https://test.atlassian.net", email="test@example.com", api_token="test-token")
+        return JiraAPIClient(base_url="https://test.atlassian.net", email="test@example.com", api_token="test-token")
 
     @pytest.fixture
     def mock_response(self) -> Mock:
@@ -67,7 +67,7 @@ class TestJIRAApiClient:
             ]
         }
 
-    def test_client_initialization(self, jira_client: JiraApiClient) -> None:
+    def test_client_initialization(self, jira_client: JiraAPIClient) -> None:
         """Test client initialization."""
         assert jira_client.base_url == "https://test.atlassian.net"
         assert isinstance(jira_client.http, urllib3.PoolManager)
@@ -77,7 +77,7 @@ class TestJIRAApiClient:
 
     def test_get_ticket_success(
         self,
-        jira_client: JiraApiClient,
+        jira_client: JiraAPIClient,
         mock_response: Mock,
         sample_ticket_data: Dict[str, Any],
         monkeypatch: MonkeyPatch,
@@ -102,7 +102,7 @@ class TestJIRAApiClient:
         assert ticket.project_key == "TEST"
 
     def test_get_ticket_not_found(
-        self, jira_client: JiraApiClient, mock_response: Mock, monkeypatch: MonkeyPatch
+        self, jira_client: JiraAPIClient, mock_response: Mock, monkeypatch: MonkeyPatch
     ) -> None:
         """Test ticket not found scenario."""
         mock_response.status = 404
@@ -115,7 +115,7 @@ class TestJIRAApiClient:
         ticket: Optional[JiraTicket] = jira_client.get_ticket("TEST-999")
         assert ticket is None
 
-    def test_get_ticket_error(self, jira_client: JiraApiClient, mock_response: Mock, monkeypatch: MonkeyPatch) -> None:
+    def test_get_ticket_error(self, jira_client: JiraAPIClient, mock_response: Mock, monkeypatch: MonkeyPatch) -> None:
         """Test error handling in get_ticket."""
         mock_response.status = 500
 
@@ -129,7 +129,7 @@ class TestJIRAApiClient:
 
     def test_search_tickets_success(
         self,
-        jira_client: JiraApiClient,
+        jira_client: JiraAPIClient,
         mock_response: Mock,
         sample_search_data: Dict[str, list[Dict[str, Any]]],
         monkeypatch: MonkeyPatch,
@@ -156,7 +156,7 @@ class TestJIRAApiClient:
         assert tickets[1].description == ""
 
     def test_search_tickets_error(
-        self, jira_client: JiraApiClient, mock_response: Mock, monkeypatch: MonkeyPatch
+        self, jira_client: JiraAPIClient, mock_response: Mock, monkeypatch: MonkeyPatch
     ) -> None:
         """Test error handling in search_tickets."""
         mock_response.status = 400
@@ -202,7 +202,7 @@ class TestJIRAApiClient:
     )
     def test_ticket_assignee_handling(
         self,
-        jira_client: JiraApiClient,
+        jira_client: JiraAPIClient,
         mock_response: Mock,
         ticket_data: Dict[str, Any],
         expected_assignee: Optional[str],

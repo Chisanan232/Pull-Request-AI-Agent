@@ -9,7 +9,7 @@ from .model import JiraTicket
 from create_pr_bot.project_management_tool._base.client import BaseProjectManagementAPIClient
 
 
-class JiraApiClient(BaseProjectManagementAPIClient):
+class JiraAPIClient(BaseProjectManagementAPIClient):
     """Client for interacting with JIRA REST API."""
 
     def __init__(self, base_url: str, email: str, api_token: str):
