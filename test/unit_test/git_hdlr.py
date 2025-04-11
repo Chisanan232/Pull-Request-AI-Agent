@@ -28,7 +28,7 @@ class TestGitHandler:
     @pytest.fixture
     def git_handler(self, mock_repo):
         """Fixture for GitHandler with mocked repository."""
-        with patch('git.Repo') as mock_repo_class:
+        with patch('create_pr_bot.git_hdlr.Repo') as mock_repo_class:
             mock_repo_class.return_value = mock_repo
             handler = GitHandler('./')
             return handler
@@ -62,19 +62,33 @@ class TestGitHandler:
         # Mock current branch
         mock_current_branch = Mock()
         mock_current_branch.name = git_handler._current_git_branch
+        # Ensure commit has hexsha attribute
+        mock_current_commit = Mock()
+        mock_current_commit.hexsha = 'current_sha_123'
+        mock_current_branch.commit = mock_current_commit
         mock_repo.heads = {git_handler._current_git_branch: mock_current_branch}
         
         # Mock remote branch
         mock_remote_branch = Mock()
         mock_remote_branch.name = self.remote_ref
+        # Ensure commit has hexsha attribute
+        mock_remote_commit = Mock()
+        mock_remote_commit.hexsha = 'remote_sha_456'
+        mock_remote_branch.commit = mock_remote_commit
         mock_repo.refs = {self.remote_ref: mock_remote_branch}
         
         # Mock commit iteration for behind and ahead counts
         def mock_iter_commits(*args, **kwargs):
             if args[0] == f'{git_handler._current_git_branch}..{self.remote_ref}':  # behind count
-                return [Mock()]
+                mock_behind = Mock()
+                mock_behind.hexsha = 'behind_sha_789'
+                return [mock_behind]
             elif args[0] == f'{self.remote_ref}..{git_handler._current_git_branch}':  # ahead count
-                return [Mock(), Mock()]
+                mock_ahead1 = Mock()
+                mock_ahead1.hexsha = 'ahead_sha_def'
+                mock_ahead2 = Mock()
+                mock_ahead2.hexsha = 'ahead_sha_ghi'
+                return [mock_ahead1, mock_ahead2]
             return []
         mock_repo.iter_commits.side_effect = mock_iter_commits
         
@@ -158,7 +172,7 @@ class TestGitHandler:
         """Test getting head commit for existing branch."""
         # Mock branch with commit
         mock_commit = Mock()
-        mock_commit.hexsha = 'abc123'
+        mock_commit.hexsha = 'abc123'  # Explicitly set hexsha
         
         mock_branch = Mock()
         mock_branch.commit = mock_commit
@@ -183,7 +197,7 @@ class TestGitHandler:
         
         # Mock remote ref with commit
         mock_commit = Mock()
-        mock_commit.hexsha = 'abc123'
+        mock_commit.hexsha = 'abc123'  # Explicitly set hexsha
         
         mock_ref = Mock()
         mock_ref.commit = mock_commit
@@ -215,16 +229,24 @@ class TestGitHandler:
         # Mock current branch
         mock_current_branch = Mock()
         mock_current_branch.name = git_handler._current_git_branch
+        # Ensure commit has hexsha attribute
+        mock_current_commit = Mock()
+        mock_current_commit.hexsha = 'current_sha_123'
+        mock_current_branch.commit = mock_current_commit
         mock_repo.heads = {git_handler._current_git_branch: mock_current_branch}
         
         # Mock remote branch
         mock_remote_branch = Mock()
         mock_remote_branch.name = self.remote_ref
+        # Ensure commit has hexsha attribute
+        mock_remote_commit = Mock()
+        mock_remote_commit.hexsha = 'remote_sha_456'
+        mock_remote_branch.commit = mock_remote_commit
         mock_repo.refs = {self.remote_ref: mock_remote_branch}
         
         # Mock merge base
         mock_commit = Mock()
-        mock_commit.hexsha = 'abc123'
+        mock_commit.hexsha = 'abc123'  # Explicitly set hexsha
         mock_repo.merge_base.return_value = [mock_commit]
         
         ancestor = git_handler.get_common_ancestor(git_handler._current_git_branch, self.default_branch)
@@ -239,11 +261,19 @@ class TestGitHandler:
         # Mock current branch
         mock_current_branch = Mock()
         mock_current_branch.name = git_handler._current_git_branch
+        # Ensure commit has hexsha attribute
+        mock_current_commit = Mock()
+        mock_current_commit.hexsha = 'current_sha_123'
+        mock_current_branch.commit = mock_current_commit
         mock_repo.heads = {git_handler._current_git_branch: mock_current_branch}
         
         # Mock remote branch
         mock_remote_branch = Mock()
         mock_remote_branch.name = self.remote_ref
+        # Ensure commit has hexsha attribute
+        mock_remote_commit = Mock()
+        mock_remote_commit.hexsha = 'remote_sha_456'
+        mock_remote_branch.commit = mock_remote_commit
         mock_repo.refs = {self.remote_ref: mock_remote_branch}
         
         # Mock no merge base
