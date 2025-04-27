@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - master
-#      - "develop/**"    # For testing
+      - "develop/**"    # For testing
     paths:
       - ".github/labels.yaml"
       - ".github/workflows/github-labels.yaml"
