@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Sync labels details
-        uses: Chisanan232/Just-Some-Tools/github-label-management/
+        uses: Chisanan232/Just-Some-Tools/github-label-management@master
         with:
           operations: sync_upstream
         env:
