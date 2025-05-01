@@ -1,0 +1,10 @@
+================ create =======================
+Please help me implement the data models which only have one property named *content*. And the value is the content of
+the prompt files at folder *create_pr_bot/ai_bot/prompts*. Different prompts should be different data models.
+1. Please use Python 3.11 or later.
+2. Please use the library *dataclass* for the data model implementation.
+3. Please use the library *pytest* for the test part.
+4. Have an utility function as factory pattern function to create data models about getting the file content from the file paths and serialize as data models.
+5. Please also help me generate the unit test for each function in these data model objects.
+6. Source code should be in the file *create_pr_bot/ai_bot/prompts/model.py*
+7. Test code should be in the file *test/unit_test/ai_bot/prompts/model.py*
