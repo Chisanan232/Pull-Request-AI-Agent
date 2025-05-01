@@ -11,13 +11,14 @@ from typing import Dict, Optional, Any
 import urllib3
 from urllib3.response import HTTPResponse
 
+from create_pr_bot.ai_bot._base.client import BaseAIClient
 from create_pr_bot.ai_bot.claude.model import ClaudeContent, ClaudeUsage, ClaudeResponse
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
-class ClaudeClient:
+class ClaudeClient(BaseAIClient):
     """Client for interacting with Anthropic's Claude models."""
 
     # Claude API defaults
@@ -27,11 +28,8 @@ class ClaudeClient:
     DEFAULT_MAX_TOKENS = 800
     API_VERSION = "2023-06-01"  # Anthropic API version
 
-    def __init__(self,
-                 api_key: Optional[str] = None,
-                 model: Optional[str] = None,
-                 temperature: float = DEFAULT_TEMPERATURE,
-                 max_tokens: int = DEFAULT_MAX_TOKENS):
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None,
+                 temperature: float = DEFAULT_TEMPERATURE, max_tokens: int = DEFAULT_MAX_TOKENS):
         """
         Initialize the Claude client.
 
@@ -44,14 +42,7 @@ class ClaudeClient:
         Raises:
             ValueError: If no API key is provided or found in environment variables
         """
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-        if not self.api_key:
-            raise ValueError("Anthropic API key is required. Provide it as a parameter or set the ANTHROPIC_API_KEY environment variable.")
-
-        self.model = model or self.DEFAULT_MODEL
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-        self._http = urllib3.PoolManager()
+        super().__init__(api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="ANTHROPIC_API_KEY")
 
     def _prepare_headers(self) -> Dict[str, str]:
         """
@@ -175,16 +166,7 @@ class ClaudeClient:
         headers = self._prepare_headers()
         payload = self._prepare_payload(prompt, system_message)
 
-        try:
-            response = self._http.request(
-                "POST",
-                endpoint,
-                headers=headers,
-                body=json.dumps(payload).encode('utf-8')
-            )
-            return self._parse_response(response)
-        except Exception as e:
-            raise ValueError(f"Failed to call Claude API: {str(e)}")
+        return self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="Claude")
 
     def get_content(self, prompt: str,
                     system_message: Optional[str] = None) -> str:
