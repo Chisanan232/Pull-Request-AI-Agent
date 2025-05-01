@@ -3,12 +3,12 @@ Module for prompt data models in the AI bot component.
 This module provides dataclasses for different types of prompts used by the AI bot,
 along with utility functions to load and create these models from prompt files.
 """
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, Type, TypeVar, Any
-import os
 
+from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Dict, Type, TypeVar
+
 
 class PromptName(Enum):
     SUMMARIZE_AS_CLEAR_TITLE = "summarize-as-clear-title"
@@ -16,31 +16,29 @@ class PromptName(Enum):
 
 
 # Define a generic type for our prompt models
-T = TypeVar('T', bound='BasePrompt')
+T = TypeVar("T", bound="BasePrompt")
 
 
 @dataclass(frozen=True)
 class BasePrompt:
     """Base class for all prompt models."""
+
     content: str
 
 
 @dataclass(frozen=True)
 class SummarizeChangeContentPrompt(BasePrompt):
     """Prompt model for summarizing changes in pull requests."""
-    pass
 
 
 @dataclass(frozen=True)
 class SummarizeAsPullRequestTitle(BasePrompt):
     """Prompt model for generating pull request titles."""
-    pass
 
 
 @dataclass(frozen=True)
 class GeneratePRDescriptionPrompt(BasePrompt):
     """Prompt model for generating pull request descriptions."""
-    pass
 
 
 # Add other prompt models as needed
@@ -63,7 +61,7 @@ def load_prompt_from_file(file_path: str | Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")
 
-    with open(path, 'r', encoding='utf-8') as file:
+    with open(path, "r", encoding="utf-8") as file:
         return file.read()
 
 
@@ -90,6 +88,7 @@ def create_prompt_model(model_class: Type[T], prompt_name: PromptName) -> T:
 
     # Create and return the model instance
     return model_class(content=content)
+
 
 # Mapping from prompt names to model classes for easier access
 PROMPT_MODEL_MAPPING: Dict[PromptName, Type[BasePrompt]] = {

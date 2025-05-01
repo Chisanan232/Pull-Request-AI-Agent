@@ -1,19 +1,21 @@
 """Unit tests for prompt data models."""
+
 import os
 from pathlib import Path
 from typing import List, Type
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 import pytest
 
 from create_pr_bot.ai_bot.prompts.model import (
+    PROMPT_MODEL_MAPPING,
     BasePrompt,
-    SummarizeChangeContentPrompt,
+    PromptName,
     SummarizeAsPullRequestTitle,
-    load_prompt_from_file,
+    SummarizeChangeContentPrompt,
     create_prompt_model,
     get_prompt_model,
-    PROMPT_MODEL_MAPPING, PromptName
+    load_prompt_from_file,
 )
 
 
@@ -66,7 +68,7 @@ def test_load_prompt_from_file(mock_prompt_content):
             content = load_prompt_from_file(mock_path)
 
             # Verify the correct file was opened
-            mock_file.assert_called_once_with(Path(mock_path), 'r', encoding='utf-8')
+            mock_file.assert_called_once_with(Path(mock_path), "r", encoding="utf-8")
 
             # Verify the content matches
             assert content == mock_prompt_content
@@ -82,10 +84,7 @@ def test_load_prompt_from_file_not_found():
 def test_create_prompt_model(mock_prompt_content):
     """Test creating a prompt model instance."""
     # Mock the load_prompt_from_file function
-    with patch(
-            "create_pr_bot.ai_bot.prompts.model.load_prompt_from_file",
-            return_value=mock_prompt_content
-    ):
+    with patch("create_pr_bot.ai_bot.prompts.model.load_prompt_from_file", return_value=mock_prompt_content):
         # Test with each model class
         for model_class in [SummarizeChangeContentPrompt, SummarizeAsPullRequestTitle]:
             prompt = create_prompt_model(model_class, "test-prompt")
@@ -111,8 +110,8 @@ def test_get_prompt_model(mock_prompt_content):
     """Test getting a prompt model by name."""
     # Mock create_prompt_model to avoid file system access
     with patch(
-            "create_pr_bot.ai_bot.prompts.model.create_prompt_model",
-            return_value=SummarizeChangeContentPrompt(content=mock_prompt_content)
+        "create_pr_bot.ai_bot.prompts.model.create_prompt_model",
+        return_value=SummarizeChangeContentPrompt(content=mock_prompt_content),
     ):
         # Test with a valid prompt name
         prompt = get_prompt_model(PromptName.SUMMARIZE_CHANGE_CONTENT)
