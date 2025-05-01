@@ -98,14 +98,7 @@ class GPTClient(BaseAIClient):
             ValueError: If the response is invalid or contains an error
         """
         if response.status != 200:
-            error_message = f"API request failed with status {response.status}"
-            try:
-                error_data = json.loads(response.data.decode("utf-8"))
-                if "error" in error_data and "message" in error_data["error"]:
-                    error_message = f"{error_message}: {error_data['error']['message']}"
-            except Exception:
-                pass
-            raise ValueError(error_message)
+            raise ValueError(self._handle_error_response(response))
 
         try:
             data = json.loads(response.data.decode("utf-8"))

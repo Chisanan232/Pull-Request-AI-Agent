@@ -6,6 +6,7 @@ This module provides a common interface for all AI API clients.
 import json
 import logging
 import os
+import traceback
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generic, Optional, TypeVar
 
@@ -116,7 +117,7 @@ class BaseAIClient(ABC, Generic[T]):
                 elif isinstance(error_data["error"], str):
                     error_message = f"{error_message}: {error_data['error']}"
         except Exception:
-            pass
+            logger.error(traceback.print_exc())
         return error_message
 
     @abstractmethod
