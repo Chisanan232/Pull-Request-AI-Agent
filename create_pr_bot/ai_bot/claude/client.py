@@ -60,6 +60,7 @@ class ClaudeClient(BaseAIClient):
         Returns:
             Dictionary of HTTP headers.
         """
+        assert self.api_key
         return {"Content-Type": "application/json", "x-api-key": self.api_key, "anthropic-version": self.API_VERSION}
 
     def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
