@@ -3,17 +3,20 @@ Client for interacting with Google's Gemini models.
 Provides functionality to send prompts and receive responses.
 """
 
-import os
 import json
 import logging
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
-import urllib3
 from urllib3.response import HTTPResponse
 
 from create_pr_bot.ai_bot._base.client import BaseAIClient
-from create_pr_bot.ai_bot.gemini.model import GeminiContent, GeminiCandidate, GeminiPromptFeedback, GeminiUsage, \
-    GeminiResponse
+from create_pr_bot.ai_bot.gemini.model import (
+    GeminiCandidate,
+    GeminiContent,
+    GeminiPromptFeedback,
+    GeminiResponse,
+    GeminiUsage,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,8 +31,13 @@ class GeminiClient(BaseAIClient):
     DEFAULT_TEMPERATURE = 0.7
     DEFAULT_MAX_TOKENS = 800
 
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None,
-                 temperature: float = DEFAULT_TEMPERATURE, max_tokens: int = DEFAULT_MAX_TOKENS):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+    ):
         """
         Initialize the Gemini client.
 
@@ -42,7 +50,9 @@ class GeminiClient(BaseAIClient):
         Raises:
             ValueError: If no API key is provided or found in environment variables
         """
-        super().__init__(api_key=api_key, model=model, temperature=temperature,max_tokens= max_tokens, env_var_name="GOOGLE_API_KEY")
+        super().__init__(
+            api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="GOOGLE_API_KEY"
+        )
 
     def _prepare_headers(self) -> Dict[str, str]:
         """
@@ -51,12 +61,9 @@ class GeminiClient(BaseAIClient):
         Returns:
             Dictionary of HTTP headers.
         """
-        return {
-            "Content-Type": "application/json"
-        }
+        return {"Content-Type": "application/json"}
 
-    def _prepare_payload(self, prompt: str,
-                         system_message: Optional[str] = None) -> Dict[str, Any]:
+    def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Prepare the payload for the Gemini API request.
 
@@ -71,17 +78,10 @@ class GeminiClient(BaseAIClient):
 
         # Add system message if provided
         if system_message:
-            contents.append({
-                "role": "system",
-                "parts": [{"text": system_message}]
-            })
+            contents.append({"role": "system", "parts": [{"text": system_message}]})
 
         # Add user prompt
-        contents.append({
-            "role": "user",
-            "parts": [{"text": prompt}]
-
-        })
+        contents.append({"role": "user", "parts": [{"text": prompt}]})
 
         return {
             "contents": contents,
@@ -89,14 +89,9 @@ class GeminiClient(BaseAIClient):
                 "temperature": self.temperature,
                 "maxOutputTokens": self.max_tokens,
                 "topK": 40,
-                "topP": 0.95
+                "topP": 0.95,
             },
-            "safetySettings": [
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_MEDIUM_AND_ABOVE"
-                }
-            ]
+            "safetySettings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}],
         }
 
     def _parse_response(self, response: HTTPResponse) -> GeminiResponse:
@@ -115,58 +110,52 @@ class GeminiClient(BaseAIClient):
         if response.status != 200:
             error_message = f"API request failed with status {response.status}"
             try:
-                error_data = json.loads(response.data.decode('utf-8'))
-                if 'error' in error_data:
+                error_data = json.loads(response.data.decode("utf-8"))
+                if "error" in error_data:
                     error_message = f"{error_message}: {error_data['error']['message']}"
             except Exception:
                 pass
             raise ValueError(error_message)
 
         try:
-            data = json.loads(response.data.decode('utf-8'))
+            data = json.loads(response.data.decode("utf-8"))
 
             # Create candidates
             candidates = []
-            for candidate_data in data.get('candidates', []):
-                content_data = candidate_data.get('content', {})
-                parts = content_data.get('parts', [{}])[0]
+            for candidate_data in data.get("candidates", []):
+                content_data = candidate_data.get("content", {})
+                parts = content_data.get("parts", [{}])[0]
 
-                content = GeminiContent(
-                    text=parts.get('text', ''),
-                    role=content_data.get('role', 'model')
+                content = GeminiContent(text=parts.get("text", ""), role=content_data.get("role", "model"))
+
+                candidates.append(
+                    GeminiCandidate(
+                        content=content,
+                        finish_reason=candidate_data.get("finishReason", ""),
+                        index=candidate_data.get("index", 0),
+                        safety_ratings=candidate_data.get("safetyRatings", []),
+                    )
                 )
-
-                candidates.append(GeminiCandidate(
-                    content=content,
-                    finish_reason=candidate_data.get('finishReason', ''),
-                    index=candidate_data.get('index', 0),
-                    safety_ratings=candidate_data.get('safetyRatings', [])
-                ))
 
             # Create prompt feedback
             prompt_feedback = GeminiPromptFeedback(
-                safety_ratings=data.get('promptFeedback', {}).get('safetyRatings', [])
+                safety_ratings=data.get("promptFeedback", {}).get("safetyRatings", [])
             )
 
             # Create usage data
-            usage_data = data.get('usageMetadata', {})
+            usage_data = data.get("usageMetadata", {})
             usage = GeminiUsage(
-                prompt_token_count=usage_data.get('promptTokenCount', 0),
-                candidates_token_count=usage_data.get('candidatesTokenCount', 0),
-                total_token_count=usage_data.get('totalTokenCount', 0)
+                prompt_token_count=usage_data.get("promptTokenCount", 0),
+                candidates_token_count=usage_data.get("candidatesTokenCount", 0),
+                total_token_count=usage_data.get("totalTokenCount", 0),
             )
 
             # Create and return the full response object
-            return GeminiResponse(
-                candidates=candidates,
-                prompt_feedback=prompt_feedback,
-                usage=usage
-            )
+            return GeminiResponse(candidates=candidates, prompt_feedback=prompt_feedback, usage=usage)
         except Exception as e:
             raise ValueError(f"Failed to parse API response: {str(e)}")
 
-    def ask(self, prompt: str,
-            system_message: Optional[str] = None) -> GeminiResponse:
+    def ask(self, prompt: str, system_message: Optional[str] = None) -> GeminiResponse:
         """
         Send a prompt to the Gemini model and get a response.
 
@@ -187,8 +176,7 @@ class GeminiClient(BaseAIClient):
 
         return self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="Gemini")
 
-    def get_content(self, prompt: str,
-                    system_message: Optional[str] = None) -> str:
+    def get_content(self, prompt: str, system_message: Optional[str] = None) -> str:
         """
         Get just the content string from the Gemini model's response.
 

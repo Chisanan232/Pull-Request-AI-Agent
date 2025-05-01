@@ -4,16 +4,14 @@ Unit tests for the GPT client functionality.
 
 import json
 import os
-from typing import Dict, Any
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.gpt.client import (
-    GPTClient
-)
-from create_pr_bot.ai_bot.gpt.model import GPTMessage, GPTChoice, GPTUsage, GPTResponse
+from create_pr_bot.ai_bot.gpt.client import GPTClient
+from create_pr_bot.ai_bot.gpt.model import GPTChoice, GPTMessage, GPTResponse, GPTUsage
 
 
 @pytest.fixture
@@ -42,21 +40,14 @@ def sample_gpt_response_data() -> Dict[str, Any]:
         "object": "chat.completion",
         "created": 1677858242,
         "model": "gpt-4",
-        "usage": {
-            "prompt_tokens": 13,
-            "completion_tokens": 7,
-            "total_tokens": 20
-        },
+        "usage": {"prompt_tokens": 13, "completion_tokens": 7, "total_tokens": 20},
         "choices": [
             {
-                "message": {
-                    "role": "assistant",
-                    "content": "The capital of France is Paris."
-                },
+                "message": {"role": "assistant", "content": "The capital of France is Paris."},
                 "finish_reason": "stop",
-                "index": 0
+                "index": 0,
             }
-        ]
+        ],
     }
 
 
@@ -66,22 +57,15 @@ def sample_gpt_response(sample_gpt_response_data) -> GPTResponse:
     choice_data = sample_gpt_response_data["choices"][0]
     message_data = choice_data["message"]
 
-    message = GPTMessage(
-        role=message_data["role"],
-        content=message_data["content"]
-    )
+    message = GPTMessage(role=message_data["role"], content=message_data["content"])
 
-    choice = GPTChoice(
-        index=choice_data["index"],
-        message=message,
-        finish_reason=choice_data["finish_reason"]
-    )
+    choice = GPTChoice(index=choice_data["index"], message=message, finish_reason=choice_data["finish_reason"])
 
     usage_data = sample_gpt_response_data["usage"]
     usage = GPTUsage(
         prompt_tokens=usage_data["prompt_tokens"],
         completion_tokens=usage_data["completion_tokens"],
-        total_tokens=usage_data["total_tokens"]
+        total_tokens=usage_data["total_tokens"],
     )
 
     return GPTResponse(
@@ -90,7 +74,7 @@ def sample_gpt_response(sample_gpt_response_data) -> GPTResponse:
         created=sample_gpt_response_data["created"],
         model=sample_gpt_response_data["model"],
         choices=[choice],
-        usage=usage
+        usage=usage,
     )
 
 
@@ -145,12 +129,7 @@ def test_gpt_response_dataclass():
     usage = GPTUsage(prompt_tokens=10, completion_tokens=15, total_tokens=25)
 
     response = GPTResponse(
-        id="test-id",
-        object="chat.completion",
-        created=123456789,
-        model="gpt-4",
-        choices=[choice],
-        usage=usage
+        id="test-id", object="chat.completion", created=123456789, model="gpt-4", choices=[choice], usage=usage
     )
 
     assert response.id == "test-id"
@@ -192,12 +171,7 @@ def test_gpt_client_init_missing_api_key():
 
 def test_gpt_client_init_custom_parameters():
     """Test GPTClient initialization with custom parameters."""
-    client = GPTClient(
-        api_key="custom-api-key",
-        model="gpt-3.5-turbo",
-        temperature=0.5,
-        max_tokens=1000
-    )
+    client = GPTClient(api_key="custom-api-key", model="gpt-3.5-turbo", temperature=0.5, max_tokens=1000)
 
     assert client.api_key == "custom-api-key"
     assert client.model == "gpt-3.5-turbo"
@@ -241,7 +215,7 @@ def test_parse_response_success(gpt_client, sample_gpt_response_data):
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gpt_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gpt_response_data).encode("utf-8")
 
     # Parse the response
     parsed_response = gpt_client._parse_response(mock_response)
@@ -278,12 +252,9 @@ def test_parse_response_error(gpt_client):
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "type": "invalid_request_error"
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "type": "invalid_request_error"}}).encode(
+        "utf-8"
+    )
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -297,7 +268,7 @@ def test_parse_response_malformed(gpt_client):
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = "Not valid JSON".encode('utf-8')
+    mock_response.data = "Not valid JSON".encode("utf-8")
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -305,13 +276,13 @@ def test_parse_response_malformed(gpt_client):
     assert "Failed to parse API response" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_success(mock_request, gpt_client, sample_prompt, sample_gpt_response_data):
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gpt_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gpt_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask
@@ -329,7 +300,7 @@ def test_ask_success(mock_request, gpt_client, sample_prompt, sample_gpt_respons
     assert headers["Authorization"] == f"Bearer {gpt_client.api_key}"
 
     # Verify payload
-    payload = json.loads(call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(call_args[1]["body"].decode("utf-8"))
     assert payload["model"] == gpt_client.model
     assert len(payload["messages"]) == 1
     assert payload["messages"][0]["role"] == "user"
@@ -341,20 +312,22 @@ def test_ask_success(mock_request, gpt_client, sample_prompt, sample_gpt_respons
     assert response.choices[0].message.content == sample_gpt_response_data["choices"][0]["message"]["content"]
 
 
-@patch('urllib3.PoolManager.request')
-def test_ask_with_system_message(mock_request, gpt_client, sample_prompt, sample_system_message, sample_gpt_response_data):
+@patch("urllib3.PoolManager.request")
+def test_ask_with_system_message(
+    mock_request, gpt_client, sample_prompt, sample_system_message, sample_gpt_response_data
+):
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gpt_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gpt_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask with a system message
     gpt_client.ask(sample_prompt, sample_system_message)
 
     # Verify payload includes the system message
-    payload = json.loads(mock_request.call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(mock_request.call_args[1]["body"].decode("utf-8"))
     assert len(payload["messages"]) == 2
     assert payload["messages"][0]["role"] == "system"
     assert payload["messages"][0]["content"] == sample_system_message
@@ -362,18 +335,15 @@ def test_ask_with_system_message(mock_request, gpt_client, sample_prompt, sample
     assert payload["messages"][1]["content"] == sample_prompt
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_api_error(mock_request, gpt_client, sample_prompt):
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "type": "invalid_request_error"
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "type": "invalid_request_error"}}).encode(
+        "utf-8"
+    )
     mock_request.return_value = mock_response
 
     # Verify that ask raises the expected error
@@ -382,7 +352,7 @@ def test_ask_api_error(mock_request, gpt_client, sample_prompt):
     assert "API request failed" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_connection_error(mock_request, gpt_client, sample_prompt):
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
@@ -394,7 +364,7 @@ def test_ask_connection_error(mock_request, gpt_client, sample_prompt):
     assert "Failed to call GPT API" in str(excinfo.value)
 
 
-@patch('create_pr_bot.ai_bot.gpt.client.GPTClient.ask')
+@patch("create_pr_bot.ai_bot.gpt.client.GPTClient.ask")
 def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
     """Test that get_content returns just the content from the first choice."""
     # Set up the mock to return a sample response
@@ -411,7 +381,7 @@ def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
     assert content == expected_content
 
 
-@patch('create_pr_bot.ai_bot.gpt.client.GPTClient.ask')
+@patch("create_pr_bot.ai_bot.gpt.client.GPTClient.ask")
 def test_get_content_no_choices(mock_ask, gpt_client, sample_prompt):
     """Test that get_content raises IndexError when there are no choices in the response."""
     # Create a response with no choices
@@ -421,7 +391,7 @@ def test_get_content_no_choices(mock_ask, gpt_client, sample_prompt):
         created=123456789,
         model="gpt-4",
         choices=[],
-        usage=GPTUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
+        usage=GPTUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0),
     )
 
     # Set up the mock to return the empty response

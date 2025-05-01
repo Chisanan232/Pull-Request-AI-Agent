@@ -4,17 +4,20 @@ Unit tests for the Gemini client functionality.
 
 import json
 import os
-from typing import Dict, Any
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.gemini.client import (
-    GeminiClient
+from create_pr_bot.ai_bot.gemini.client import GeminiClient
+from create_pr_bot.ai_bot.gemini.model import (
+    GeminiCandidate,
+    GeminiContent,
+    GeminiPromptFeedback,
+    GeminiResponse,
+    GeminiUsage,
 )
-from create_pr_bot.ai_bot.gemini.model import GeminiContent, GeminiCandidate, GeminiPromptFeedback, GeminiUsage, \
-    GeminiResponse
 
 
 @pytest.fixture
@@ -41,37 +44,16 @@ def sample_gemini_response_data() -> Dict[str, Any]:
     return {
         "candidates": [
             {
-                "content": {
-                    "role": "model",
-                    "parts": [
-                        {
-                            "text": "The capital of France is Paris."
-                        }
-                    ]
-                },
+                "content": {"role": "model", "parts": [{"text": "The capital of France is Paris."}]},
                 "finishReason": "STOP",
                 "index": 0,
-                "safetyRatings": [
-                    {
-                        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                        "probability": "NEGLIGIBLE"
-                    }
-                ]
+                "safetyRatings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE"}],
             }
         ],
         "promptFeedback": {
-            "safetyRatings": [
-                {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "probability": "NEGLIGIBLE"
-                }
-            ]
+            "safetyRatings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE"}]
         },
-        "usageMetadata": {
-            "promptTokenCount": 13,
-            "candidatesTokenCount": 8,
-            "totalTokenCount": 21
-        }
+        "usageMetadata": {"promptTokenCount": 13, "candidatesTokenCount": 8, "totalTokenCount": 21},
     }
 
 
@@ -81,16 +63,13 @@ def sample_gemini_response(sample_gemini_response_data) -> GeminiResponse:
     candidate_data = sample_gemini_response_data["candidates"][0]
     content_data = candidate_data["content"]
 
-    content = GeminiContent(
-        text=content_data["parts"][0]["text"],
-        role=content_data["role"]
-    )
+    content = GeminiContent(text=content_data["parts"][0]["text"], role=content_data["role"])
 
     candidate = GeminiCandidate(
         content=content,
         finish_reason=candidate_data["finishReason"],
         index=candidate_data["index"],
-        safety_ratings=candidate_data["safetyRatings"]
+        safety_ratings=candidate_data["safetyRatings"],
     )
 
     prompt_feedback = GeminiPromptFeedback(
@@ -101,14 +80,10 @@ def sample_gemini_response(sample_gemini_response_data) -> GeminiResponse:
     usage = GeminiUsage(
         prompt_token_count=usage_data["promptTokenCount"],
         candidates_token_count=usage_data["candidatesTokenCount"],
-        total_token_count=usage_data["totalTokenCount"]
+        total_token_count=usage_data["totalTokenCount"],
     )
 
-    return GeminiResponse(
-        candidates=[candidate],
-        prompt_feedback=prompt_feedback,
-        usage=usage
-    )
+    return GeminiResponse(candidates=[candidate], prompt_feedback=prompt_feedback, usage=usage)
 
 
 @pytest.fixture
@@ -133,12 +108,7 @@ def test_gemini_candidate_dataclass():
     content = GeminiContent(text="Test content", role="model")
     safety_ratings = [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE"}]
 
-    candidate = GeminiCandidate(
-        content=content,
-        finish_reason="STOP",
-        index=0,
-        safety_ratings=safety_ratings
-    )
+    candidate = GeminiCandidate(content=content, finish_reason="STOP", index=0, safety_ratings=safety_ratings)
 
     assert candidate.content == content
     assert candidate.finish_reason == "STOP"
@@ -165,11 +135,7 @@ def test_gemini_prompt_feedback_dataclass():
 
 def test_gemini_usage_dataclass():
     """Test that GeminiUsage is a frozen dataclass with the expected attributes."""
-    usage = GeminiUsage(
-        prompt_token_count=10,
-        candidates_token_count=15,
-        total_token_count=25
-    )
+    usage = GeminiUsage(prompt_token_count=10, candidates_token_count=15, total_token_count=25)
 
     assert usage.prompt_token_count == 10
     assert usage.candidates_token_count == 15
@@ -183,24 +149,11 @@ def test_gemini_usage_dataclass():
 def test_gemini_response_dataclass():
     """Test that GeminiResponse is a frozen dataclass with the expected attributes."""
     content = GeminiContent(text="Test content", role="model")
-    candidate = GeminiCandidate(
-        content=content,
-        finish_reason="STOP",
-        index=0,
-        safety_ratings=[]
-    )
+    candidate = GeminiCandidate(content=content, finish_reason="STOP", index=0, safety_ratings=[])
     prompt_feedback = GeminiPromptFeedback(safety_ratings=[])
-    usage = GeminiUsage(
-        prompt_token_count=10,
-        candidates_token_count=15,
-        total_token_count=25
-    )
+    usage = GeminiUsage(prompt_token_count=10, candidates_token_count=15, total_token_count=25)
 
-    response = GeminiResponse(
-        candidates=[candidate],
-        prompt_feedback=prompt_feedback,
-        usage=usage
-    )
+    response = GeminiResponse(candidates=[candidate], prompt_feedback=prompt_feedback, usage=usage)
 
     assert response.candidates == [candidate]
     assert response.prompt_feedback == prompt_feedback
@@ -238,12 +191,7 @@ def test_gemini_client_init_missing_api_key():
 
 def test_gemini_client_init_custom_parameters():
     """Test GeminiClient initialization with custom parameters."""
-    client = GeminiClient(
-        api_key="custom-api-key",
-        model="gemini-1.5-flash",
-        temperature=0.5,
-        max_tokens=1000
-    )
+    client = GeminiClient(api_key="custom-api-key", model="gemini-1.5-flash", temperature=0.5, max_tokens=1000)
 
     assert client.api_key == "custom-api-key"
     assert client.model == "gemini-1.5-flash"
@@ -288,7 +236,7 @@ def test_parse_response_success(gemini_client, sample_gemini_response_data):
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gemini_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gemini_response_data).encode("utf-8")
 
     # Parse the response
     parsed_response = gemini_client._parse_response(mock_response)
@@ -321,12 +269,7 @@ def test_parse_response_error(gemini_client):
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "code": 400
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "code": 400}}).encode("utf-8")
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -339,7 +282,7 @@ def test_parse_response_malformed(gemini_client):
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = "Not valid JSON".encode('utf-8')
+    mock_response.data = "Not valid JSON".encode("utf-8")
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -347,13 +290,13 @@ def test_parse_response_malformed(gemini_client):
     assert "Failed to parse API response" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_success(mock_request, gemini_client, sample_prompt, sample_gemini_response_data):
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gemini_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gemini_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask
@@ -371,30 +314,35 @@ def test_ask_success(mock_request, gemini_client, sample_prompt, sample_gemini_r
     assert headers["Content-Type"] == "application/json"
 
     # Verify payload
-    payload = json.loads(call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(call_args[1]["body"].decode("utf-8"))
     assert len(payload["contents"]) == 1
     assert payload["contents"][0]["role"] == "user"
     assert payload["contents"][0]["parts"][0]["text"] == sample_prompt
 
     # Verify response
     assert len(response.candidates) == 1
-    assert response.candidates[0].content.text == sample_gemini_response_data["candidates"][0]["content"]["parts"][0]["text"]
+    assert (
+        response.candidates[0].content.text
+        == sample_gemini_response_data["candidates"][0]["content"]["parts"][0]["text"]
+    )
 
 
-@patch('urllib3.PoolManager.request')
-def test_ask_with_system_message(mock_request, gemini_client, sample_prompt, sample_system_message, sample_gemini_response_data):
+@patch("urllib3.PoolManager.request")
+def test_ask_with_system_message(
+    mock_request, gemini_client, sample_prompt, sample_system_message, sample_gemini_response_data
+):
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gemini_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gemini_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask with a system message
     gemini_client.ask(sample_prompt, sample_system_message)
 
     # Verify payload includes the system message
-    payload = json.loads(mock_request.call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(mock_request.call_args[1]["body"].decode("utf-8"))
     assert len(payload["contents"]) == 2
     assert payload["contents"][0]["role"] == "system"
     assert payload["contents"][0]["parts"][0]["text"] == sample_system_message
@@ -402,18 +350,13 @@ def test_ask_with_system_message(mock_request, gemini_client, sample_prompt, sam
     assert payload["contents"][1]["parts"][0]["text"] == sample_prompt
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_api_error(mock_request, gemini_client, sample_prompt):
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "code": 400
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "code": 400}}).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Verify that ask raises the expected error
@@ -422,7 +365,7 @@ def test_ask_api_error(mock_request, gemini_client, sample_prompt):
     assert "API request failed" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_connection_error(mock_request, gemini_client, sample_prompt):
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
@@ -434,7 +377,7 @@ def test_ask_connection_error(mock_request, gemini_client, sample_prompt):
     assert "Failed to call Gemini API" in str(excinfo.value)
 
 
-@patch('create_pr_bot.ai_bot.gemini.client.GeminiClient.ask')
+@patch("create_pr_bot.ai_bot.gemini.client.GeminiClient.ask")
 def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_response):
     """Test that get_content returns just the content from the first candidate."""
     # Set up the mock to return a sample response
@@ -451,18 +394,14 @@ def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_respo
     assert content == expected_content
 
 
-@patch('create_pr_bot.ai_bot.gemini.client.GeminiClient.ask')
+@patch("create_pr_bot.ai_bot.gemini.client.GeminiClient.ask")
 def test_get_content_no_candidates(mock_ask, gemini_client, sample_prompt):
     """Test that get_content raises IndexError when there are no candidates in the response."""
     # Create a response with no candidates
     empty_response = GeminiResponse(
         candidates=[],
         prompt_feedback=GeminiPromptFeedback(safety_ratings=[]),
-        usage=GeminiUsage(
-            prompt_token_count=0,
-            candidates_token_count=0,
-            total_token_count=0
-        )
+        usage=GeminiUsage(prompt_token_count=0, candidates_token_count=0, total_token_count=0),
     )
 
     # Set up the mock to return the empty response
@@ -474,13 +413,13 @@ def test_get_content_no_candidates(mock_ask, gemini_client, sample_prompt):
     assert "Gemini response contains no candidates" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_with_custom_model(mock_request, mock_api_key, sample_prompt, sample_gemini_response_data):
     """Test that ask uses the custom model when specified."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_gemini_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_gemini_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Create client with custom model

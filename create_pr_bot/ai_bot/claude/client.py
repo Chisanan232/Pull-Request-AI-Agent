@@ -3,16 +3,14 @@ Client for interacting with Anthropic's Claude models.
 Provides functionality to send prompts and receive responses.
 """
 
-import os
 import json
 import logging
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
-import urllib3
 from urllib3.response import HTTPResponse
 
 from create_pr_bot.ai_bot._base.client import BaseAIClient
-from create_pr_bot.ai_bot.claude.model import ClaudeContent, ClaudeUsage, ClaudeResponse
+from create_pr_bot.ai_bot.claude.model import ClaudeContent, ClaudeResponse, ClaudeUsage
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,8 +26,13 @@ class ClaudeClient(BaseAIClient):
     DEFAULT_MAX_TOKENS = 800
     API_VERSION = "2023-06-01"  # Anthropic API version
 
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None,
-                 temperature: float = DEFAULT_TEMPERATURE, max_tokens: int = DEFAULT_MAX_TOKENS):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+    ):
         """
         Initialize the Claude client.
 
@@ -42,7 +45,13 @@ class ClaudeClient(BaseAIClient):
         Raises:
             ValueError: If no API key is provided or found in environment variables
         """
-        super().__init__(api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="ANTHROPIC_API_KEY")
+        super().__init__(
+            api_key=api_key,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            env_var_name="ANTHROPIC_API_KEY",
+        )
 
     def _prepare_headers(self) -> Dict[str, str]:
         """
@@ -51,14 +60,9 @@ class ClaudeClient(BaseAIClient):
         Returns:
             Dictionary of HTTP headers.
         """
-        return {
-            "Content-Type": "application/json",
-            "x-api-key": self.api_key,
-            "anthropic-version": self.API_VERSION
-        }
+        return {"Content-Type": "application/json", "x-api-key": self.api_key, "anthropic-version": self.API_VERSION}
 
-    def _prepare_payload(self, prompt: str,
-                         system_message: Optional[str] = None) -> Dict[str, Any]:
+    def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Prepare the payload for the Claude API request.
 
@@ -73,17 +77,7 @@ class ClaudeClient(BaseAIClient):
             "model": self.model,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ]
-                }
-            ]
+            "messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}],
         }
 
         # Add system message if provided
@@ -108,47 +102,42 @@ class ClaudeClient(BaseAIClient):
         if response.status != 200:
             error_message = f"API request failed with status {response.status}"
             try:
-                error_data = json.loads(response.data.decode('utf-8'))
-                if 'error' in error_data:
+                error_data = json.loads(response.data.decode("utf-8"))
+                if "error" in error_data:
                     error_message = f"{error_message}: {error_data['error']['message']}"
             except Exception:
                 pass
             raise ValueError(error_message)
 
         try:
-            data = json.loads(response.data.decode('utf-8'))
+            data = json.loads(response.data.decode("utf-8"))
 
             # Create ClaudeContent objects for each content item
             content_items = []
-            for item in data.get('content', []):
-                content_items.append(ClaudeContent(
-                    type=item.get('type', ''),
-                    text=item.get('text', '')
-                ))
+            for item in data.get("content", []):
+                content_items.append(ClaudeContent(type=item.get("type", ""), text=item.get("text", "")))
 
             # Create usage data
-            usage_data = data.get('usage', {})
+            usage_data = data.get("usage", {})
             usage = ClaudeUsage(
-                input_tokens=usage_data.get('input_tokens', 0),
-                output_tokens=usage_data.get('output_tokens', 0)
+                input_tokens=usage_data.get("input_tokens", 0), output_tokens=usage_data.get("output_tokens", 0)
             )
 
             # Create and return the full response object
             return ClaudeResponse(
-                id=data.get('id', ''),
-                type=data.get('type', ''),
-                role=data.get('role', ''),
+                id=data.get("id", ""),
+                type=data.get("type", ""),
+                role=data.get("role", ""),
                 content=content_items,
-                model=data.get('model', ''),
-                stop_reason=data.get('stop_reason'),
-                stop_sequence=data.get('stop_sequence'),
-                usage=usage
+                model=data.get("model", ""),
+                stop_reason=data.get("stop_reason"),
+                stop_sequence=data.get("stop_sequence"),
+                usage=usage,
             )
         except Exception as e:
             raise ValueError(f"Failed to parse API response: {str(e)}")
 
-    def ask(self, prompt: str,
-            system_message: Optional[str] = None) -> ClaudeResponse:
+    def ask(self, prompt: str, system_message: Optional[str] = None) -> ClaudeResponse:
         """
         Send a prompt to the Claude model and get a response.
 
@@ -168,8 +157,7 @@ class ClaudeClient(BaseAIClient):
 
         return self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="Claude")
 
-    def get_content(self, prompt: str,
-                    system_message: Optional[str] = None) -> str:
+    def get_content(self, prompt: str, system_message: Optional[str] = None) -> str:
         """
         Get just the content string from the Claude model's response.
 

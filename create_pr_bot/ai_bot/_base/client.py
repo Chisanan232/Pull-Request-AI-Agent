@@ -3,11 +3,11 @@ Abstract base class for AI model clients.
 This module provides a common interface for all AI API clients.
 """
 
-import os
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
-from typing import Dict, Optional, Any, TypeVar, Generic
+from typing import Any, Dict, Generic, Optional, TypeVar
 
 import urllib3
 from urllib3.response import HTTPResponse
@@ -16,7 +16,7 @@ from urllib3.response import HTTPResponse
 logger = logging.getLogger(__name__)
 
 # Generic type for response objects
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseAIClient(ABC, Generic[T]):
@@ -28,12 +28,14 @@ class BaseAIClient(ABC, Generic[T]):
     DEFAULT_TEMPERATURE = 0.7
     DEFAULT_MAX_TOKENS = 800
 
-    def __init__(self,
-                 api_key: Optional[str] = None,
-                 model: Optional[str] = None,
-                 temperature: float = DEFAULT_TEMPERATURE,
-                 max_tokens: int = DEFAULT_MAX_TOKENS,
-                 env_var_name: str = ""):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+        env_var_name: str = "",
+    ):
         """
         Initialize the AI client with common parameters.
 
@@ -49,7 +51,9 @@ class BaseAIClient(ABC, Generic[T]):
         """
         self.api_key = api_key or os.environ.get(env_var_name, "")
         if not self.api_key:
-            raise ValueError(f"API key is required. Provide it as a parameter or set the {env_var_name} environment variable.")
+            raise ValueError(
+                f"API key is required. Provide it as a parameter or set the {env_var_name} environment variable."
+            )
 
         self.model = model or self.DEFAULT_MODEL
         self.temperature = temperature
@@ -64,11 +68,9 @@ class BaseAIClient(ABC, Generic[T]):
         Returns:
             Dictionary of HTTP headers.
         """
-        pass
 
     @abstractmethod
-    def _prepare_payload(self, prompt: str,
-                         system_message: Optional[str] = None) -> Dict[str, Any]:
+    def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Prepare the payload for the API request.
 
@@ -79,7 +81,6 @@ class BaseAIClient(ABC, Generic[T]):
         Returns:
             Dictionary payload for the API request.
         """
-        pass
 
     @abstractmethod
     def _parse_response(self, response: HTTPResponse) -> T:
@@ -95,7 +96,6 @@ class BaseAIClient(ABC, Generic[T]):
         Raises:
             ValueError: If the response is invalid or contains an error
         """
-        pass
 
     def _handle_error_response(self, response: HTTPResponse) -> str:
         """
@@ -109,19 +109,18 @@ class BaseAIClient(ABC, Generic[T]):
         """
         error_message = f"API request failed with status {response.status}"
         try:
-            error_data = json.loads(response.data.decode('utf-8'))
-            if 'error' in error_data:
-                if 'message' in error_data['error']:
+            error_data = json.loads(response.data.decode("utf-8"))
+            if "error" in error_data:
+                if "message" in error_data["error"]:
                     error_message = f"{error_message}: {error_data['error']['message']}"
-                elif isinstance(error_data['error'], str):
+                elif isinstance(error_data["error"], str):
                     error_message = f"{error_message}: {error_data['error']}"
         except Exception:
             pass
         return error_message
 
     @abstractmethod
-    def ask(self, prompt: str,
-            system_message: Optional[str] = None) -> T:
+    def ask(self, prompt: str, system_message: Optional[str] = None) -> T:
         """
         Send a prompt to the AI model and get a response.
 
@@ -135,11 +134,9 @@ class BaseAIClient(ABC, Generic[T]):
         Raises:
             ValueError: If the API request fails or returns an error
         """
-        pass
 
     @abstractmethod
-    def get_content(self, prompt: str,
-                    system_message: Optional[str] = None) -> str:
+    def get_content(self, prompt: str, system_message: Optional[str] = None) -> str:
         """
         Get just the content string from the AI model's response.
 
@@ -153,10 +150,10 @@ class BaseAIClient(ABC, Generic[T]):
         Raises:
             ValueError: If the API request fails or returns an error
         """
-        pass
 
-    def _make_request(self, method: str, url: str, headers: Dict[str, str],
-                      payload: Dict[str, Any], service_name: str) -> T:
+    def _make_request(
+        self, method: str, url: str, headers: Dict[str, str], payload: Dict[str, Any], service_name: str
+    ) -> T:
         """
         Make an HTTP request to the API endpoint.
 
@@ -174,12 +171,7 @@ class BaseAIClient(ABC, Generic[T]):
             ValueError: If the request fails
         """
         try:
-            response = self._http.request(
-                method,
-                url,
-                headers=headers,
-                body=json.dumps(payload).encode('utf-8')
-            )
+            response = self._http.request(method, url, headers=headers, body=json.dumps(payload).encode("utf-8"))
             return self._parse_response(response)
         except Exception as e:
             raise ValueError(f"Failed to call {service_name} API: {str(e)}")

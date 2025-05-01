@@ -3,16 +3,14 @@ Client for interacting with OpenAI's GPT models.
 Provides functionality to send prompts and receive responses.
 """
 
-import os
 import json
 import logging
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 
-import urllib3
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.gpt.model import GPTMessage, GPTChoice, GPTUsage, GPTResponse
 from create_pr_bot.ai_bot._base.client import BaseAIClient
+from create_pr_bot.ai_bot.gpt.model import GPTChoice, GPTMessage, GPTResponse, GPTUsage
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -27,8 +25,13 @@ class GPTClient(BaseAIClient):
     DEFAULT_TEMPERATURE = 0.7
     DEFAULT_MAX_TOKENS = 800
 
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None,
-                 temperature: float = DEFAULT_TEMPERATURE, max_tokens: int = DEFAULT_MAX_TOKENS):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS,
+    ):
         """
         Initialize the GPT client.
 
@@ -41,7 +44,9 @@ class GPTClient(BaseAIClient):
         Raises:
             ValueError: If no API key is provided or found in environment variables
         """
-        super().__init__(api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="OPENAI_API_KEY")
+        super().__init__(
+            api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="OPENAI_API_KEY"
+        )
 
     def _prepare_headers(self) -> Dict[str, str]:
         """
@@ -50,13 +55,9 @@ class GPTClient(BaseAIClient):
         Returns:
             Dictionary of HTTP headers.
         """
-        return {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
+        return {"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"}
 
-    def _prepare_payload(self, prompt: str,
-                         system_message: Optional[str] = None) -> Dict[str, Any]:
+    def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
         """
         Prepare the payload for the OpenAI API request.
 
@@ -80,7 +81,7 @@ class GPTClient(BaseAIClient):
             "model": self.model,
             "messages": messages,
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens
+            "max_tokens": self.max_tokens,
         }
 
     def _parse_response(self, response: HTTPResponse) -> GPTResponse:
@@ -99,52 +100,48 @@ class GPTClient(BaseAIClient):
         if response.status != 200:
             error_message = f"API request failed with status {response.status}"
             try:
-                error_data = json.loads(response.data.decode('utf-8'))
-                if 'error' in error_data and 'message' in error_data['error']:
+                error_data = json.loads(response.data.decode("utf-8"))
+                if "error" in error_data and "message" in error_data["error"]:
                     error_message = f"{error_message}: {error_data['error']['message']}"
             except Exception:
                 pass
             raise ValueError(error_message)
 
         try:
-            data = json.loads(response.data.decode('utf-8'))
+            data = json.loads(response.data.decode("utf-8"))
 
             # Create GPTMessage objects for each choice's message
             choices = []
-            for choice in data.get('choices', []):
-                message_data = choice.get('message', {})
-                message = GPTMessage(
-                    role=message_data.get('role', ''),
-                    content=message_data.get('content', '')
+            for choice in data.get("choices", []):
+                message_data = choice.get("message", {})
+                message = GPTMessage(role=message_data.get("role", ""), content=message_data.get("content", ""))
+                choices.append(
+                    GPTChoice(
+                        index=choice.get("index", 0), message=message, finish_reason=choice.get("finish_reason", "")
+                    )
                 )
-                choices.append(GPTChoice(
-                    index=choice.get('index', 0),
-                    message=message,
-                    finish_reason=choice.get('finish_reason', '')
-                ))
 
             # Create usage data
-            usage_data = data.get('usage', {})
+            usage_data = data.get("usage", {})
             usage = GPTUsage(
-                prompt_tokens=usage_data.get('prompt_tokens', 0),
-                completion_tokens=usage_data.get('completion_tokens', 0),
-                total_tokens=usage_data.get('total_tokens', 0)
+                prompt_tokens=usage_data.get("prompt_tokens", 0),
+                completion_tokens=usage_data.get("completion_tokens", 0),
+                total_tokens=usage_data.get("total_tokens", 0),
             )
 
             # Create and return the full response object
             return GPTResponse(
-                id=data.get('id', ''),
-                object=data.get('object', ''),
-                created=data.get('created', 0),
-                model=data.get('model', ''),
+                id=data.get("id", ""),
+                object=data.get("object", ""),
+                created=data.get("created", 0),
+                model=data.get("model", ""),
                 choices=choices,
-                usage=usage
+                usage=usage,
             )
         except Exception as e:
             raise ValueError(f"Failed to parse API response: {str(e)}")
 
-    def ask(self, prompt: str,
-            system_message: Optional[str] = None) -> GPTResponse:
+    def ask(self, prompt: str, system_message: Optional[str] = None) -> GPTResponse:
         """
         Send a prompt to the GPT model and get a response.
 
@@ -164,8 +161,7 @@ class GPTClient(BaseAIClient):
 
         return self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="GPT")
 
-    def get_content(self, prompt: str,
-                    system_message: Optional[str] = None) -> str:
+    def get_content(self, prompt: str, system_message: Optional[str] = None) -> str:
         """
         Get just the content string from the GPT model's response.
 

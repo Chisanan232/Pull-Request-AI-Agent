@@ -5,6 +5,7 @@ from typing import List, Optional
 @dataclass(frozen=True)
 class ClaudeContent:
     """Represents a content element in Claude messages."""
+
     type: str
     text: str
 
@@ -12,6 +13,7 @@ class ClaudeContent:
 @dataclass(frozen=True)
 class ClaudeMessage:
     """Represents a message in the Claude API response."""
+
     id: str
     type: str
     role: str
@@ -24,6 +26,7 @@ class ClaudeMessage:
 @dataclass(frozen=True)
 class ClaudeUsage:
     """Represents token usage information from the Claude response."""
+
     input_tokens: int
     output_tokens: int
 
@@ -31,6 +34,7 @@ class ClaudeUsage:
 @dataclass(frozen=True)
 class ClaudeResponse:
     """Represents a complete response from the Claude API."""
+
     id: str
     type: str
     role: str

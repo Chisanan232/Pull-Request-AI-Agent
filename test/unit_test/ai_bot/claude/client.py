@@ -4,16 +4,19 @@ Unit tests for the Claude client functionality.
 
 import json
 import os
-from typing import Dict, Any, List
-from unittest.mock import patch, MagicMock
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.claude.client import (
-    ClaudeClient
+from create_pr_bot.ai_bot.claude.client import ClaudeClient
+from create_pr_bot.ai_bot.claude.model import (
+    ClaudeContent,
+    ClaudeMessage,
+    ClaudeResponse,
+    ClaudeUsage,
 )
-from create_pr_bot.ai_bot.claude.model import ClaudeContent, ClaudeMessage, ClaudeUsage, ClaudeResponse
 
 
 @pytest.fixture
@@ -41,19 +44,11 @@ def sample_claude_response_data() -> Dict[str, Any]:
         "id": "msg_012345abcdef",
         "type": "message",
         "role": "assistant",
-        "content": [
-            {
-                "type": "text",
-                "text": "The capital of France is Paris."
-            }
-        ],
+        "content": [{"type": "text", "text": "The capital of France is Paris."}],
         "model": "claude-3-opus-20240229",
         "stop_reason": "end_turn",
         "stop_sequence": None,
-        "usage": {
-            "input_tokens": 15,
-            "output_tokens": 8
-        }
+        "usage": {"input_tokens": 15, "output_tokens": 8},
     }
 
 
@@ -61,18 +56,11 @@ def sample_claude_response_data() -> Dict[str, Any]:
 def sample_claude_response(sample_claude_response_data) -> ClaudeResponse:
     """Fixture for a sample ClaudeResponse object."""
     content_items = [
-        ClaudeContent(
-            type=item["type"],
-            text=item["text"]
-        )
-        for item in sample_claude_response_data["content"]
+        ClaudeContent(type=item["type"], text=item["text"]) for item in sample_claude_response_data["content"]
     ]
 
     usage_data = sample_claude_response_data["usage"]
-    usage = ClaudeUsage(
-        input_tokens=usage_data["input_tokens"],
-        output_tokens=usage_data["output_tokens"]
-    )
+    usage = ClaudeUsage(input_tokens=usage_data["input_tokens"], output_tokens=usage_data["output_tokens"])
 
     return ClaudeResponse(
         id=sample_claude_response_data["id"],
@@ -82,7 +70,7 @@ def sample_claude_response(sample_claude_response_data) -> ClaudeResponse:
         model=sample_claude_response_data["model"],
         stop_reason=sample_claude_response_data["stop_reason"],
         stop_sequence=sample_claude_response_data["stop_sequence"],
-        usage=usage
+        usage=usage,
     )
 
 
@@ -113,7 +101,7 @@ def test_claude_message_dataclass():
         content=[content],
         model="claude-3-opus-20240229",
         stop_reason="end_turn",
-        stop_sequence=None
+        stop_sequence=None,
     )
 
     assert message.id == "msg_123"
@@ -154,7 +142,7 @@ def test_claude_response_dataclass():
         model="claude-3-opus-20240229",
         stop_reason="end_turn",
         stop_sequence=None,
-        usage=usage
+        usage=usage,
     )
 
     assert response.id == "msg_123"
@@ -198,12 +186,7 @@ def test_claude_client_init_missing_api_key():
 
 def test_claude_client_init_custom_parameters():
     """Test ClaudeClient initialization with custom parameters."""
-    client = ClaudeClient(
-        api_key="custom-api-key",
-        model="claude-3-sonnet-20240229",
-        temperature=0.5,
-        max_tokens=1000
-    )
+    client = ClaudeClient(api_key="custom-api-key", model="claude-3-sonnet-20240229", temperature=0.5, max_tokens=1000)
 
     assert client.api_key == "custom-api-key"
     assert client.model == "claude-3-sonnet-20240229"
@@ -248,7 +231,7 @@ def test_parse_response_success(claude_client, sample_claude_response_data):
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_claude_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_claude_response_data).encode("utf-8")
 
     # Parse the response
     parsed_response = claude_client._parse_response(mock_response)
@@ -279,12 +262,9 @@ def test_parse_response_error(claude_client):
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "type": "invalid_request_error"
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "type": "invalid_request_error"}}).encode(
+        "utf-8"
+    )
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -297,7 +277,7 @@ def test_parse_response_malformed(claude_client):
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = "Not valid JSON".encode('utf-8')
+    mock_response.data = "Not valid JSON".encode("utf-8")
 
     # Verify that parsing raises the expected error
     with pytest.raises(ValueError) as excinfo:
@@ -305,13 +285,13 @@ def test_parse_response_malformed(claude_client):
     assert "Failed to parse API response" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_success(mock_request, claude_client, sample_prompt, sample_claude_response_data):
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_claude_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_claude_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask
@@ -329,7 +309,7 @@ def test_ask_success(mock_request, claude_client, sample_prompt, sample_claude_r
     assert headers["x-api-key"] == claude_client.api_key
 
     # Verify payload
-    payload = json.loads(call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(call_args[1]["body"].decode("utf-8"))
     assert payload["model"] == claude_client.model
     assert len(payload["messages"]) == 1
     assert payload["messages"][0]["role"] == "user"
@@ -340,36 +320,35 @@ def test_ask_success(mock_request, claude_client, sample_prompt, sample_claude_r
     assert response.content[0].text == sample_claude_response_data["content"][0]["text"]
 
 
-@patch('urllib3.PoolManager.request')
-def test_ask_with_system_message(mock_request, claude_client, sample_prompt, sample_system_message, sample_claude_response_data):
+@patch("urllib3.PoolManager.request")
+def test_ask_with_system_message(
+    mock_request, claude_client, sample_prompt, sample_system_message, sample_claude_response_data
+):
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 200
-    mock_response.data = json.dumps(sample_claude_response_data).encode('utf-8')
+    mock_response.data = json.dumps(sample_claude_response_data).encode("utf-8")
     mock_request.return_value = mock_response
 
     # Call ask with a system message
     claude_client.ask(sample_prompt, sample_system_message)
 
     # Verify payload includes the system message
-    payload = json.loads(mock_request.call_args[1]["body"].decode('utf-8'))
+    payload = json.loads(mock_request.call_args[1]["body"].decode("utf-8"))
     assert "system" in payload
     assert payload["system"] == sample_system_message
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_api_error(mock_request, claude_client, sample_prompt):
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
     mock_response.status = 400
-    mock_response.data = json.dumps({
-        "error": {
-            "message": "Invalid request",
-            "type": "invalid_request_error"
-        }
-    }).encode('utf-8')
+    mock_response.data = json.dumps({"error": {"message": "Invalid request", "type": "invalid_request_error"}}).encode(
+        "utf-8"
+    )
     mock_request.return_value = mock_response
 
     # Verify that ask raises the expected error
@@ -378,7 +357,7 @@ def test_ask_api_error(mock_request, claude_client, sample_prompt):
     assert "API request failed" in str(excinfo.value)
 
 
-@patch('urllib3.PoolManager.request')
+@patch("urllib3.PoolManager.request")
 def test_ask_connection_error(mock_request, claude_client, sample_prompt):
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
@@ -390,7 +369,7 @@ def test_ask_connection_error(mock_request, claude_client, sample_prompt):
     assert "Failed to call Claude API" in str(excinfo.value)
 
 
-@patch('create_pr_bot.ai_bot.claude.client.ClaudeClient.ask')
+@patch("create_pr_bot.ai_bot.claude.client.ClaudeClient.ask")
 def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_response):
     """Test that get_content returns just the content from the response."""
     # Set up the mock to return a sample response
@@ -407,7 +386,7 @@ def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_respo
     assert content == expected_content
 
 
-@patch('create_pr_bot.ai_bot.claude.client.ClaudeClient.ask')
+@patch("create_pr_bot.ai_bot.claude.client.ClaudeClient.ask")
 def test_get_content_no_content(mock_ask, claude_client, sample_prompt):
     """Test that get_content raises IndexError when there is no content in the response."""
     # Create a response with no content
@@ -419,7 +398,7 @@ def test_get_content_no_content(mock_ask, claude_client, sample_prompt):
         model="claude-3-opus-20240229",
         stop_reason="end_turn",
         stop_sequence=None,
-        usage=ClaudeUsage(input_tokens=0, output_tokens=0)
+        usage=ClaudeUsage(input_tokens=0, output_tokens=0),
     )
 
     # Set up the mock to return the empty response
