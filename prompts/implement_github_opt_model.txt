@@ -1,0 +1,21 @@
+Please help me implement a module about doing some operations with GitHub.
+About how to implement:
+1. Please use Python 3.10 or later.
+2. Please use the library *PyGithub*.
+3. Wrap the code in an object.
+4. Each feature be a method of this object.
+5. Some of them would be protected methods. Please check the comment at last.
+6. Please also help me generate the unit test for each function includes protected one or public one in this object.
+7. Source code should be in file *create_pr_bot/github_opt.py*
+8. Test code should be in file *test/unit_test/github_opt.py*
+
+About feature implements what I want:
+1. Get the PR list of a repository. (protected method)
+2. Get the specific PR index by a specific git head branch of a repository. (public method)
+3. Create a PR with the content of a specific git branch. And it should accepts to set the properties like below. (public method)
+    3-1. The title of the PR.
+    3-2. The body of the PR.
+    3-3. The base branch of the PR.
+    3-4. The head branch of the PR.
+    3-5. The PR is draft or not.
+4. Add GitHub labels to a specific PR by some specific conditions like which files be change. (public method)
