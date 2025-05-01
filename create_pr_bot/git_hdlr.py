@@ -267,5 +267,5 @@ class GitHandler:
         except GitCommandError as e:
             if "rejected" in str(e) and "non-fast-forward" in str(e):
                 raise GitCommandError(
-                    f"Push rejected: Remote has changes you don't have locally. Use force=True to override or fetch and merge first.")
+                    "Push rejected: Remote has changes you don't have locally. Use force=True to override or fetch and merge first.")
             raise e
