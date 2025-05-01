@@ -1,0 +1,19 @@
+I would open a pull request (aka PR) for the current change for remote GitHub repository. And I need a description about
+the target (why do this?), change details (how do this?), etc. for the PR to let reviewer could clearly understand what
+you do and why you do. So I need you read the following contents and help me organize and summarize all of them for the
+PR description.
+1. Here are the task tickets about title or detail from project management tool like ClickUp, Jira, etc.
+    ```json
+    {{ task_tickets_details }}
+    ```
+2. Here are all the git commit messages about the code changes.
+    ```shell
+    {{ all_commits }}
+    ```
+
+And please summarize the content as the result with the following format as this project pull request template:
+    ```markdown
+    {{ pull_request_template }}
+    ```
+
+It already has description of each sections in the template setting. Please fill up the mapping values for each section.
