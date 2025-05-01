@@ -1,0 +1,494 @@
+"""
+CreatePrAIBot - A bot that helps developers create pull requests with AI-generated content.
+"""
+
+import logging
+import re
+from typing import Dict, List, Optional, Any, Tuple, Union
+from enum import Enum
+
+from github import Github
+from github.PullRequest import PullRequest
+
+from .git_hdlr import GitHandler, GitCodeConflictError
+from .github_opt import GitHubOperations
+from .ai_bot.gpt.client import GPTClient
+from .ai_bot.claude.client import ClaudeClient
+from .ai_bot.gemini.client import GeminiClient
+from .ai_bot._base.client import BaseAIClient
+
+
+logger = logging.getLogger(__name__)
+
+
+class AiModuleClient(Enum):
+    GPT = "gpt"
+    CLAUDE = "claude"
+    GEMINI = "gemini"
+
+
+class CreatePrAIBot:
+    """
+    A bot that automates creation of pull requests with AI-generated content
+    based on git commits and task tickets information.
+    """
+
+    # AI client types
+    AI_CLIENT_GPT = AiModuleClient.GPT
+    AI_CLIENT_CLAUDE = AiModuleClient.CLAUDE
+    AI_CLIENT_GEMINI = AiModuleClient.GEMINI
+
+    def __init__(
+            self,
+            repo_path: str = ".",
+            base_branch: str = "main",
+            github_token: Optional[str] = None,
+            github_repo: Optional[str] = None,
+            project_management_client: Optional[Any] = None,
+            ai_client_type: AiModuleClient = AI_CLIENT_GPT,
+            ai_client_api_key: Optional[str] = None,
+    ):
+        """
+        Initialize the CreatePrAIBot.
+
+        Args:
+            repo_path: Path to the git repository. Defaults to current directory.
+            base_branch: Name of the base branch to compare against. Defaults to "main".
+            github_token: GitHub access token for API access.
+            github_repo: GitHub repository name in format 'owner/repo'.
+            project_management_client: Client for interacting with project management tools.
+            ai_client_type: Type of AI client to use (gpt, claude, gemini).
+            ai_client_api_key: API key for the AI service.
+        """
+        self.repo_path = repo_path
+        self.base_branch = base_branch
+        self.git_handler = GitHandler(repo_path)
+
+        # Initialize GitHub operations if token and repo are provided
+        self.github_operations = None
+        if github_token and github_repo:
+            self.github_operations = GitHubOperations(github_token, github_repo)
+
+        # Store project management client for task ticket retrieval
+        self.project_management_client = project_management_client
+
+        # Initialize AI client based on type
+        self.ai_client = self._initialize_ai_client(ai_client_type, ai_client_api_key)
+
+    def _initialize_ai_client(self, client_type: AiModuleClient, api_key: Optional[str] = None) -> BaseAIClient:
+        """
+        Initialize the AI client based on the specified type.
+
+        Args:
+            client_type: Type of AI client (gpt, claude, gemini)
+            api_key: API key for the AI service
+
+        Returns:
+            Initialized AI client
+
+        Raises:
+            ValueError: If the client type is not supported
+        """
+        if client_type == self.AI_CLIENT_GPT:
+            return GPTClient(api_key=api_key)
+        elif client_type == self.AI_CLIENT_CLAUDE:
+            return ClaudeClient(api_key=api_key)
+        elif client_type == self.AI_CLIENT_GEMINI:
+            return GeminiClient(api_key=api_key)
+        else:
+            raise ValueError(f"Unsupported AI client type: {client_type}")
+
+    def _get_current_branch(self) -> str:
+        """
+        Get the name of the current git branch.
+
+        Returns:
+            Name of the current branch
+        """
+        return self.git_handler._get_current_branch()
+
+    def is_branch_outdated(self, branch_name: Optional[str] = None) -> bool:
+        """
+        Check if the branch is outdated compared to the base branch.
+
+        Args:
+            branch_name: Name of the branch to check. If None, uses the current branch.
+
+        Returns:
+            True if the branch is outdated, False otherwise
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        return self.git_handler.is_branch_outdated(branch_name, self.base_branch)
+
+    def is_pr_already_opened(self, branch_name: Optional[str] = None) -> bool:
+        """
+        Check if a pull request is already opened for the branch.
+
+        Args:
+            branch_name: Name of the branch to check. If None, uses the current branch.
+
+        Returns:
+            True if a PR exists, False otherwise
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        if not self.github_operations:
+            logger.warning("GitHub operations not configured. Cannot check if PR exists.")
+            return False
+
+        try:
+            pr = self.github_operations.get_pull_request_by_branch(branch_name)
+            return pr is not None
+        except Exception as e:
+            logger.error(f"Error checking if PR exists: {str(e)}")
+            return False
+
+    def fetch_and_merge_latest_from_base_branch(self, branch_name: Optional[str] = None) -> bool:
+        """
+        Fetch and merge the latest changes from the remote base branch.
+
+        Args:
+            branch_name: Name of the branch to update. If None, uses the current branch.
+
+        Returns:
+            True if update was successful, False otherwise
+
+        Raises:
+            GitCodeConflictError: If there is a merge conflict
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        try:
+            return self.git_handler.fetch_and_merge_remote_branch(branch_name)
+        except GitCodeConflictError as e:
+            logger.error(f"Merge conflict detected: {str(e)}")
+            raise
+
+    def get_branch_commits(self, branch_name: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all commits in the branch that are not in the base branch.
+
+        Args:
+            branch_name: Name of the branch to get commits from. If None, uses the current branch.
+
+        Returns:
+            List of commit details
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        # Get the commits between the base branch and the current branch
+        repo = self.git_handler.repo
+
+        try:
+            merge_base = repo.merge_base(f"refs/heads/{branch_name}", f"refs/heads/{self.base_branch}")
+            if not merge_base:
+                return []
+
+            # Get all commits from merge base to head of branch
+            base_commit = merge_base[0]
+            commits = []
+
+            # Iterate through commits in reverse chronological order
+            for commit in repo.iter_commits(f"{branch_name}"):
+                # Stop when we reach the merge base
+                if commit.hexsha == base_commit.hexsha:
+                    break
+
+                commits.append({
+                    "hash": commit.hexsha,
+                    "short_hash": commit.hexsha[:7],
+                    "author": {"name": commit.author.name, "email": commit.author.email},
+                    "committer": {"name": commit.committer.name, "email": commit.committer.email},
+                    "message": commit.message.strip(),
+                    "committed_date": commit.committed_date,
+                    "authored_date": commit.authored_date,
+                })
+
+            return commits
+        except Exception as e:
+            logger.error(f"Error getting branch commits: {str(e)}")
+            return []
+
+    def extract_ticket_ids(self, commits: List[Dict[str, Any]]) -> List[str]:
+        """
+        Extract ticket IDs from commit messages.
+
+        Args:
+            commits: List of commit details
+
+        Returns:
+            List of unique ticket IDs
+        """
+        ticket_ids = set()
+
+        # Common patterns for ticket IDs in commit messages
+        # Adjust patterns based on your project's conventions
+        patterns = [
+            r"#(\d+)",                # GitHub issue format: #123
+            r"([A-Z]+-\d+)",          # Jira format: PROJ-123
+            r"CU-([a-z0-9]+)",        # ClickUp format: CU-abc123
+            r"Task-(\d+)",            # Generic task format: Task-123
+        ]
+
+        for commit in commits:
+            message = commit["message"]
+
+            for pattern in patterns:
+                matches = re.findall(pattern, message)
+                ticket_ids.update(matches)
+
+        return list(ticket_ids)
+
+    def get_ticket_details(self, ticket_ids: List[str]) -> List[Dict[str, Any]]:
+        """
+        Get details for each ticket ID from the project management system.
+
+        Args:
+            ticket_ids: List of ticket IDs to get details for
+
+        Returns:
+            List of ticket details
+        """
+        if not self.project_management_client:
+            logger.warning("Project management client not configured. Cannot get ticket details.")
+            return []
+
+        ticket_details = []
+
+        for ticket_id in ticket_ids:
+            try:
+                ticket = self.project_management_client.get_ticket(ticket_id)
+                if ticket:
+                    ticket_details.append(ticket)
+            except Exception as e:
+                logger.error(f"Error getting details for ticket {ticket_id}: {str(e)}")
+
+        return ticket_details
+
+    def prepare_ai_prompt(
+            self,
+            commits: List[Dict[str, Any]],
+            ticket_details: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Prepare a prompt for the AI to generate a PR title and body.
+
+        Args:
+            commits: List of commit details
+            ticket_details: List of ticket details
+
+        Returns:
+            Formatted prompt string
+        """
+        # Start with a general instruction
+        prompt = "I need you to generate a pull request title and description based on the following information:\n\n"
+
+        # Add commit information
+        prompt += "## Commits\n"
+        for i, commit in enumerate(commits, 1):
+            prompt += f"{i}. {commit['short_hash']} - {commit['message']}\n"
+
+        prompt += "\n"
+
+        # Add ticket information
+        if ticket_details:
+            prompt += "## Related Tickets\n"
+            for i, ticket in enumerate(ticket_details, 1):
+                # Adapt this based on your ticket object structure
+                ticket_id = ticket.id if hasattr(ticket, "id") else "Unknown ID"
+                title = ticket.title if hasattr(ticket, "title") else "Unknown Title"
+                description = ticket.description if hasattr(ticket, "description") else ""
+
+                prompt += f"{i}. {ticket_id}: {title}\n"
+                if description:
+                    # Truncate long descriptions
+                    short_desc = description[:200] + "..." if len(description) > 200 else description
+                    prompt += f"   Description: {short_desc}\n"
+
+            prompt += "\n"
+
+        # Add formatting instructions
+        prompt += """
+## Instructions
+Please generate:
+1. A clear and concise pull request title (one line)
+2. A detailed pull request description that includes:
+   - A summary of changes
+   - The purpose of the changes
+   - Any notable implementation details
+   - References to the related tickets
+
+Format your response as follows:
+TITLE: [Your suggested PR title]
+
+BODY:
+[Your suggested PR description]
+"""
+
+        return prompt
+
+    def parse_ai_response(self, response: str) -> Tuple[str, str]:
+        """
+        Parse the AI-generated response into a PR title and body.
+
+        Args:
+            response: Raw response from the AI
+
+        Returns:
+            Tuple of (title, body)
+        """
+        # Extract title and body from the response
+        title_match = re.search(r"TITLE:\s*(.*?)(?:\n|$)", response)
+        title = title_match.group(1).strip() if title_match else "Automated Pull Request"
+
+        body_match = re.search(r"BODY:\s*(.*)", response, re.DOTALL)
+        body = body_match.group(1).strip() if body_match else response
+
+        return title, body
+
+    def create_pull_request(self, title: str, body: str, branch_name: Optional[str] = None) -> Optional[PullRequest]:
+        """
+        Create a pull request from the branch to the base branch.
+
+        Args:
+            title: Title of the pull request
+            body: Body/description of the pull request
+            branch_name: Name of the branch to create PR from. If None, uses the current branch.
+
+        Returns:
+            Created PullRequest object or None if creation failed
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        if not self.github_operations:
+            logger.error("GitHub operations not configured. Cannot create PR.")
+            return None
+
+        try:
+            # Create the pull request
+            pr = self.github_operations.create_pull_request(
+                title=title,
+                body=body,
+                base_branch=self.base_branch,
+                head_branch=branch_name
+            )
+
+            logger.info(f"Created pull request #{pr.number}: {pr.html_url}")
+            return pr
+        except Exception as e:
+            logger.error(f"Error creating pull request: {str(e)}")
+            return None
+
+    def run(self, branch_name: Optional[str] = None) -> Optional[PullRequest]:
+        """
+        Run the PR creation workflow.
+
+        Args:
+            branch_name: Name of the branch to create PR from. If None, uses the current branch.
+
+        Returns:
+            Created PullRequest object or None if no PR was created
+        """
+        if not branch_name:
+            branch_name = self._get_current_branch()
+
+        logger.info(f"Running CreatePrAIBot for branch: {branch_name}")
+
+        # Step 1: Check if branch is outdated
+        is_outdated = self.is_branch_outdated(branch_name)
+        logger.info(f"Branch is outdated: {is_outdated}")
+
+        # Step 2: Check if PR already exists
+        pr_exists = self.is_pr_already_opened(branch_name)
+        logger.info(f"PR already exists: {pr_exists}")
+
+        # Step 3: If branch is up-to-date and PR exists, do nothing
+        if is_outdated and pr_exists:
+            logger.info("Branch is outdated and PR already exists. Nothing to do.")
+            return None
+
+        # Step 4: If branch is outdated and PR doesn't exist, update and create PR
+        if is_outdated and not pr_exists:
+            # Step 4-1: Update the branch
+            try:
+                logger.info("Updating branch...")
+                self.fetch_and_merge_latest_from_base_branch(branch_name)
+            except GitCodeConflictError:
+                logger.error("Merge conflicts detected. Cannot proceed.")
+                return None
+
+            # Step 4-2: Get branch commits
+            logger.info("Getting branch commits...")
+            commits = self.get_branch_commits(branch_name)
+            if not commits:
+                logger.warning("No commits found in branch. Cannot create PR.")
+                return None
+
+            # Step 4-3: Get ticket details
+            logger.info("Extracting ticket IDs from commits...")
+            ticket_ids = self.extract_ticket_ids(commits)
+
+            logger.info(f"Found ticket IDs: {ticket_ids}")
+            ticket_details = self.get_ticket_details(ticket_ids)
+
+            # Step 4-4: Prepare AI prompt
+            logger.info("Preparing AI prompt...")
+            prompt = self.prepare_ai_prompt(commits, ticket_details)
+
+            # Step 4-5: Ask AI to generate PR content
+            logger.info("Asking AI to generate PR content...")
+            try:
+                ai_response = self.ai_client.get_content(prompt)
+                title, body = self.parse_ai_response(ai_response)
+            except Exception as e:
+                logger.error(f"Error generating PR content with AI: {str(e)}")
+                # Fall back to basic PR content if AI fails
+                title = f"Update {branch_name}"
+                body = "Automated pull request."
+
+            # Step 4-6: Create the pull request
+            logger.info("Creating pull request...")
+            return self.create_pull_request(title, body, branch_name)
+
+        # If PR doesn't exist but branch is up to date, create PR
+        if not pr_exists:
+            # Get branch commits
+            logger.info("Getting branch commits...")
+            commits = self.get_branch_commits(branch_name)
+            if not commits:
+                logger.warning("No commits found in branch. Cannot create PR.")
+                return None
+
+            # Get ticket details
+            logger.info("Extracting ticket IDs from commits...")
+            ticket_ids = self.extract_ticket_ids(commits)
+
+            logger.info(f"Found ticket IDs: {ticket_ids}")
+            ticket_details = self.get_ticket_details(ticket_ids)
+
+            # Prepare AI prompt
+            logger.info("Preparing AI prompt...")
+            prompt = self.prepare_ai_prompt(commits, ticket_details)
+
+            # Ask AI to generate PR content
+            logger.info("Asking AI to generate PR content...")
+            try:
+                ai_response = self.ai_client.get_content(prompt)
+                title, body = self.parse_ai_response(ai_response)
+            except Exception as e:
+                logger.error(f"Error generating PR content with AI: {str(e)}")
+                # Fall back to basic PR content if AI fails
+                title = f"Update {branch_name}"
+                body = "Automated pull request."
+
+            # Create the pull request
+            logger.info("Creating pull request...")
+            return self.create_pull_request(title, body, branch_name)
+
+        return None
