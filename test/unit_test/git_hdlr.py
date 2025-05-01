@@ -1,14 +1,14 @@
 """
 Unit tests for the GitHandler class.
 """
-import os
-import pytest
-from unittest.mock import Mock, patch, PropertyMock, MagicMock
-from datetime import datetime
+
+from unittest.mock import Mock, PropertyMock, patch
+
 import git
+import pytest
 from git.exc import GitCommandError
 
-from create_pr_bot.git_hdlr import GitHandler, GitCodeConflictError
+from create_pr_bot.git_hdlr import GitCodeConflictError, GitHandler
 
 
 class TestGitHandler:
@@ -222,8 +222,9 @@ class TestGitHandler:
         mock_heads = []
         type(mock_repo).heads = PropertyMock(return_value=mock_heads)
 
-        with pytest.raises(ValueError,
-                           match="Branch 'feature-branch' or remote branch 'origin/feature-branch' not found"):
+        with pytest.raises(
+            ValueError, match="Branch 'feature-branch' or remote branch 'origin/feature-branch' not found"
+        ):
             git_handler.fetch_and_merge_remote_branch("feature-branch")
 
     def test_push_branch_to_remote_success(self, git_handler, mock_repo):

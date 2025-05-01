@@ -2,15 +2,16 @@
 Git Handler module for PR creation bot.
 This module provides functionality for common git operations.
 """
+
 import re
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import git
 from git.exc import GitCommandError
 
 
 class GitCodeConflictError(Exception):
     """Custom exception raised when a git merge operation results in code conflicts."""
-    pass
 
 
 class GitHandler:
@@ -50,24 +51,20 @@ class GitHandler:
         try:
             branches = list(filter(lambda head: head.name == branch_name, self.repo.heads))
             if not branches:
-                raise KeyError(f"Cannot get the git branch '{branch_name}' from repository head list '{[h.name for h in self.repo.heads]}'.")
+                raise KeyError(
+                    f"Cannot get the git branch '{branch_name}' from repository head list '{[h.name for h in self.repo.heads]}'."
+                )
             branch = branches[0]
             commit = branch.commit
 
             return {
                 "hash": commit.hexsha,
                 "short_hash": commit.hexsha[:7],
-                "author": {
-                    "name": commit.author.name,
-                    "email": commit.author.email
-                },
-                "committer": {
-                    "name": commit.committer.name,
-                    "email": commit.committer.email
-                },
+                "author": {"name": commit.author.name, "email": commit.author.email},
+                "committer": {"name": commit.committer.name, "email": commit.committer.email},
                 "message": commit.message.strip(),
                 "committed_date": commit.committed_date,
-                "authored_date": commit.authored_date
+                "authored_date": commit.authored_date,
             }
         except (IndexError, KeyError):
             raise ValueError(f"Branch '{branch_name}' not found")
@@ -99,23 +96,18 @@ class GitHandler:
             return {
                 "hash": remote_commit.hexsha,
                 "short_hash": remote_commit.hexsha[:7],
-                "author": {
-                    "name": remote_commit.author.name,
-                    "email": remote_commit.author.email
-                },
-                "committer": {
-                    "name": remote_commit.committer.name,
-                    "email": remote_commit.committer.email
-                },
+                "author": {"name": remote_commit.author.name, "email": remote_commit.author.email},
+                "committer": {"name": remote_commit.committer.name, "email": remote_commit.committer.email},
                 "message": remote_commit.message.strip(),
                 "committed_date": remote_commit.committed_date,
-                "authored_date": remote_commit.authored_date
+                "authored_date": remote_commit.authored_date,
             }
         except (IndexError, KeyError):
             raise ValueError(f"Remote '{remote_name}' not found")
 
-    def is_branch_outdated(self, branch_name: Optional[str] = None, base_branch: str = "main",
-                           remote_name: str = "origin") -> bool:
+    def is_branch_outdated(
+        self, branch_name: Optional[str] = None, base_branch: str = "main", remote_name: str = "origin"
+    ) -> bool:
         """
         Check if the local branch is outdated compared to the remote base branch.
 
@@ -155,8 +147,9 @@ class GitHandler:
 
         return False
 
-    def fetch_and_merge_remote_branch(self, branch_name: Optional[str] = None, remote_branch: Optional[str] = None,
-                                      remote_name: str = "origin") -> bool:
+    def fetch_and_merge_remote_branch(
+        self, branch_name: Optional[str] = None, remote_branch: Optional[str] = None, remote_name: str = "origin"
+    ) -> bool:
         """
         Fetch and merge the remote branch into the local branch.
 
@@ -195,7 +188,9 @@ class GitHandler:
             # Get the specific branch
             branches = list(filter(lambda head: head.name == branch_name, self.repo.heads))
             if not branches:
-                raise KeyError(f"Cannot get the git branch '{branch_name}' from repository head list '{[h.name for h in self.repo.heads]}'.")
+                raise KeyError(
+                    f"Cannot get the git branch '{branch_name}' from repository head list '{[h.name for h in self.repo.heads]}'."
+                )
             branch = branches[0]
 
             if merge_base and merge_base[0].hexsha == branch.commit.hexsha:
@@ -230,8 +225,9 @@ class GitHandler:
 
         return False  # No merge was needed
 
-    def push_branch_to_remote(self, branch_name: Optional[str] = None, remote_name: str = "origin",
-                              force: bool = False) -> bool:
+    def push_branch_to_remote(
+        self, branch_name: Optional[str] = None, remote_name: str = "origin", force: bool = False
+    ) -> bool:
         """
         Push the local branch to the remote repository.
 
@@ -267,5 +263,6 @@ class GitHandler:
         except GitCommandError as e:
             if "rejected" in str(e) and "non-fast-forward" in str(e):
                 raise GitCommandError(
-                    f"Push rejected: Remote has changes you don't have locally. Use force=True to override or fetch and merge first.")
+                    f"Push rejected: Remote has changes you don't have locally. Use force=True to override or fetch and merge first."
+                )
             raise e
