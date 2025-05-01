@@ -116,8 +116,9 @@ class BaseAIClient(ABC, Generic[T]):
                     error_message = f"{error_message}: {error_data['error']['message']}"
                 elif isinstance(error_data["error"], str):
                     error_message = f"{error_message}: {error_data['error']}"
-        except Exception:
-            logger.error(traceback.print_exc())
+        except Exception as e:
+            logger.error("Occur something error when parsing error response! Error: %s", e)
+            traceback.print_exc()
         return error_message
 
     @abstractmethod
