@@ -1,0 +1,32 @@
+================ create =======================
+Please help me implement about asking question (aka give commands) as prompts to AI modules of GPT, Claude and Gemini
+and get the response back as data models.
+1. Please use Python 3.11 or later.
+2. Please use the library *urllib3* to send HTTP requests if it needs.
+3. Please use the library *pytest* for the test part.
+4. Wrap the code in an object.
+5. Each feature is an object.
+6. Please also help me generate the unit test for each function of each object includes protected one or public one in this object.
+7. Source code should be in the file:
+    7-1. If the feature is about GPT AI module, record in *create_pr_bot/ai_bot/gpt/client.py*
+    7-2. If the feature is about Claude AI module, record in *create_pr_bot/ai_bot/claude/client.py*
+    7-3. If the feature is about Gemini AI module, record in *create_pr_bot/ai_bot/gemini/client.py*
+8. Test code should be in the file:
+    8-1. If the feature is about GPT AI module, record in *test/unit_test/ai_bot/gpt/client.py*
+    8-2. If the feature is about Claude AI module, record in *test/unit_test/ai_bot/claude/client.py*
+    8-3. If the feature is about Gemini AI module, record in *test/unit_test/ai_bot/gemini/client.py*
+
+About feature implements what I want:
+1. Give prompts as commands to AI modules of GPT by API or SDK. Using the implementation way which is recommended by official documentation if it has, nor use API by default.
+2. Give prompts as commands to AI modules of Claude by API or SDK. Using the implementation way which is recommended by official documentation if it has, nor use API by default.
+3. Give prompts as commands to AI modules of Gemini by API or SDK. Using the implementation way which is recommended by official documentation if it has, nor use API by default.
+
+================ bug fix =======================
+The claude AI module is not finish implemented yet. Please finish it.
+The unit test of Gemini AI module part seems to don't finish yet. Please finish it.
+
+================ improvement (or refactoring) =======================
+Please help me extract the common logic or likely implementations in all API clients as an abstract method into abstract
+class as base class for common usage and management. Please remember that DO NOT have any breaking changes which may
+cause the code be broken. Just refactoring without any breaking changes.
+The abstract class about API client should be put in the file *create_pr_bot/ai_bot/_base/client.py*
