@@ -2,9 +2,10 @@
 
 import unittest
 from unittest.mock import MagicMock, patch
+
 from github import GithubException
 from github.PullRequest import PullRequest
-from github.PaginatedList import PaginatedList
+
 from create_pr_bot.github_opt import GitHubOperations
 
 
@@ -13,7 +14,7 @@ class TestGitHubOperations(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.patcher = patch('create_pr_bot.github_opt.Github')
+        self.patcher = patch("create_pr_bot.github_opt.Github")
         self.mock_github = self.patcher.start()
         self.mock_repo = MagicMock()
         self.mock_github.return_value.get_repo.return_value = self.mock_repo
@@ -51,9 +52,7 @@ class TestGitHubOperations(unittest.TestCase):
     def test_get_pull_requests_exception(self):
         """Test _get_pull_requests method with exception."""
         # Set up the mock to raise an exception
-        self.mock_repo.get_pulls.side_effect = GithubException(
-            status=404, data={"message": "Not Found"}
-        )
+        self.mock_repo.get_pulls.side_effect = GithubException(status=404, data={"message": "Not Found"})
 
         # Call the method and verify exception
         with self.assertRaises(GithubException) as context:
@@ -72,9 +71,7 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr2.head.ref = "another-branch"
 
         # Set up the _get_pull_requests method
-        with patch.object(
-                self.github_ops, '_get_pull_requests', return_value=[mock_pr1, mock_pr2]
-        ) as mock_get_prs:
+        with patch.object(self.github_ops, "_get_pull_requests", return_value=[mock_pr1, mock_pr2]) as mock_get_prs:
             # Call the method
             result = self.github_ops.get_pull_request_by_branch("feature-branch")
 
@@ -90,9 +87,9 @@ class TestGitHubOperations(unittest.TestCase):
         """Test get_pull_request_by_branch method with exception."""
         # Set up the mock to raise an exception
         with patch.object(
-                self.github_ops,
-                '_get_pull_requests',
-                side_effect=GithubException(status=401, data={"message": "Unauthorized"})
+            self.github_ops,
+            "_get_pull_requests",
+            side_effect=GithubException(status=401, data={"message": "Unauthorized"}),
         ):
             # Call the method and verify exception
             with self.assertRaises(GithubException) as context:
@@ -109,37 +106,24 @@ class TestGitHubOperations(unittest.TestCase):
 
         # Call the method
         result = self.github_ops.create_pull_request(
-            title="Test PR",
-            body="Description",
-            base_branch="main",
-            head_branch="feature",
-            draft=True
+            title="Test PR", body="Description", base_branch="main", head_branch="feature", draft=True
         )
 
         # Assertions
         self.mock_repo.create_pull.assert_called_once_with(
-            title="Test PR",
-            body="Description",
-            base="main",
-            head="feature",
-            draft=True
+            title="Test PR", body="Description", base="main", head="feature", draft=True
         )
         self.assertEqual(result, mock_pr)
 
     def test_create_pull_request_exception(self):
         """Test create_pull_request method with exception."""
         # Set up the mock to raise an exception
-        self.mock_repo.create_pull.side_effect = GithubException(
-            status=422, data={"message": "Validation Failed"}
-        )
+        self.mock_repo.create_pull.side_effect = GithubException(status=422, data={"message": "Validation Failed"})
 
         # Call the method and verify exception
         with self.assertRaises(GithubException) as context:
             self.github_ops.create_pull_request(
-                title="Test PR",
-                body="Description",
-                base_branch="main",
-                head_branch="feature"
+                title="Test PR", body="Description", base_branch="main", head_branch="feature"
             )
 
         self.assertEqual(context.exception.status, 422)
@@ -160,10 +144,7 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr.get_files.return_value = [mock_file1, mock_file2]
 
         # Labels config
-        labels_config = {
-            "*.py": ["python", "code"],
-            "docs/*": ["documentation"]
-        }
+        labels_config = {"*.py": ["python", "code"], "docs/*": ["documentation"]}
 
         # Call the method
         result = self.github_ops.add_labels_to_pull_request(mock_pr, labels_config)
@@ -185,9 +166,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.mock_repo.get_pull.return_value = mock_pr
 
         # Labels config
-        labels_config = {
-            "*.py": ["python"]
-        }
+        labels_config = {"*.py": ["python"]}
 
         # Call the method
         result = self.github_ops.add_labels_to_pull_request(123, labels_config)
@@ -203,14 +182,10 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr = MagicMock(spec=PullRequest)
 
         # Set up the mock to raise an exception
-        self.mock_repo.get_pull.side_effect = GithubException(
-            status=404, data={"message": "Not Found"}
-        )
+        self.mock_repo.get_pull.side_effect = GithubException(status=404, data={"message": "Not Found"})
 
         # Labels config
-        labels_config = {
-            "*.py": ["python"]
-        }
+        labels_config = {"*.py": ["python"]}
 
         # Call the method and verify exception
         with self.assertRaises(GithubException) as context:

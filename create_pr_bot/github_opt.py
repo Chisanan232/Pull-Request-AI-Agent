@@ -4,8 +4,8 @@ This module uses PyGithub to interact with GitHub repositories.
 """
 
 from typing import Dict, List, Optional, Union
+
 from github import Github, GithubException
-from github.Repository import Repository
 from github.PullRequest import PullRequest
 
 
@@ -40,9 +40,7 @@ class GitHubOperations:
         try:
             return list(self.repo.get_pulls(state=state))
         except GithubException as e:
-            raise GithubException(
-                e.status, f"Failed to get pull requests: {e.data.get('message', '')}"
-            )
+            raise GithubException(e.status, f"Failed to get pull requests: {e.data.get('message', '')}")
 
     def get_pull_request_by_branch(self, head_branch: str) -> Optional[PullRequest]:
         """
@@ -102,8 +100,7 @@ class GitHubOperations:
             )
         except GithubException as e:
             raise GithubException(
-                e.status, 
-                f"Failed to create PR from '{head_branch}' to '{base_branch}': {e.data.get('message', '')}"
+                e.status, f"Failed to create PR from '{head_branch}' to '{base_branch}': {e.data.get('message', '')}"
             )
 
     def add_labels_to_pull_request(
@@ -133,7 +130,7 @@ class GitHubOperations:
 
             # Get changed files in the PR
             changed_files = [file.filename for file in pr.get_files()]
-            
+
             # Determine which labels to add based on changed files
             labels_to_add = set()
             for file_path in changed_files:
@@ -149,14 +146,12 @@ class GitHubOperations:
                     # Extension match
                     elif pattern.startswith("*.") and file_path.endswith(pattern[1:]):
                         labels_to_add.update(labels)
-            
+
             # Add labels to PR
             if labels_to_add:
                 pr.add_to_labels(*labels_to_add)
-            
+
             return list(labels_to_add)
-        
+
         except GithubException as e:
-            raise GithubException(
-                e.status, f"Failed to add labels to PR: {e.data.get('message', '')}"
-            )
+            raise GithubException(e.status, f"Failed to add labels to PR: {e.data.get('message', '')}")
