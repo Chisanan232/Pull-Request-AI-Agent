@@ -1,0 +1,17 @@
+================ create =======================
+------------------ one prompt start ------------------
+Please help me implement the entry point as a command line interface of this AI bot.
+1. Please use Python 3.11 or later.
+2. Please use the library *pytest* for the test part.
+3. Please also help me generate the unit test for each function of each object includes protected one or public one in this object.
+4. Source code should be in the file *create_pr_bot/__main__.py*.
+5. Test code should be in the file *test/unit_test/entry_point.py*.
+
+The feature is as follows:
+1. Add a new Python file named *__main__* as an entry point in the root folder of the project.
+2. It should call function *CreatePrAIBot().run()* in entry point
+3. It should have a data model about the settings. And the model has a utility function getting the setting values by
+   environment variables and serialize as the data model.
+4. Use the data model to set the options of instantiating the object *CreatePrAIBot*.
+5. Use the data model to set the options of calling function *run* of the object *CreatePrAIBot*.
+------------------ one prompt end ------------------
