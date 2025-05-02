@@ -4,23 +4,21 @@ CreatePrAIBot - A bot that helps developers create pull requests with AI-generat
 
 import logging
 import re
-from typing import Dict, List, Optional, Any, Tuple, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from github import Github
 from github.PullRequest import PullRequest
 
-from .git_hdlr import GitHandler, GitCodeConflictError
-from .github_opt import GitHubOperations
-from .ai_bot.gpt.client import GPTClient
+from .ai_bot._base.client import BaseAIClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
-from .ai_bot._base.client import BaseAIClient
+from .ai_bot.gpt.client import GPTClient
+from .git_hdlr import GitCodeConflictError, GitHandler
+from .github_opt import GitHubOperations
 from .project_management_tool._base.client import BaseProjectManagementAPIClient
 from .project_management_tool._base.model import BaseImmutableModel
 from .project_management_tool.clickup.client import ClickUpAPIClient
 from .project_management_tool.jira.client import JiraAPIClient
-from .ai_bot.prompts.model import prepare_pr_prompt_data
 from .ai_bot.prompts.model import prepare_pr_prompt_data
 
 logger = logging.getLogger(__name__)
@@ -47,21 +45,21 @@ class CreatePrAIBot:
     AI_CLIENT_GPT = AiModuleClient.GPT
     AI_CLIENT_CLAUDE = AiModuleClient.CLAUDE
     AI_CLIENT_GEMINI = AiModuleClient.GEMINI
-    
+
     # Project management tool types
     PM_TOOL_CLICKUP = ProjectManagementToolType.CLICKUP
     PM_TOOL_JIRA = ProjectManagementToolType.JIRA
 
     def __init__(
-            self,
-            repo_path: str = ".",
-            base_branch: str = "main",
-            github_token: Optional[str] = None,
-            github_repo: Optional[str] = None,
-            project_management_tool_type: Optional[ProjectManagementToolType] = None,
-            project_management_tool_config: Optional[Dict[str, Any]] = None,
-            ai_client_type: AiModuleClient = AI_CLIENT_GPT,
-            ai_client_api_key: Optional[str] = None,
+        self,
+        repo_path: str = ".",
+        base_branch: str = "main",
+        github_token: Optional[str] = None,
+        github_repo: Optional[str] = None,
+        project_management_tool_type: Optional[ProjectManagementToolType] = None,
+        project_management_tool_config: Optional[Dict[str, Any]] = None,
+        ai_client_type: AiModuleClient = AI_CLIENT_GPT,
+        ai_client_api_key: Optional[str] = None,
     ):
         """
         Initialize the CreatePrAIBot.
@@ -121,11 +119,7 @@ class CreatePrAIBot:
             for key in required_keys:
                 if key not in config:
                     raise ValueError(f"Jira {key} is required")
-            return JiraAPIClient(
-                base_url=config["base_url"],
-                email=config["email"],
-                api_token=config["api_token"]
-            )
+            return JiraAPIClient(base_url=config["base_url"], email=config["email"], api_token=config["api_token"])
         else:
             raise ValueError(f"Unsupported project management tool type: {tool_type}")
 
@@ -253,15 +247,17 @@ class CreatePrAIBot:
                 if commit.hexsha == base_commit.hexsha:
                     break
 
-                commits.append({
-                    "hash": commit.hexsha,
-                    "short_hash": commit.hexsha[:7],
-                    "author": {"name": commit.author.name, "email": commit.author.email},
-                    "committer": {"name": commit.committer.name, "email": commit.committer.email},
-                    "message": commit.message.strip(),
-                    "committed_date": commit.committed_date,
-                    "authored_date": commit.authored_date,
-                })
+                commits.append(
+                    {
+                        "hash": commit.hexsha,
+                        "short_hash": commit.hexsha[:7],
+                        "author": {"name": commit.author.name, "email": commit.author.email},
+                        "committer": {"name": commit.committer.name, "email": commit.committer.email},
+                        "message": commit.message.strip(),
+                        "committed_date": commit.committed_date,
+                        "authored_date": commit.authored_date,
+                    }
+                )
 
             return commits
         except Exception as e:
@@ -283,10 +279,10 @@ class CreatePrAIBot:
         # Common patterns for ticket IDs in commit messages
         # Adjust patterns based on your project's conventions
         patterns = [
-            r"#(\d+)",                # GitHub issue format: #123
-            r"([A-Z]+-\d+)",          # Jira format: PROJ-123
-            r"CU-([a-z0-9]+)",        # ClickUp format: CU-abc123
-            r"Task-(\d+)",            # Generic task format: Task-123
+            r"#(\d+)",  # GitHub issue format: #123
+            r"([A-Z]+-\d+)",  # Jira format: PROJ-123
+            r"CU-([a-z0-9]+)",  # ClickUp format: CU-abc123
+            r"Task-(\d+)",  # Generic task format: Task-123
         ]
 
         for commit in commits:
@@ -328,7 +324,7 @@ class CreatePrAIBot:
 
                 logger.info(f"Fetching details for ticket: {formatted_ticket_id}")
                 ticket = self.project_management_client.get_ticket(formatted_ticket_id)
-                
+
                 if ticket:
                     logger.info(f"Successfully retrieved ticket: {formatted_ticket_id}")
                     ticket_details.append(ticket)
@@ -367,11 +363,7 @@ class CreatePrAIBot:
             # For unknown tool types, return as is
             return ticket_id
 
-    def prepare_ai_prompt(
-            self,
-            commits: List[Dict[str, Any]],
-            ticket_details: List[BaseImmutableModel]
-    ) -> str:
+    def prepare_ai_prompt(self, commits: List[Dict[str, Any]], ticket_details: List[BaseImmutableModel]) -> str:
         """
         Prepare a prompt for the AI to generate a PR title and body.
 
@@ -387,16 +379,13 @@ class CreatePrAIBot:
         for ticket in ticket_details:
             ticket_info = self._extract_ticket_info(ticket)
             ticket_info_list.append(ticket_info)
-        
+
         # Ensure commits have required fields
         formatted_commits = []
         for commit in commits:
-            if 'short_hash' in commit and 'message' in commit:
-                formatted_commits.append({
-                    'short_hash': commit['short_hash'],
-                    'message': commit['message']
-                })
-        
+            if "short_hash" in commit and "message" in commit:
+                formatted_commits.append({"short_hash": commit["short_hash"], "message": commit["message"]})
+
         try:
             # Process prompt templates
             prompt_data = prepare_pr_prompt_data(
@@ -408,39 +397,45 @@ class CreatePrAIBot:
             # For now, we'll just use the title prompt
             # In the future, we could use both title and description separately
             return prompt_data.title
-            
+
         except FileNotFoundError as e:
             logger.error(f"Failed to load prompt template: {str(e)}")
             raise
         except Exception as e:
             logger.error(f"Error preparing AI prompt: {str(e)}")
-            
+
             # Fallback to a simple prompt
-            prompt = "I need you to generate a pull request title and description based on the following information:\n\n"
-            
+            prompt = (
+                "I need you to generate a pull request title and description based on the following information:\n\n"
+            )
+
             # Add commit information
             prompt += "## Commits\n"
             for i, commit in enumerate(commits, 1):
                 prompt += f"{i}. {commit.get('short_hash', '')} - {commit.get('message', '')}\n"
-            
+
             prompt += "\n"
-            
+
             # Add ticket information
             if ticket_info_list:
                 prompt += "## Related Tickets\n"
                 for i, ticket_info in enumerate(ticket_info_list, 1):
                     prompt += f"{i}. {ticket_info.get('id', '')}: {ticket_info.get('title', '')}\n"
-                    if ticket_info.get('description'):
+                    if ticket_info.get("description"):
                         # Truncate long descriptions
-                        short_desc = ticket_info['description'][:200] + "..." if len(ticket_info['description']) > 200 else ticket_info['description']
+                        short_desc = (
+                            ticket_info["description"][:200] + "..."
+                            if len(ticket_info["description"]) > 200
+                            else ticket_info["description"]
+                        )
                         prompt += f"   Description: {short_desc}\n"
-                    
+
                     # Add status if available
-                    if ticket_info.get('status'):
+                    if ticket_info.get("status"):
                         prompt += f"   Status: {ticket_info['status']}\n"
-                
+
                 prompt += "\n"
-            
+
             # Add PR template if available
             try:
                 from pathlib import Path
@@ -465,44 +460,39 @@ class CreatePrAIBot:
         Returns:
             Dictionary with standardized ticket information
         """
-        ticket_info = {
-            'id': '',
-            'title': '',
-            'description': '',
-            'status': ''
-        }
+        ticket_info = {"id": "", "title": "", "description": "", "status": ""}
 
         # Handle different ticket types
         if self.project_management_tool_type == self.PM_TOOL_CLICKUP:
             # For ClickUp tickets
-            ticket_info['id'] = getattr(ticket, 'id', '')
-            ticket_info['title'] = getattr(ticket, 'name', '')
-            
+            ticket_info["id"] = getattr(ticket, "id", "")
+            ticket_info["title"] = getattr(ticket, "name", "")
+
             # Use text_content if available, otherwise use description
-            description = getattr(ticket, 'text_content', None)
+            description = getattr(ticket, "text_content", None)
             if not description:
-                description = getattr(ticket, 'description', '')
-            ticket_info['description'] = description or ''
-            
+                description = getattr(ticket, "description", "")
+            ticket_info["description"] = description or ""
+
             # Get status if available
-            status = getattr(ticket, 'status', None)
+            status = getattr(ticket, "status", None)
             if status:
-                ticket_info['status'] = getattr(status, 'status', '')
-                
+                ticket_info["status"] = getattr(status, "status", "")
+
         elif self.project_management_tool_type == self.PM_TOOL_JIRA:
             # For Jira tickets
-            ticket_info['id'] = getattr(ticket, 'id', '')
-            ticket_info['title'] = getattr(ticket, 'title', '')
-            ticket_info['description'] = getattr(ticket, 'description', '')
-            ticket_info['status'] = getattr(ticket, 'status', '')
+            ticket_info["id"] = getattr(ticket, "id", "")
+            ticket_info["title"] = getattr(ticket, "title", "")
+            ticket_info["description"] = getattr(ticket, "description", "")
+            ticket_info["status"] = getattr(ticket, "status", "")
         else:
             # Generic fallback for unknown ticket types
             # Try to extract common attributes
-            for field in ['id', 'title', 'name', 'description', 'status']:
+            for field in ["id", "title", "name", "description", "status"]:
                 value = getattr(ticket, field, None)
                 if value and isinstance(value, str):
-                    if field == 'name' and not ticket_info['title']:
-                        ticket_info['title'] = value
+                    if field == "name" and not ticket_info["title"]:
+                        ticket_info["title"] = value
                     else:
                         ticket_info[field] = value
 
@@ -549,10 +539,7 @@ class CreatePrAIBot:
         try:
             # Create the pull request
             pr = self.github_operations.create_pull_request(
-                title=title,
-                body=body,
-                base_branch=self.base_branch,
-                head_branch=branch_name
+                title=title, body=body, base_branch=self.base_branch, head_branch=branch_name
             )
 
             logger.info(f"Created pull request #{pr.number}: {pr.html_url}")

@@ -7,8 +7,7 @@ along with utility functions to load and create these models from prompt files.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-import re
-from typing import Dict, List, Type, TypeVar, Optional, Any
+from typing import Any, Dict, List, Type, TypeVar
 
 
 class PromptName(Enum):
@@ -45,7 +44,7 @@ class GeneratePRDescriptionPrompt(BasePrompt):
 @dataclass(frozen=True)
 class PRPromptData:
     """Data model for processed PR prompt data."""
-    
+
     title: str
     description: str
 
@@ -149,9 +148,10 @@ def process_prompt_template(
     if "{{ task_tickets_details }}" in prompt_content:
         # Convert task tickets to JSON string
         import json
+
         task_tickets_json = json.dumps(task_tickets_details, indent=2)
         prompt_content = prompt_content.replace("{{ task_tickets_details }}", task_tickets_json)
-    
+
     # Replace commits
     if "{{ all_commits }}" in prompt_content:
         # Format commits as a list of short_hash and message
@@ -159,17 +159,17 @@ def process_prompt_template(
         for commit in commits:
             if "short_hash" in commit and "message" in commit:
                 formatted_commits.append(f"{commit['short_hash']}: {commit['message']}")
-        
+
         commits_text = "\n".join(formatted_commits)
         prompt_content = prompt_content.replace("{{ all_commits }}", commits_text)
-    
+
     # Replace pull request template
     if "{{ pull_request_template }}" in prompt_content and project_root:
         from pathlib import Path
-        
+
         # Look for the PR template file
         pr_template_path = Path(project_root) / ".github" / "PULL_REQUEST_TEMPLATE.md"
-        
+
         if pr_template_path.exists():
             with open(pr_template_path, "r", encoding="utf-8") as file:
                 pr_template_content = file.read()
@@ -177,7 +177,7 @@ def process_prompt_template(
         else:
             # If template doesn't exist, replace with empty string
             prompt_content = prompt_content.replace("{{ pull_request_template }}", "")
-    
+
     return prompt_content
 
 
@@ -203,7 +203,7 @@ def prepare_pr_prompt_data(
     # Get prompt models
     title_prompt_model = get_prompt_model(PromptName.SUMMARIZE_AS_CLEAR_TITLE)
     description_prompt_model = get_prompt_model(PromptName.SUMMARIZE_CHANGE_CONTENT)
-    
+
     # Process prompt templates
     title_prompt = process_prompt_template(
         title_prompt_model.content,
@@ -211,7 +211,7 @@ def prepare_pr_prompt_data(
         commits,
         project_root
     )
-    
+
     description_prompt = process_prompt_template(
         description_prompt_model.content,
         task_tickets_details,
@@ -220,7 +220,4 @@ def prepare_pr_prompt_data(
     )
     
     # Return processed prompts
-    return PRPromptData(
-        title=title_prompt,
-        description=description_prompt
-    )
+    return PRPromptData(title=title_prompt, description=description_prompt)

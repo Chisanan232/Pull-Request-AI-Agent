@@ -1,12 +1,11 @@
 """Unit tests for prompt data models."""
 
-from typing import List, Type
-from unittest.mock import Mock
 import json
 import os
 from enum import Enum
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from typing import List, Type
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
@@ -14,16 +13,15 @@ from create_pr_bot.ai_bot.prompts.model import (
     PROMPT_MODEL_MAPPING,
     BasePrompt,
     PromptName,
-    load_prompt_from_file,
-    create_prompt_model,
-    get_prompt_model,
-    process_prompt_template,
-    prepare_pr_prompt_data,
+    PRPromptData,
     SummarizeAsPullRequestTitle,
     SummarizeChangeContentPrompt,
-    PRPromptData
+    create_prompt_model,
+    get_prompt_model,
+    load_prompt_from_file,
+    prepare_pr_prompt_data,
+    process_prompt_template,
 )
-
 
 
 @pytest.fixture
@@ -223,12 +221,12 @@ class TestPromptModel:
         # Create test data
         task_tickets = [
             {"id": "PROJ-123", "title": "Fix bug", "description": "Fix the login bug", "status": "In Progress"},
-            {"id": "PROJ-456", "title": "Add feature", "description": "Add a new feature", "status": "Done"}
+            {"id": "PROJ-456", "title": "Add feature", "description": "Add a new feature", "status": "Done"},
         ]
 
         commits = [
             {"short_hash": "abc123", "message": "Fix login bug"},
-            {"short_hash": "def456", "message": "Add new feature"}
+            {"short_hash": "def456", "message": "Add new feature"},
         ]
 
         # Process the template
@@ -331,9 +329,11 @@ class TestPromptModel:
         with patch("create_pr_bot.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
             # Mock the prompt models
             title_prompt = SummarizeAsPullRequestTitle(
-                content="Title template: {{ task_tickets_details }} {{ all_commits }}")
+                content="Title template: {{ task_tickets_details }} {{ all_commits }}"
+            )
             description_prompt = SummarizeChangeContentPrompt(
-                content="Description template: {{ task_tickets_details }} {{ all_commits }}")
+                content="Description template: {{ task_tickets_details }} {{ all_commits }}"
+            )
             mock_get_prompt.side_effect = [title_prompt, description_prompt]
 
             # Create test data

@@ -2,35 +2,35 @@
 Unit tests for the CreatePrAIBot class.
 """
 
+from typing import Any, Dict, Optional
+from unittest.mock import MagicMock, PropertyMock, call, patch
 import json
 import os
 from typing import Dict, List, Optional, Any
 from unittest.mock import patch, MagicMock, PropertyMock, call, mock_open
 
 import pytest
-import git
 from github.PullRequest import PullRequest
 
-from create_pr_bot.bot import CreatePrAIBot, AiModuleClient, ProjectManagementToolType
-from create_pr_bot.git_hdlr import GitHandler, GitCodeConflictError
-from create_pr_bot.github_opt import GitHubOperations
 from create_pr_bot.ai_bot.gpt.client import GPTClient
+from create_pr_bot.bot import AiModuleClient, CreatePrAIBot, ProjectManagementToolType
+from create_pr_bot.git_hdlr import GitCodeConflictError, GitHandler
+from create_pr_bot.github_opt import GitHubOperations
 from create_pr_bot.project_management_tool._base.model import BaseImmutableModel
 from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
-from create_pr_bot.project_management_tool.jira.client import JiraAPIClient
 
 
 class SpyBot(CreatePrAIBot):
     def __init__(
-            self,
-            repo_path: str = ".",
-            base_branch: str = "main",
-            github_token: Optional[str] = None,
-            github_repo: Optional[str] = None,
-            project_management_tool_type: Optional[ProjectManagementToolType] = None,
-            project_management_tool_config: Optional[Dict[str, Any]] = None,
-            ai_client_type: AiModuleClient = AiModuleClient,
-            ai_client_api_key: Optional[str] = None,
+        self,
+        repo_path: str = ".",
+        base_branch: str = "main",
+        github_token: Optional[str] = None,
+        github_repo: Optional[str] = None,
+        project_management_tool_type: Optional[ProjectManagementToolType] = None,
+        project_management_tool_config: Optional[Dict[str, Any]] = None,
+        ai_client_type: AiModuleClient = AiModuleClient,
+        ai_client_api_key: Optional[str] = None,
     ):
         # Initialize attributes directly
         self.repo_path = repo_path
@@ -41,7 +41,7 @@ class SpyBot(CreatePrAIBot):
         self.project_management_tool_config = project_management_tool_config
         self.ai_client_type = ai_client_type
         self.ai_client_api_key = ai_client_api_key
-        
+
         # Initialize components
         self.git_handler = None
         self.github_operations = None
@@ -108,7 +108,7 @@ class TestCreatePrAIBot:
         mock_ticket.name = "Test ticket"
         mock_ticket.text_content = "Test ticket description"
         mock_ticket.description = None
-        
+
         # Mock status as a nested object
         mock_status = MagicMock()
         mock_status.status = "In Progress"
@@ -138,10 +138,14 @@ class TestCreatePrAIBot:
     @pytest.fixture
     def bot(self, mock_git_handler, mock_github_operations, mock_ai_client, mock_project_management_client):
         """Create a CreatePrAIBot instance with mocked dependencies."""
-        with patch("create_pr_bot.bot.GitHandler", return_value=mock_git_handler), \
-                patch("create_pr_bot.bot.GitHubOperations", return_value=mock_github_operations), \
-                patch.object(CreatePrAIBot, "_initialize_ai_client", return_value=mock_ai_client), \
-                patch.object(CreatePrAIBot, "_initialize_project_management_client", return_value=mock_project_management_client):
+        with (
+            patch("create_pr_bot.bot.GitHandler", return_value=mock_git_handler),
+            patch("create_pr_bot.bot.GitHubOperations", return_value=mock_github_operations),
+            patch.object(CreatePrAIBot, "_initialize_ai_client", return_value=mock_ai_client),
+            patch.object(
+                CreatePrAIBot, "_initialize_project_management_client", return_value=mock_project_management_client
+            ),
+        ):
 
             bot = CreatePrAIBot(
                 repo_path="/mock/repo",
@@ -151,7 +155,7 @@ class TestCreatePrAIBot:
                 project_management_tool_type=ProjectManagementToolType.CLICKUP,
                 project_management_tool_config={"api_token": "mock-api-key"},
                 ai_client_type="gpt",
-                ai_client_api_key="mock-api-key"
+                ai_client_api_key="mock-api-key",
             )
 
             return bot
@@ -322,10 +326,7 @@ class TestCreatePrAIBot:
 
         # Verify get_ticket was called with formatted ticket IDs
         assert mock_project_management_client.get_ticket.call_count == 2
-        mock_project_management_client.get_ticket.assert_has_calls([
-            call("123456"),
-            call("789012")
-        ])
+        mock_project_management_client.get_ticket.assert_has_calls([call("123456"), call("789012")])
 
         # Verify returned tickets
         assert len(tickets) == 2
@@ -348,7 +349,7 @@ class TestCreatePrAIBot:
         # Set up the project management tool client and type
         bot.project_management_client = mock_project_management_client
         bot.project_management_tool_type = ProjectManagementToolType.JIRA
-        
+
         # Mock get_ticket to raise exception
         mock_project_management_client.get_ticket.side_effect = Exception("API error")
 
@@ -363,7 +364,7 @@ class TestCreatePrAIBot:
         # Set up the project management tool client and type
         bot.project_management_client = mock_project_management_client
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
-        
+
         # Mock get_ticket to return None for one ticket
         mock_project_management_client.get_ticket.side_effect = [None, MagicMock()]
 
@@ -378,13 +379,13 @@ class TestCreatePrAIBot:
         # Mock commits and tickets
         commits = [
             {"short_hash": "abc123", "message": "Fix bug in login form", "author": "John Doe", "date": "2023-01-01"},
-            {"short_hash": "def456", "message": "Add new feature", "author": "Jane Smith", "date": "2023-01-02"}
+            {"short_hash": "def456", "message": "Add new feature", "author": "Jane Smith", "date": "2023-01-02"},
         ]
-        
+
         # Create mock tickets with the new structure
         mock_ticket1 = MagicMock()
         mock_ticket2 = MagicMock()
-        
+
         # Set up _extract_ticket_info to return structured ticket info
         with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
             mock_extract_info.side_effect = [
@@ -392,36 +393,33 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 },
                 {
                     "id": "PROJ-456",
                     "title": "Implement new feature",
                     "description": "Add a new feature to the application",
-                    "status": "In Review"
-                }
+                    "status": "In Review",
+                },
             ]
-            
+
             # Call prepare_ai_prompt
             prompt = bot.prepare_ai_prompt(commits, [mock_ticket1, mock_ticket2])
-            
+
             # Verify _extract_ticket_info was called
             assert mock_extract_info.call_count == 2
-            mock_extract_info.assert_has_calls([
-                call(mock_ticket1),
-                call(mock_ticket2)
-            ])
-        
+            mock_extract_info.assert_has_calls([call(mock_ticket1), call(mock_ticket2)])
+
         # Verify prompt contains commit info
         assert "Fix bug in login form" in prompt
         assert "Add new feature" in prompt
-        
+
         # Verify prompt contains ticket info
         assert "PROJ-123" in prompt
         assert "Fix login bug" in prompt
         assert "The login form has a bug that needs to be fixed" in prompt
         assert "In Progress" in prompt
-        
+
         assert "PROJ-456" in prompt
         assert "Implement new feature" in prompt
         assert "Add a new feature to the application" in prompt
@@ -433,13 +431,13 @@ class TestCreatePrAIBot:
         commits = [
             {"short_hash": "abc123", "message": "Fix bug in login form", "author": "John Doe", "date": "2023-01-01"}
         ]
-        
+
         # Call prepare_ai_prompt with empty tickets list
         prompt = bot.prepare_ai_prompt(commits, [])
-        
+
         # Verify prompt contains commit info
         assert "Fix bug in login form" in prompt
-        
+
         # Verify prompt mentions no tickets
         # assert "No tickets found" in prompt
 
@@ -447,22 +445,22 @@ class TestCreatePrAIBot:
         """Test prepare_ai_prompt method with no commits."""
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Set up _extract_ticket_info to return structured ticket info
         with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
             mock_extract_info.return_value = {
                 "id": "PROJ-123",
                 "title": "Fix login bug",
                 "description": "The login form has a bug that needs to be fixed",
-                "status": "In Progress"
+                "status": "In Progress",
             }
-            
+
             # Call prepare_ai_prompt with empty commits list
             prompt = bot.prepare_ai_prompt([], [mock_ticket])
-        
+
         # Verify prompt mentions no commits
         # assert "No commits found" in prompt
-        
+
         # Verify prompt contains ticket info
         assert "PROJ-123" in prompt
         assert "Fix login bug" in prompt
@@ -472,7 +470,7 @@ class TestCreatePrAIBot:
         # Test with well-formatted response
         response = """
         TITLE: This is the PR title
-        
+
         BODY:
         This is the PR body.
         It spans multiple lines.
@@ -508,18 +506,11 @@ class TestCreatePrAIBot:
 
     def test_create_pull_request(self, bot, mock_github_operations):
         """Test create_pull_request method."""
-        pr = bot.create_pull_request(
-            title="Test PR",
-            body="Test PR description",
-            branch_name="feature-branch"
-        )
+        pr = bot.create_pull_request(title="Test PR", body="Test PR description", branch_name="feature-branch")
 
         # Verify create_pull_request was called
         mock_github_operations.create_pull_request.assert_called_once_with(
-            title="Test PR",
-            body="Test PR description",
-            base_branch="main",
-            head_branch="feature-branch"
+            title="Test PR", body="Test PR description", base_branch="main", head_branch="feature-branch"
         )
 
         # Verify returned PR
@@ -530,10 +521,7 @@ class TestCreatePrAIBot:
         """Test create_pull_request method with no GitHub operations."""
         bot.github_operations = None
 
-        pr = bot.create_pull_request(
-            title="Test PR",
-            body="Test PR description"
-        )
+        pr = bot.create_pull_request(title="Test PR", body="Test PR description")
 
         # Should return None
         assert pr is None
@@ -542,10 +530,7 @@ class TestCreatePrAIBot:
         """Test create_pull_request method with exception."""
         mock_github_operations.create_pull_request.side_effect = Exception("Test error")
 
-        pr = bot.create_pull_request(
-            title="Test PR",
-            body="Test PR description"
-        )
+        pr = bot.create_pull_request(title="Test PR", body="Test PR description")
 
         # Should return None
         assert pr is None
@@ -553,8 +538,10 @@ class TestCreatePrAIBot:
     def test_run_outdated_pr_exists(self, bot):
         """Test run method when branch is outdated and PR exists."""
         # Mock is_branch_outdated and is_pr_already_opened
-        with patch.object(bot, "is_branch_outdated", return_value=True), \
-                patch.object(bot, "is_pr_already_opened", return_value=True):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=True),
+            patch.object(bot, "is_pr_already_opened", return_value=True),
+        ):
 
             # Call run
             result = bot.run()
@@ -565,14 +552,16 @@ class TestCreatePrAIBot:
     def test_run_outdated_no_pr(self, bot, mock_git_handler, mock_ai_client, mock_github_operations):
         """Test run method when branch is outdated and no PR exists."""
         # Mock methods
-        with patch.object(bot, "is_branch_outdated", return_value=True), \
-                patch.object(bot, "is_pr_already_opened", return_value=False), \
-                patch.object(bot, "fetch_and_merge_latest_from_base_branch", return_value=True), \
-                patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]), \
-                patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]), \
-                patch.object(bot, "get_ticket_details", return_value=[MagicMock()]), \
-                patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"), \
-                patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=True),
+            patch.object(bot, "is_pr_already_opened", return_value=False),
+            patch.object(bot, "fetch_and_merge_latest_from_base_branch", return_value=True),
+            patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
+            patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]),
+            patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
+            patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
+            patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
+        ):
 
             # Call run
             result = bot.run()
@@ -584,13 +573,15 @@ class TestCreatePrAIBot:
     def test_run_up_to_date_no_pr(self, bot, mock_github_operations):
         """Test run method when branch is up to date and no PR exists."""
         # Mock methods
-        with patch.object(bot, "is_branch_outdated", return_value=False), \
-                patch.object(bot, "is_pr_already_opened", return_value=False), \
-                patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]), \
-                patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]), \
-                patch.object(bot, "get_ticket_details", return_value=[MagicMock()]), \
-                patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"), \
-                patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=False),
+            patch.object(bot, "is_pr_already_opened", return_value=False),
+            patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
+            patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]),
+            patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
+            patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
+            patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
+        ):
 
             # Call run
             result = bot.run()
@@ -602,9 +593,13 @@ class TestCreatePrAIBot:
     def test_run_merge_conflict(self, bot):
         """Test run method with merge conflict."""
         # Mock methods
-        with patch.object(bot, "is_branch_outdated", return_value=True), \
-                patch.object(bot, "is_pr_already_opened", return_value=False), \
-                patch.object(bot, "fetch_and_merge_latest_from_base_branch", side_effect=GitCodeConflictError("Test conflict")):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=True),
+            patch.object(bot, "is_pr_already_opened", return_value=False),
+            patch.object(
+                bot, "fetch_and_merge_latest_from_base_branch", side_effect=GitCodeConflictError("Test conflict")
+            ),
+        ):
 
             # Call run
             result = bot.run()
@@ -615,9 +610,11 @@ class TestCreatePrAIBot:
     def test_run_no_commits(self, bot):
         """Test run method with no commits."""
         # Mock methods
-        with patch.object(bot, "is_branch_outdated", return_value=False), \
-                patch.object(bot, "is_pr_already_opened", return_value=False), \
-                patch.object(bot, "get_branch_commits", return_value=[]):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=False),
+            patch.object(bot, "is_pr_already_opened", return_value=False),
+            patch.object(bot, "get_branch_commits", return_value=[]),
+        ):
 
             # Call run
             result = bot.run()
@@ -631,12 +628,14 @@ class TestCreatePrAIBot:
         mock_ai_client.get_content.side_effect = Exception("AI error")
 
         # Mock methods
-        with patch.object(bot, "is_branch_outdated", return_value=False), \
-                patch.object(bot, "is_pr_already_opened", return_value=False), \
-                patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]), \
-                patch.object(bot, "extract_ticket_ids", return_value=[]), \
-                patch.object(bot, "get_ticket_details", return_value=[]), \
-                patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"):
+        with (
+            patch.object(bot, "is_branch_outdated", return_value=False),
+            patch.object(bot, "is_pr_already_opened", return_value=False),
+            patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
+            patch.object(bot, "extract_ticket_ids", return_value=[]),
+            patch.object(bot, "get_ticket_details", return_value=[]),
+            patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
+        ):
 
             # Call run
             result = bot.run()
@@ -644,9 +643,11 @@ class TestCreatePrAIBot:
             # Verify PR was created with fallback content
             assert result is not None
             mock_github_operations.create_pull_request.assert_called_once()
-            title, body, branch = mock_github_operations.create_pull_request.call_args[1]["title"], \
-                mock_github_operations.create_pull_request.call_args[1]["body"], \
-                mock_github_operations.create_pull_request.call_args[1]["head_branch"]
+            title, body, branch = (
+                mock_github_operations.create_pull_request.call_args[1]["title"],
+                mock_github_operations.create_pull_request.call_args[1]["body"],
+                mock_github_operations.create_pull_request.call_args[1]["head_branch"],
+            )
             assert title == f"Update {branch}"
             assert body == "Automated pull request."
 
@@ -654,9 +655,7 @@ class TestCreatePrAIBot:
         """Test initialization of ClickUp project management client."""
         with patch("create_pr_bot.bot.ClickUpAPIClient") as mock_clickup_client:
             config = {"api_token": "mock-api-token"}
-            client = SpyBot()._initialize_project_management_client(
-                ProjectManagementToolType.CLICKUP, config
-            )
+            client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.CLICKUP, config)
             mock_clickup_client.assert_called_once_with(api_token="mock-api-token")
 
     def test_initialize_project_management_client_jira(self):
@@ -665,15 +664,11 @@ class TestCreatePrAIBot:
             config = {
                 "base_url": "https://example.atlassian.net",
                 "email": "test@example.com",
-                "api_token": "mock-api-token"
+                "api_token": "mock-api-token",
             }
-            client = SpyBot()._initialize_project_management_client(
-                ProjectManagementToolType.JIRA, config
-            )
+            client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.JIRA, config)
             mock_jira_client.assert_called_once_with(
-                base_url="https://example.atlassian.net",
-                email="test@example.com",
-                api_token="mock-api-token"
+                base_url="https://example.atlassian.net", email="test@example.com", api_token="mock-api-token"
             )
 
     @pytest.mark.parametrize(
@@ -683,9 +678,11 @@ class TestCreatePrAIBot:
             (ProjectManagementToolType.JIRA, {"email": "test@example.com", "api_token": "mock-token"}),
             (ProjectManagementToolType.JIRA, {"base_url": "example.com", "api_token": "mock-token"}),
             (ProjectManagementToolType.JIRA, {"base_url": "example.com", "email": "test@example.com"}),
-        ]
+        ],
     )
-    def test_initialize_project_management_client_missing_config(self, service_type: ProjectManagementToolType, config: Dict[str, str]):
+    def test_initialize_project_management_client_missing_config(
+        self, service_type: ProjectManagementToolType, config: Dict[str, str]
+    ):
         # Test Jira with missing base_url
         with pytest.raises(ValueError, match="is required"):
             SpyBot()._initialize_project_management_client(service_type, config)
@@ -699,15 +696,15 @@ class TestCreatePrAIBot:
         """Test _format_ticket_id method for ClickUp tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
-        
+
         # Test with CU- prefix
         ticket_id = bot._format_ticket_id("CU-abc123")
         assert ticket_id == "abc123"
-        
+
         # Test without prefix
         ticket_id = bot._format_ticket_id("def456")
         assert ticket_id == "def456"
-        
+
         # Test with whitespace
         ticket_id = bot._format_ticket_id(" CU-ghi789 ")
         assert ticket_id == "ghi789"
@@ -716,11 +713,11 @@ class TestCreatePrAIBot:
         """Test _format_ticket_id method for Jira tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.JIRA
-        
+
         # Test with standard Jira format
         ticket_id = bot._format_ticket_id("PROJ-123")
         assert ticket_id == "PROJ-123"
-        
+
         # Test with whitespace
         ticket_id = bot._format_ticket_id(" TEST-456 ")
         assert ticket_id == "TEST-456"
@@ -734,7 +731,7 @@ class TestCreatePrAIBot:
         """Test _format_ticket_id method with unknown tool type."""
         # Set project management tool type to None
         bot.project_management_tool_type = None
-        
+
         ticket_id = bot._format_ticket_id("TICKET-123")
         assert ticket_id == "TICKET-123"
 
@@ -742,23 +739,23 @@ class TestCreatePrAIBot:
         """Test _extract_ticket_info method for ClickUp tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
-        
+
         # Create a mock ClickUp ticket
         mock_ticket = MagicMock()
         mock_ticket.id = "123456"
         mock_ticket.name = "Test ClickUp ticket"
         mock_ticket.text_content = "Test ticket text content"
         mock_ticket.description = None
-        
+
         # Mock status as a nested object
         mock_status = MagicMock()
         mock_status.status = "In Progress"
         mock_status.color = "#4A90E2"
         mock_ticket.status = mock_status
-        
+
         # Extract ticket info
         ticket_info = bot._extract_ticket_info(mock_ticket)
-        
+
         # Verify extracted info
         assert ticket_info["id"] == "123456"
         assert ticket_info["title"] == "Test ClickUp ticket"
@@ -769,17 +766,17 @@ class TestCreatePrAIBot:
         """Test _extract_ticket_info method for ClickUp tickets with description instead of text_content."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
-        
+
         # Create a mock ClickUp ticket
         mock_ticket = MagicMock()
         mock_ticket.id = "123456"
         mock_ticket.name = "Test ClickUp ticket"
         mock_ticket.text_content = None
         mock_ticket.description = "Test ticket description"
-        
+
         # Extract ticket info
         ticket_info = bot._extract_ticket_info(mock_ticket)
-        
+
         # Verify extracted info
         assert ticket_info["description"] == "Test ticket description"
 
@@ -787,17 +784,17 @@ class TestCreatePrAIBot:
         """Test _extract_ticket_info method for Jira tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.JIRA
-        
+
         # Create a mock Jira ticket
         mock_ticket = MagicMock()
         mock_ticket.id = "PROJ-123"
         mock_ticket.title = "Test Jira ticket"
         mock_ticket.description = "Test Jira description"
         mock_ticket.status = "In Review"
-        
+
         # Extract ticket info
         ticket_info = bot._extract_ticket_info(mock_ticket)
-        
+
         # Verify extracted info
         assert ticket_info["id"] == "PROJ-123"
         assert ticket_info["title"] == "Test Jira ticket"
@@ -808,7 +805,7 @@ class TestCreatePrAIBot:
         """Test _extract_ticket_info method with unknown tool type."""
         # Set project management tool type to None
         bot.project_management_tool_type = None
-        
+
         # Create a mock ticket with various attributes
         mock_ticket = MagicMock()
         mock_ticket.id = "TICKET-123"
@@ -816,10 +813,10 @@ class TestCreatePrAIBot:
         mock_ticket.title = "Test ticket title"
         mock_ticket.description = "Test description"
         mock_ticket.status = "Open"
-        
+
         # Extract ticket info
         ticket_info = bot._extract_ticket_info(mock_ticket)
-        
+
         # Verify extracted info - should use generic fallback
         assert ticket_info["id"] == "TICKET-123"
         assert ticket_info["title"] == "Test ticket title"  # Should prefer title over name
@@ -831,17 +828,17 @@ class TestCreatePrAIBot:
         # Mock commits and tickets
         commits = [
             {"short_hash": "abc123", "message": "Fix bug in login form", "author": "John Doe", "date": "2023-01-01"},
-            {"short_hash": "def456", "message": "Add new feature", "author": "Jane Smith", "date": "2023-01-02"}
+            {"short_hash": "def456", "message": "Add new feature", "author": "Jane Smith", "date": "2023-01-02"},
         ]
-        
+
         # Create mock tickets
         mock_ticket1 = MagicMock()
         mock_ticket2 = MagicMock()
-        
+
         # Mock prepare_pr_prompt_data
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt"
-        
+
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
@@ -850,22 +847,22 @@ class TestCreatePrAIBot:
                         "id": "PROJ-123",
                         "title": "Fix login bug",
                         "description": "The login form has a bug that needs to be fixed",
-                        "status": "In Progress"
+                        "status": "In Progress",
                     },
                     {
                         "id": "PROJ-456",
                         "title": "Implement new feature",
                         "description": "Add a new feature to the application",
-                        "status": "In Review"
-                    }
+                        "status": "In Review",
+                    },
                 ]
-                
+
                 # Call prepare_ai_prompt
                 prompt = bot.prepare_ai_prompt(commits, [mock_ticket1, mock_ticket2])
-                
+
                 # Verify _extract_ticket_info was called
                 assert mock_extract_info.call_count == 2
-                
+
                 # Verify prepare_pr_prompt_data was called with the right arguments
                 mock_prepare.assert_called_once()
                 call_args = mock_prepare.call_args[1]
@@ -875,20 +872,18 @@ class TestCreatePrAIBot:
                 assert len(call_args["commits"]) == 2
                 assert call_args["commits"][0]["short_hash"] == "abc123"
                 assert call_args["commits"][1]["short_hash"] == "def456"
-                
+
                 # Verify the returned prompt
                 assert prompt == "Test title prompt"
 
     def test_prepare_ai_prompt_template_not_found(self, bot):
         """Test prepare_ai_prompt method when prompt template is not found."""
         # Mock commits and tickets
-        commits = [
-            {"short_hash": "abc123", "message": "Fix bug in login form"}
-        ]
-        
+        commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
+
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Mock prepare_pr_prompt_data to raise FileNotFoundError
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=FileNotFoundError("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
@@ -897,9 +892,9 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 }
-                
+
                 # Call prepare_ai_prompt should raise FileNotFoundError
                 with pytest.raises(FileNotFoundError):
                     bot.prepare_ai_prompt(commits, [mock_ticket])
@@ -907,13 +902,11 @@ class TestCreatePrAIBot:
     def test_prepare_ai_prompt_fallback(self, bot):
         """Test prepare_ai_prompt method falling back to default prompt on error."""
         # Mock commits and tickets
-        commits = [
-            {"short_hash": "abc123", "message": "Fix bug in login form"}
-        ]
-        
+        commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
+
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Mock prepare_pr_prompt_data to raise a generic Exception
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
@@ -922,12 +915,12 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 }
-                
+
                 # Call prepare_ai_prompt
                 prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
-                
+
                 # Verify the fallback prompt was returned
                 assert "I need you to generate a pull request title and description" in prompt
                 assert "abc123 - Fix bug in login form" in prompt
@@ -939,16 +932,16 @@ class TestCreatePrAIBot:
         """Test prepare_ai_prompt method with invalid commits."""
         # Mock commits without required fields
         commits = [
-            {"hash": "abc123", "author": "John Doe"}, # Missing short_hash and message
+            {"hash": "abc123", "author": "John Doe"},  # Missing short_hash and message
         ]
-        
+
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Mock prepare_pr_prompt_data
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt"
-        
+
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
@@ -956,12 +949,12 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 }
-                
+
                 # Call prepare_ai_prompt
                 prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
-                
+
                 # Verify prepare_pr_prompt_data was called with empty commits list
                 mock_prepare.assert_called_once()
                 call_args = mock_prepare.call_args[1]
@@ -973,14 +966,14 @@ class TestCreatePrAIBot:
         commits = [
             {"short_hash": "abc123", "message": "Fix bug in login form"}
         ]
-        
+
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Mock prepare_pr_prompt_data
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt with PR template"
-        
+
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
@@ -990,16 +983,16 @@ class TestCreatePrAIBot:
                     "description": "The login form has a bug that needs to be fixed",
                     "status": "In Progress"
                 }
-                
+
                 # Call prepare_ai_prompt
                 prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
-                
+
                 # Verify prepare_pr_prompt_data was called with project_root
                 mock_prepare.assert_called_once()
                 call_args = mock_prepare.call_args[1]
                 assert "project_root" in call_args
                 assert call_args["project_root"] == bot.repo_path
-                
+
                 # Verify the returned prompt
                 assert prompt == "Test title prompt with PR template"
 
@@ -1009,13 +1002,13 @@ class TestCreatePrAIBot:
         commits = [
             {"short_hash": "abc123", "message": "Fix bug in login form"}
         ]
-        
+
         # Create mock ticket
         mock_ticket = MagicMock()
-        
+
         # Mock PR template file
         mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
-        
+
         # Mock prepare_pr_prompt_data to raise Exception
         with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
@@ -1026,13 +1019,13 @@ class TestCreatePrAIBot:
                     "description": "The login form has a bug that needs to be fixed",
                     "status": "In Progress"
                 }
-                
+
                 # Mock Path.exists and open for PR template
                 with patch("pathlib.Path.exists", return_value=True):
                     with patch("builtins.open", mock_open(read_data=mock_pr_template)):
                         # Call prepare_ai_prompt
                         prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
-                        
+
                         # Verify the fallback prompt includes PR template
                         assert "Pull Request Template" in prompt
                         assert mock_pr_template in prompt
