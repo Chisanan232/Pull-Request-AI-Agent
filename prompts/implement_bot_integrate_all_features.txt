@@ -62,5 +62,11 @@ Now, I need to fix another bug: the prompt data process is incorrect. The prompt
 Please remember to generate the unit tests for this function.
 ------------------ one prompt end ------------------
 
+------------------ one prompt start ------------------
+About the prompt data process, we forget one thing: set the GitHub pull request template. The variable *{{ pull_request_template }}*
+means the pull request template setting which would be a file named *PULL_REQUEST_TEMPLATE.md* in project folder *.github/*.
+Please also replace it by the file content and also adjust unit test for this change.
+------------------ one prompt end ------------------
+
 ================ improvement (or refactoring) =======================
 content ...
