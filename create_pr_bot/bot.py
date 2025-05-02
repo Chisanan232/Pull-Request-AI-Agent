@@ -16,6 +16,10 @@ from .ai_bot.gpt.client import GPTClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
 from .ai_bot._base.client import BaseAIClient
+from .project_management_tool._base.client import BaseProjectManagementAPIClient
+from .project_management_tool._base.model import BaseImmutableModel
+from .project_management_tool.clickup.client import ClickUpAPIClient
+from .project_management_tool.jira.client import JiraAPIClient
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +29,11 @@ class AiModuleClient(Enum):
     GPT = "gpt"
     CLAUDE = "claude"
     GEMINI = "gemini"
+
+
+class ProjectManagementToolType(Enum):
+    CLICKUP = "clickup"
+    JIRA = "jira"
 
 
 class CreatePrAIBot:
@@ -37,6 +46,10 @@ class CreatePrAIBot:
     AI_CLIENT_GPT = AiModuleClient.GPT
     AI_CLIENT_CLAUDE = AiModuleClient.CLAUDE
     AI_CLIENT_GEMINI = AiModuleClient.GEMINI
+    
+    # Project management tool types
+    PM_TOOL_CLICKUP = ProjectManagementToolType.CLICKUP
+    PM_TOOL_JIRA = ProjectManagementToolType.JIRA
 
     def __init__(
             self,
@@ -44,7 +57,8 @@ class CreatePrAIBot:
             base_branch: str = "main",
             github_token: Optional[str] = None,
             github_repo: Optional[str] = None,
-            project_management_client: Optional[Any] = None,
+            project_management_tool_type: Optional[ProjectManagementToolType] = None,
+            project_management_tool_config: Optional[Dict[str, Any]] = None,
             ai_client_type: AiModuleClient = AI_CLIENT_GPT,
             ai_client_api_key: Optional[str] = None,
     ):
@@ -56,7 +70,8 @@ class CreatePrAIBot:
             base_branch: Name of the base branch to compare against. Defaults to "main".
             github_token: GitHub access token for API access.
             github_repo: GitHub repository name in format 'owner/repo'.
-            project_management_client: Client for interacting with project management tools.
+            project_management_tool_type: Type of project management tool to use.
+            project_management_tool_config: Configuration for the project management tool.
             ai_client_type: Type of AI client to use (gpt, claude, gemini).
             ai_client_api_key: API key for the AI service.
         """
@@ -69,11 +84,49 @@ class CreatePrAIBot:
         if github_token and github_repo:
             self.github_operations = GitHubOperations(github_token, github_repo)
 
-        # Store project management client for task ticket retrieval
-        self.project_management_client = project_management_client
+        # Initialize project management client based on type
+        self.project_management_client = None
+        self.project_management_tool_type = project_management_tool_type
+        if project_management_tool_type and project_management_tool_config:
+            self.project_management_client = self._initialize_project_management_client(
+                project_management_tool_type, project_management_tool_config
+            )
 
         # Initialize AI client based on type
         self.ai_client = self._initialize_ai_client(ai_client_type, ai_client_api_key)
+
+    def _initialize_project_management_client(
+        self, tool_type: ProjectManagementToolType, config: Dict[str, Any]
+    ) -> Optional[BaseProjectManagementAPIClient]:
+        """
+        Initialize the project management client based on the specified type.
+
+        Args:
+            tool_type: Type of project management tool
+            config: Configuration for the project management tool
+
+        Returns:
+            Initialized project management client or None if initialization fails
+
+        Raises:
+            ValueError: If the tool type is not supported or required config is missing
+        """
+        if tool_type == self.PM_TOOL_CLICKUP:
+            if "api_token" not in config:
+                raise ValueError("ClickUp API token is required")
+            return ClickUpAPIClient(api_token=config["api_token"])
+        elif tool_type == self.PM_TOOL_JIRA:
+            required_keys = ["base_url", "email", "api_token"]
+            for key in required_keys:
+                if key not in config:
+                    raise ValueError(f"Jira {key} is required")
+            return JiraAPIClient(
+                base_url=config["base_url"],
+                email=config["email"],
+                api_token=config["api_token"]
+            )
+        else:
+            raise ValueError(f"Unsupported project management tool type: {tool_type}")
 
     def _initialize_ai_client(self, client_type: AiModuleClient, api_key: Optional[str] = None) -> BaseAIClient:
         """
@@ -244,7 +297,7 @@ class CreatePrAIBot:
 
         return list(ticket_ids)
 
-    def get_ticket_details(self, ticket_ids: List[str]) -> List[Dict[str, Any]]:
+    def get_ticket_details(self, ticket_ids: List[str]) -> List[BaseImmutableModel]:
         """
         Get details for each ticket ID from the project management system.
 
@@ -252,35 +305,78 @@ class CreatePrAIBot:
             ticket_ids: List of ticket IDs to get details for
 
         Returns:
-            List of ticket details
+            List of ticket details as BaseImmutableModel objects
         """
         if not self.project_management_client:
             logger.warning("Project management client not configured. Cannot get ticket details.")
+            return []
+
+        if not ticket_ids:
+            logger.info("No ticket IDs provided. Skipping ticket details retrieval.")
             return []
 
         ticket_details = []
 
         for ticket_id in ticket_ids:
             try:
-                ticket = self.project_management_client.get_ticket(ticket_id)
+                # Format ticket ID based on project management tool type
+                formatted_ticket_id = self._format_ticket_id(ticket_id)
+                if not formatted_ticket_id:
+                    logger.warning(f"Could not format ticket ID: {ticket_id}")
+                    continue
+
+                logger.info(f"Fetching details for ticket: {formatted_ticket_id}")
+                ticket = self.project_management_client.get_ticket(formatted_ticket_id)
+                
                 if ticket:
+                    logger.info(f"Successfully retrieved ticket: {formatted_ticket_id}")
                     ticket_details.append(ticket)
+                else:
+                    logger.warning(f"No ticket found with ID: {formatted_ticket_id}")
             except Exception as e:
                 logger.error(f"Error getting details for ticket {ticket_id}: {str(e)}")
 
         return ticket_details
 
+    def _format_ticket_id(self, ticket_id: str) -> Optional[str]:
+        """
+        Format the ticket ID based on the project management tool type.
+
+        Args:
+            ticket_id: Raw ticket ID from commit message
+
+        Returns:
+            Formatted ticket ID or None if formatting fails
+        """
+        if not ticket_id:
+            return None
+
+        # Remove any leading/trailing whitespace
+        ticket_id = ticket_id.strip()
+
+        if self.project_management_tool_type == self.PM_TOOL_CLICKUP:
+            # For ClickUp, if the ID starts with "CU-", remove it
+            if ticket_id.startswith("CU-"):
+                return ticket_id[3:]
+            return ticket_id
+        elif self.project_management_tool_type == self.PM_TOOL_JIRA:
+            # For Jira, the ID format is typically PROJECT-123
+            return ticket_id
+        else:
+            # For unknown tool types, return as is
+            return ticket_id
+
     def prepare_ai_prompt(
             self,
             commits: List[Dict[str, Any]],
-            ticket_details: List[Dict[str, Any]]
+            ticket_details: List[BaseImmutableModel]
     ) -> str:
         """
         Prepare a prompt for the AI to generate a PR title and body.
 
         Args:
             commits: List of commit details
-            ticket_details: List of ticket details
+            ticket_details: List of ticket details as BaseImmutableModel objects
 
         Returns:
             Formatted prompt string
@@ -299,16 +395,18 @@ class CreatePrAIBot:
         if ticket_details:
             prompt += "## Related Tickets\n"
             for i, ticket in enumerate(ticket_details, 1):
-                # Adapt this based on your ticket object structure
-                ticket_id = ticket.id if hasattr(ticket, "id") else "Unknown ID"
-                title = ticket.title if hasattr(ticket, "title") else "Unknown Title"
-                description = ticket.description if hasattr(ticket, "description") else ""
-
-                prompt += f"{i}. {ticket_id}: {title}\n"
-                if description:
+                # Extract ticket information based on its type
+                ticket_info = self._extract_ticket_info(ticket)
+                
+                prompt += f"{i}. {ticket_info['id']}: {ticket_info['title']}\n"
+                if ticket_info['description']:
                     # Truncate long descriptions
-                    short_desc = description[:200] + "..." if len(description) > 200 else description
+                    short_desc = ticket_info['description'][:200] + "..." if len(ticket_info['description']) > 200 else ticket_info['description']
                     prompt += f"   Description: {short_desc}\n"
+                
+                # Add status if available
+                if ticket_info.get('status'):
+                    prompt += f"   Status: {ticket_info['status']}\n"
 
             prompt += "\n"
 
@@ -331,6 +429,59 @@ BODY:
 """
 
         return prompt
+
+    def _extract_ticket_info(self, ticket: BaseImmutableModel) -> Dict[str, str]:
+        """
+        Extract relevant information from a ticket based on its type.
+
+        Args:
+            ticket: Ticket object as a BaseImmutableModel
+
+        Returns:
+            Dictionary with standardized ticket information
+        """
+        ticket_info = {
+            'id': '',
+            'title': '',
+            'description': '',
+            'status': ''
+        }
+
+        # Handle different ticket types
+        if self.project_management_tool_type == self.PM_TOOL_CLICKUP:
+            # For ClickUp tickets
+            ticket_info['id'] = getattr(ticket, 'id', '')
+            ticket_info['title'] = getattr(ticket, 'name', '')
+            
+            # Use text_content if available, otherwise use description
+            description = getattr(ticket, 'text_content', None)
+            if not description:
+                description = getattr(ticket, 'description', '')
+            ticket_info['description'] = description or ''
+            
+            # Get status if available
+            status = getattr(ticket, 'status', None)
+            if status:
+                ticket_info['status'] = getattr(status, 'status', '')
+                
+        elif self.project_management_tool_type == self.PM_TOOL_JIRA:
+            # For Jira tickets
+            ticket_info['id'] = getattr(ticket, 'id', '')
+            ticket_info['title'] = getattr(ticket, 'title', '')
+            ticket_info['description'] = getattr(ticket, 'description', '')
+            ticket_info['status'] = getattr(ticket, 'status', '')
+        else:
+            # Generic fallback for unknown ticket types
+            # Try to extract common attributes
+            for field in ['id', 'title', 'name', 'description', 'status']:
+                value = getattr(ticket, field, None)
+                if value and isinstance(value, str):
+                    if field == 'name' and not ticket_info['title']:
+                        ticket_info['title'] = value
+                    else:
+                        ticket_info[field] = value
+
+        return ticket_info
 
     def parse_ai_response(self, response: str) -> Tuple[str, str]:
         """
