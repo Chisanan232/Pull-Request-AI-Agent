@@ -1,0 +1,66 @@
+================ create =======================
+------------------ one prompt start ------------------
+Please help me implement the core logic about AI bot which integrates all features into one workflow.
+1. Please use Python 3.11 or later.
+2. Please use existing common functions to do some operations like getting all the git commits, getting the task ticket details, opening a PR or something else.
+3. Please use the library *pytest* for the test part.
+4. Wrap the code in an object named *CreatePrAIBot*.
+5. A below workflow is the core logic in the object.
+6. Please also help me generate the unit test for each function of each object includes protected one or public one in this object.
+7. Source code should be in the file *create_pr_bot/bot.py*.
+8. Test code should be in the file *test/unit_test/bot.py*.
+
+The workflow is (the first number is the number, so the order is important):
+1. Check the head commit of the current git branch is out of date or not by comparing the head commit of the base git branch.
+2. Check the PR is already opened or not (use git branch to check).
+3. If #1 is *Yes* and #2 is *Yes*, then do nothing. Program will exit.
+4. If #1 is *Yes* and #2 is *No*, then:
+    4-1. Fetch and merge the remote git branch to the local specific git branch to ensure the local git branch is up-to-date.
+    4-2. Get all the git commits of the local git branch.
+    4-3. Get the task ticket(s) details from project management tool like ClickUp, Jira, etc.
+    4-4. Organize above all info into prompts.
+    4-5. Ask the AI module to generate the PR title and body with the prompts we got in #4-4.
+    4-2. Open a PR from the local git branch to the base git branch with the title and body of the PR.
+------------------ one prompt end ------------------
+
+================ bug fix =======================
+------------------ one prompt start ------------------
+It has bug at the logic of project management tool integration. You should try to use the modules in subpackage
+*create_pr_bot.project_management_tool*. Please refer the details implementation and re-implement again of the part about
+getting task tickets details from project management tool.
+------------------ one prompt end ------------------
+
+*** change AI assistant from JetBrain to Winsurf ***
+------------------ one prompt start ------------------
+Please refer to the entire code of this project. And tell me what you understand about this project. I would ask you to
+do something change.
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+Good job! Now, (repeat (bug fix)#1.)
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+Could you also help me adjust the unit test? Because the unit tests must be broken after adjust the implementation.
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+You have a good job in fixing the bug of incorrect usages about getting task ticket details from project management tools.
+Now, I need to fix another bug: the prompt data process is incorrect. The prompts handle should be like:
+1. Check the prompt files (regex: "create_pr_bot/ai_bot/prompts/**.prompt") exist or not. If it doesn't exist, raise an
+   error to stop the process.
+2. Use utility function to get the content from the file paths and serialize as data models in the Python subpackage
+   *create_pr_bot/ai_bot/prompts* annotate.
+3. Replace the value of the prompts:
+    3-1. Variable *{{ task_tickets_details }}* in value means the task ticket details. Please replace it with the dict
+         type value directly.
+    3-2. Variable *{{ all_commits }}* in value means the task ticket details. Please replace it with a list which
+         contains all the git commits (please also ensure the order is correct by the commit time). And the elements
+         should have only 2 properties: "short_hash" and "message".
+4. Finally, return a data model which has the prompts with 2 properties: *title* and *description*.
+
+Please remember to generate the unit tests for this function.
+------------------ one prompt end ------------------
+
+================ improvement (or refactoring) =======================
+content ...
