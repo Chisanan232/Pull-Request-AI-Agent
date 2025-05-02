@@ -49,7 +49,10 @@ class PRPromptData:
     description: str
 
 
-# Add other prompt models as needed
+class PromptVariable(Enum):
+    TASK_TICKETS_DETAILS = "{{ task_tickets_details }}"
+    ALL_COMMITS = "{{ all_commits }}"
+    PULL_REQUEST_TEMPLATE = "{{ pull_request_template }}"
 
 
 def load_prompt_from_file(file_path: str | Path) -> str:
@@ -145,15 +148,17 @@ def process_prompt_template(
         The processed prompt with variables replaced.
     """
     # Replace task tickets details
-    if "{{ task_tickets_details }}" in prompt_content:
+    prompt_var_task_details = PromptVariable.TASK_TICKETS_DETAILS.value
+    if prompt_var_task_details in prompt_content:
         # Convert task tickets to JSON string
         import json
 
         task_tickets_json = json.dumps(task_tickets_details, indent=2)
-        prompt_content = prompt_content.replace("{{ task_tickets_details }}", task_tickets_json)
+        prompt_content = prompt_content.replace("%s" % prompt_var_task_details, task_tickets_json)
 
     # Replace commits
-    if "{{ all_commits }}" in prompt_content:
+    prompt_var_all_commits = PromptVariable.ALL_COMMITS.value
+    if ("%s" % prompt_var_all_commits) in prompt_content:
         # Format commits as a list of short_hash and message
         formatted_commits = []
         for commit in commits:
@@ -161,10 +166,11 @@ def process_prompt_template(
                 formatted_commits.append(f"{commit['short_hash']}: {commit['message']}")
 
         commits_text = "\n".join(formatted_commits)
-        prompt_content = prompt_content.replace("{{ all_commits }}", commits_text)
+        prompt_content = prompt_content.replace(prompt_var_all_commits, commits_text)
 
     # Replace pull request template
-    if "{{ pull_request_template }}" in prompt_content and project_root:
+    prompt_var_pr_template = PromptVariable.PULL_REQUEST_TEMPLATE.value
+    if prompt_var_pr_template in prompt_content and project_root:
         from pathlib import Path
 
         # Look for the PR template file
@@ -173,10 +179,10 @@ def process_prompt_template(
         if pr_template_path.exists():
             with open(pr_template_path, "r", encoding="utf-8") as file:
                 pr_template_content = file.read()
-            prompt_content = prompt_content.replace("{{ pull_request_template }}", pr_template_content)
+            prompt_content = prompt_content.replace(prompt_var_pr_template, pr_template_content)
         else:
             # If template doesn't exist, replace with empty string
-            prompt_content = prompt_content.replace("{{ pull_request_template }}", "")
+            prompt_content = prompt_content.replace(prompt_var_pr_template, "")
 
     return prompt_content
 
