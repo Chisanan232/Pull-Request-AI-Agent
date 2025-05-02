@@ -21,6 +21,7 @@ from .project_management_tool._base.model import BaseImmutableModel
 from .project_management_tool.clickup.client import ClickUpAPIClient
 from .project_management_tool.jira.client import JiraAPIClient
 from .ai_bot.prompts.model import prepare_pr_prompt_data
+from .ai_bot.prompts.model import prepare_pr_prompt_data
 
 logger = logging.getLogger(__name__)
 
@@ -400,7 +401,8 @@ class CreatePrAIBot:
             # Process prompt templates
             prompt_data = prepare_pr_prompt_data(
                 task_tickets_details=ticket_info_list,
-                commits=formatted_commits
+                commits=formatted_commits,
+                project_root=self.repo_path
             )
             
             # For now, we'll just use the title prompt
@@ -438,6 +440,19 @@ class CreatePrAIBot:
                         prompt += f"   Status: {ticket_info['status']}\n"
                 
                 prompt += "\n"
+            
+            # Add PR template if available
+            try:
+                from pathlib import Path
+                pr_template_path = Path(self.repo_path) / ".github" / "PULL_REQUEST_TEMPLATE.md"
+                if pr_template_path.exists():
+                    with open(pr_template_path, "r", encoding="utf-8") as file:
+                        pr_template = file.read()
+                    prompt += f"## Pull Request Template\n{pr_template}\n\n"
+            except Exception as e:
+                # Ignore errors when trying to read PR template in fallback mode
+                logger.error(f"Error setting pull request template into AI prompt: {str(e)}")
+
             return prompt
 
     def _extract_ticket_info(self, ticket: BaseImmutableModel) -> Dict[str, str]:

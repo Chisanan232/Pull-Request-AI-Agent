@@ -130,7 +130,8 @@ def get_prompt_model(prompt_name: PromptName) -> BasePrompt:
 def process_prompt_template(
     prompt_content: str,
     task_tickets_details: List[Dict[str, Any]],
-    commits: List[Dict[str, str]]
+    commits: List[Dict[str, str]],
+    project_root: str = None
 ) -> str:
     """
     Process a prompt template by replacing variables with actual values.
@@ -139,6 +140,7 @@ def process_prompt_template(
         prompt_content: The content of the prompt template.
         task_tickets_details: List of task ticket details.
         commits: List of commit details.
+        project_root: Root directory of the project. If provided, will look for PR template.
 
     Returns:
         The processed prompt with variables replaced.
@@ -161,12 +163,28 @@ def process_prompt_template(
         commits_text = "\n".join(formatted_commits)
         prompt_content = prompt_content.replace("{{ all_commits }}", commits_text)
     
+    # Replace pull request template
+    if "{{ pull_request_template }}" in prompt_content and project_root:
+        from pathlib import Path
+        
+        # Look for the PR template file
+        pr_template_path = Path(project_root) / ".github" / "PULL_REQUEST_TEMPLATE.md"
+        
+        if pr_template_path.exists():
+            with open(pr_template_path, "r", encoding="utf-8") as file:
+                pr_template_content = file.read()
+            prompt_content = prompt_content.replace("{{ pull_request_template }}", pr_template_content)
+        else:
+            # If template doesn't exist, replace with empty string
+            prompt_content = prompt_content.replace("{{ pull_request_template }}", "")
+    
     return prompt_content
 
 
 def prepare_pr_prompt_data(
     task_tickets_details: List[Dict[str, Any]],
-    commits: List[Dict[str, str]]
+    commits: List[Dict[str, str]],
+    project_root: str = None
 ) -> PRPromptData:
     """
     Prepare PR prompt data by processing prompt templates.
@@ -174,6 +192,7 @@ def prepare_pr_prompt_data(
     Args:
         task_tickets_details: List of task ticket details.
         commits: List of commit details with short_hash and message.
+        project_root: Root directory of the project. If provided, will look for PR template.
 
     Returns:
         PRPromptData object with processed title and description prompts.
@@ -189,13 +208,15 @@ def prepare_pr_prompt_data(
     title_prompt = process_prompt_template(
         title_prompt_model.content,
         task_tickets_details,
-        commits
+        commits,
+        project_root
     )
     
     description_prompt = process_prompt_template(
         description_prompt_model.content,
         task_tickets_details,
-        commits
+        commits,
+        project_root
     )
     
     # Return processed prompts

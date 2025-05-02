@@ -5,7 +5,7 @@ Unit tests for the CreatePrAIBot class.
 import json
 import os
 from typing import Dict, List, Optional, Any
-from unittest.mock import patch, MagicMock, PropertyMock, call
+from unittest.mock import patch, MagicMock, PropertyMock, call, mock_open
 
 import pytest
 import git
@@ -966,3 +966,73 @@ class TestCreatePrAIBot:
                 mock_prepare.assert_called_once()
                 call_args = mock_prepare.call_args[1]
                 assert len(call_args["commits"]) == 0
+
+    def test_prepare_ai_prompt_with_pr_template(self, bot):
+        """Test prepare_ai_prompt method with PR template."""
+        # Mock commits and tickets
+        commits = [
+            {"short_hash": "abc123", "message": "Fix bug in login form"}
+        ]
+        
+        # Create mock ticket
+        mock_ticket = MagicMock()
+        
+        # Mock prepare_pr_prompt_data
+        mock_prompt_data = MagicMock()
+        mock_prompt_data.title = "Test title prompt with PR template"
+        
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.return_value = {
+                    "id": "PROJ-123",
+                    "title": "Fix login bug",
+                    "description": "The login form has a bug that needs to be fixed",
+                    "status": "In Progress"
+                }
+                
+                # Call prepare_ai_prompt
+                prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
+                
+                # Verify prepare_pr_prompt_data was called with project_root
+                mock_prepare.assert_called_once()
+                call_args = mock_prepare.call_args[1]
+                assert "project_root" in call_args
+                assert call_args["project_root"] == bot.repo_path
+                
+                # Verify the returned prompt
+                assert prompt == "Test title prompt with PR template"
+
+    def test_prepare_ai_prompt_fallback_with_pr_template(self, bot):
+        """Test prepare_ai_prompt fallback with PR template."""
+        # Mock commits and tickets
+        commits = [
+            {"short_hash": "abc123", "message": "Fix bug in login form"}
+        ]
+        
+        # Create mock ticket
+        mock_ticket = MagicMock()
+        
+        # Mock PR template file
+        mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
+        
+        # Mock prepare_pr_prompt_data to raise Exception
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.return_value = {
+                    "id": "PROJ-123",
+                    "title": "Fix login bug",
+                    "description": "The login form has a bug that needs to be fixed",
+                    "status": "In Progress"
+                }
+                
+                # Mock Path.exists and open for PR template
+                with patch("pathlib.Path.exists", return_value=True):
+                    with patch("builtins.open", mock_open(read_data=mock_pr_template)):
+                        # Call prepare_ai_prompt
+                        prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
+                        
+                        # Verify the fallback prompt includes PR template
+                        assert "Pull Request Template" in prompt
+                        assert mock_pr_template in prompt

@@ -265,6 +265,66 @@ class TestPromptModel:
         assert "Commits:" in result
         assert "{{ all_commits }}" not in result
 
+    def test_process_prompt_template_with_pr_template(self):
+        """Test processing a prompt template with PR template."""
+        # Create a test prompt template
+        template = """
+        Task tickets:
+        ```json
+        {{ task_tickets_details }}
+        ```
+        
+        Commits:
+        ```shell
+        {{ all_commits }}
+        ```
+        
+        PR Template:
+        ```
+        {{ pull_request_template }}
+        ```
+        """
+        
+        # Create test data
+        task_tickets = [{"id": "PROJ-123", "title": "Fix bug"}]
+        commits = [{"short_hash": "abc123", "message": "Fix login bug"}]
+        
+        # Mock project root and PR template file
+        mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
+        
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch("builtins.open", mock_open(read_data=mock_pr_template)):
+                # Process the template
+                result = process_prompt_template(template, task_tickets, commits, project_root="/fake/path")
+                
+                # Verify the result
+                assert "Task tickets:" in result
+                assert "Commits:" in result
+                assert "PR Template:" in result
+                assert mock_pr_template in result
+
+    def test_process_prompt_template_without_pr_template_file(self):
+        """Test processing a prompt template when PR template file doesn't exist."""
+        # Create a test prompt template
+        template = """
+        PR Template:
+        ```
+        {{ pull_request_template }}
+        ```
+        """
+        
+        # Mock project root but PR template file doesn't exist
+        with patch("pathlib.Path.exists", return_value=False):
+            # Process the template
+            result = process_prompt_template(template, [], [], project_root="/fake/path")
+            
+            # Verify the result
+            assert "PR Template:" in result
+            assert "{{ pull_request_template }}" not in result
+            filtered_result = result.replace("PR Template:", "").replace("{{ pull_request_template }}", "")
+            empty_result = filtered_result.replace("\n", "").replace(" ", "").replace("```", "")
+            assert empty_result == ""
+
     def test_prepare_pr_prompt_data(self):
         """Test preparing PR prompt data."""
         # Mock get_prompt_model
@@ -291,6 +351,30 @@ class TestPromptModel:
             assert json.dumps(task_tickets, indent=2) in result.description
             assert "abc123: Fix login bug" in result.title
             assert "abc123: Fix login bug" in result.description
+
+    def test_prepare_pr_prompt_data_with_project_root(self):
+        """Test preparing PR prompt data with project root."""
+        # Mock get_prompt_model
+        with patch("create_pr_bot.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
+            # Mock the prompt models
+            title_prompt = SummarizeAsPullRequestTitle(content="Title: {{ pull_request_template }}")
+            description_prompt = SummarizeChangeContentPrompt(content="Description: {{ pull_request_template }}")
+            mock_get_prompt.side_effect = [title_prompt, description_prompt]
+            
+            # Mock PR template file
+            mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
+            
+            with patch("pathlib.Path.exists", return_value=True):
+                with patch("builtins.open", mock_open(read_data=mock_pr_template)):
+                    # Prepare PR prompt data
+                    result = prepare_pr_prompt_data([], [], project_root="/fake/path")
+                    
+                    # Verify the result
+                    assert isinstance(result, PRPromptData)
+                    assert "Title: " in result.title
+                    assert "Description: " in result.description
+                    assert mock_pr_template in result.title
+                    assert mock_pr_template in result.description
 
     def test_prepare_pr_prompt_data_file_not_found(self):
         """Test preparing PR prompt data with a missing file."""
