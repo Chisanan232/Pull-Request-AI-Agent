@@ -569,54 +569,54 @@ class CreatePrAIBot:
         pr_exists = self.is_pr_already_opened(branch_name)
         logger.info(f"PR already exists: {pr_exists}")
 
-        # Step 3: If branch is up-to-date and PR exists, do nothing
         if is_outdated and pr_exists:
+            # Step 3: If branch is up-to-date and PR exists, do nothing
             logger.info("Branch is outdated and PR already exists. Nothing to do.")
             return None
+        else:
+            # Step 4: If PR doesn't exist, create PR
+            if not pr_exists:
+                # If branch is outdated, update
+                if is_outdated:
+                    # Step 4-1: Update the branch
+                    try:
+                        logger.info("Updating branch...")
+                        self.fetch_and_merge_latest_from_base_branch(branch_name)
+                    except GitCodeConflictError:
+                        logger.error("Merge conflicts detected. Cannot proceed.")
+                        return None
 
-        # Step 4: If PR doesn't exist, create PR
-        if not pr_exists:
-            # If branch is outdated, update
-            if is_outdated:
-                # Step 4-1: Update the branch
-                try:
-                    logger.info("Updating branch...")
-                    self.fetch_and_merge_latest_from_base_branch(branch_name)
-                except GitCodeConflictError:
-                    logger.error("Merge conflicts detected. Cannot proceed.")
+                # Step 4-2: Get branch commits
+                logger.info("Getting branch commits...")
+                commits = self.get_branch_commits(branch_name)
+                if not commits:
+                    logger.warning("No commits found in branch. Cannot create PR.")
                     return None
 
-            # Step 4-2: Get branch commits
-            logger.info("Getting branch commits...")
-            commits = self.get_branch_commits(branch_name)
-            if not commits:
-                logger.warning("No commits found in branch. Cannot create PR.")
-                return None
+                # Step 4-3: Get ticket details
+                logger.info("Extracting ticket IDs from commits...")
+                ticket_ids = self.extract_ticket_ids(commits)
 
-            # Step 4-3: Get ticket details
-            logger.info("Extracting ticket IDs from commits...")
-            ticket_ids = self.extract_ticket_ids(commits)
+                logger.info(f"Found ticket IDs: {ticket_ids}")
+                ticket_details = self.get_ticket_details(ticket_ids)
 
-            logger.info(f"Found ticket IDs: {ticket_ids}")
-            ticket_details = self.get_ticket_details(ticket_ids)
+                # Step 4-4: Prepare AI prompt
+                logger.info("Preparing AI prompt...")
+                prompt = self.prepare_ai_prompt(commits, ticket_details)
 
-            # Step 4-4: Prepare AI prompt
-            logger.info("Preparing AI prompt...")
-            prompt = self.prepare_ai_prompt(commits, ticket_details)
+                # Step 4-5: Ask AI to generate PR content
+                logger.info("Asking AI to generate PR content...")
+                try:
+                    ai_response = self.ai_client.get_content(prompt)
+                    title, body = self.parse_ai_response(ai_response)
+                except Exception as e:
+                    logger.error(f"Error generating PR content with AI: {str(e)}")
+                    # Fall back to basic PR content if AI fails
+                    title = f"Update {branch_name}"
+                    body = "Automated pull request."
 
-            # Step 4-5: Ask AI to generate PR content
-            logger.info("Asking AI to generate PR content...")
-            try:
-                ai_response = self.ai_client.get_content(prompt)
-                title, body = self.parse_ai_response(ai_response)
-            except Exception as e:
-                logger.error(f"Error generating PR content with AI: {str(e)}")
-                # Fall back to basic PR content if AI fails
-                title = f"Update {branch_name}"
-                body = "Automated pull request."
+                # Step 4-6: Create the pull request
+                logger.info("Creating pull request...")
+                return self.create_pull_request(title, body, branch_name)
 
-            # Step 4-6: Create the pull request
-            logger.info("Creating pull request...")
-            return self.create_pull_request(title, body, branch_name)
-
-        return None
+            return None
