@@ -1,0 +1,40 @@
+================ create =======================
+Please help me implement a module about doing some operations with git.
+About how to implement:
+1. Please use Python 3.10 or later.
+2. Please use the library *gitpython*.
+3. Please use the library *pytest* for the test part.
+4. Wrap the code in an object.
+5. Each feature be a method of this object.
+6. Some of them would be protected methods. Please check the comment at last.
+7. Please also help me generate the unit test for each function includes protected one or public one in this object.
+8. Source code should be in the file *create_pr_bot/git_hdlr.py*
+9. Test code should be in the file *test/unit_test/git_hdlr.py*
+
+About feature implements what I want:
+1. Get the current git branch. (protected method)
+2. Get the head commit details of the specific git branch name. (public method)
+3. Get remote head commit details of the base git branch. (public method)
+4. Check the local head commit of the specific git branch is out of date or not. Use the remote head commit of the base git branch to compare. And I think we can reuse the functions of 2 and 3. (public method)
+5. Fetch and merge the remote git branch to the local specific git branch. (public method)
+    5-1. Please remember that if it has a code conflict when merging code, please raise a customized exception named *GitCodeConflictError* and stop the process.
+6. Push the local specific git branch to the remote git repo. (public method)
+
+================ change =======================
+About the test part, please change to use PyTest to implement the unit test.
+
+================ fix code =======================
+It has broken tests. Followings are the failed tests and its error messages in brief:
+FAILED test/unit_test/git_hdlr.py::test_current_git_branch_detached_head_in_ci - AssertionError: assert <MagicMock name='Repo().active_branch.name' id='4410714272'> == 'refs/heads/main'
+ +  where <MagicMock name='Repo().active_branch.name' id='4410714272'> = <create_pr_bot.git_hdlr.GitHandler object at 0x106e63020>._current_git_branch
+FAILED test/unit_test/git_hdlr.py::test_current_git_branch_error - Failed: DID NOT RAISE <class 'TypeError'>
+FAILED test/unit_test/git_hdlr.py::test_get_branch_head_commit_git_error - TypeError: argument of type 'PropertyMock' is not iterable
+FAILED test/unit_test/git_hdlr.py::test_get_remote_branch_head_commit - AttributeError: 'dict' object attribute '__contains__' is read-only
+FAILED test/unit_test/git_hdlr.py::test_fetch_and_merge - TypeError: list indices must be integers or slices, not str
+FAILED test/unit_test/git_hdlr.py::test_fetch_and_merge_conflict - TypeError: list indices must be integers or slices, not str
+FAILED test/unit_test/git_hdlr.py::test_push_branch - git.exc.GitCommandError: Cmd('Failed') failed!
+  cmdline: Failed to push branch: Cmd('Push') failed! cmdline: Push failed: OK
+FAILED test/unit_test/git_hdlr.py::test_push_branch_force - git.exc.GitCommandError: Cmd('Failed') failed!
+  cmdline: Failed to push branch: Cmd('Push') failed! cmdline: Push failed: OK
+
+Do you have any ideas to understand and fix it? And please also tell me why.
