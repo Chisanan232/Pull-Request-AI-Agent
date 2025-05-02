@@ -825,3 +825,144 @@ class TestCreatePrAIBot:
         assert ticket_info["title"] == "Test ticket title"  # Should prefer title over name
         assert ticket_info["description"] == "Test description"
         assert ticket_info["status"] == "Open"
+
+    def test_prepare_ai_prompt_with_prompt_templates(self, bot):
+        """Test prepare_ai_prompt method using prompt templates."""
+        # Mock commits and tickets
+        commits = [
+            {"short_hash": "abc123", "message": "Fix bug in login form", "author": "John Doe", "date": "2023-01-01"},
+            {"short_hash": "def456", "message": "Add new feature", "author": "Jane Smith", "date": "2023-01-02"}
+        ]
+        
+        # Create mock tickets
+        mock_ticket1 = MagicMock()
+        mock_ticket2 = MagicMock()
+        
+        # Mock prepare_pr_prompt_data
+        mock_prompt_data = MagicMock()
+        mock_prompt_data.title = "Test title prompt"
+        
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.side_effect = [
+                    {
+                        "id": "PROJ-123",
+                        "title": "Fix login bug",
+                        "description": "The login form has a bug that needs to be fixed",
+                        "status": "In Progress"
+                    },
+                    {
+                        "id": "PROJ-456",
+                        "title": "Implement new feature",
+                        "description": "Add a new feature to the application",
+                        "status": "In Review"
+                    }
+                ]
+                
+                # Call prepare_ai_prompt
+                prompt = bot.prepare_ai_prompt(commits, [mock_ticket1, mock_ticket2])
+                
+                # Verify _extract_ticket_info was called
+                assert mock_extract_info.call_count == 2
+                
+                # Verify prepare_pr_prompt_data was called with the right arguments
+                mock_prepare.assert_called_once()
+                call_args = mock_prepare.call_args[1]
+                assert len(call_args["task_tickets_details"]) == 2
+                assert call_args["task_tickets_details"][0]["id"] == "PROJ-123"
+                assert call_args["task_tickets_details"][1]["id"] == "PROJ-456"
+                assert len(call_args["commits"]) == 2
+                assert call_args["commits"][0]["short_hash"] == "abc123"
+                assert call_args["commits"][1]["short_hash"] == "def456"
+                
+                # Verify the returned prompt
+                assert prompt == "Test title prompt"
+
+    def test_prepare_ai_prompt_template_not_found(self, bot):
+        """Test prepare_ai_prompt method when prompt template is not found."""
+        # Mock commits and tickets
+        commits = [
+            {"short_hash": "abc123", "message": "Fix bug in login form"}
+        ]
+        
+        # Create mock ticket
+        mock_ticket = MagicMock()
+        
+        # Mock prepare_pr_prompt_data to raise FileNotFoundError
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=FileNotFoundError("Test error")):
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.return_value = {
+                    "id": "PROJ-123",
+                    "title": "Fix login bug",
+                    "description": "The login form has a bug that needs to be fixed",
+                    "status": "In Progress"
+                }
+                
+                # Call prepare_ai_prompt should raise FileNotFoundError
+                with pytest.raises(FileNotFoundError):
+                    bot.prepare_ai_prompt(commits, [mock_ticket])
+
+    def test_prepare_ai_prompt_fallback(self, bot):
+        """Test prepare_ai_prompt method falling back to default prompt on error."""
+        # Mock commits and tickets
+        commits = [
+            {"short_hash": "abc123", "message": "Fix bug in login form"}
+        ]
+        
+        # Create mock ticket
+        mock_ticket = MagicMock()
+        
+        # Mock prepare_pr_prompt_data to raise a generic Exception
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.return_value = {
+                    "id": "PROJ-123",
+                    "title": "Fix login bug",
+                    "description": "The login form has a bug that needs to be fixed",
+                    "status": "In Progress"
+                }
+                
+                # Call prepare_ai_prompt
+                prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
+                
+                # Verify the fallback prompt was returned
+                assert "I need you to generate a pull request title and description" in prompt
+                assert "abc123 - Fix bug in login form" in prompt
+                assert "PROJ-123: Fix login bug" in prompt
+                assert "Description: The login form has a bug that needs to be fixed" in prompt
+                assert "Status: In Progress" in prompt
+
+    def test_prepare_ai_prompt_invalid_commits(self, bot):
+        """Test prepare_ai_prompt method with invalid commits."""
+        # Mock commits without required fields
+        commits = [
+            {"hash": "abc123", "author": "John Doe"}, # Missing short_hash and message
+        ]
+        
+        # Create mock ticket
+        mock_ticket = MagicMock()
+        
+        # Mock prepare_pr_prompt_data
+        mock_prompt_data = MagicMock()
+        mock_prompt_data.title = "Test title prompt"
+        
+        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+            # Set up _extract_ticket_info to return structured ticket info
+            with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
+                mock_extract_info.return_value = {
+                    "id": "PROJ-123",
+                    "title": "Fix login bug",
+                    "description": "The login form has a bug that needs to be fixed",
+                    "status": "In Progress"
+                }
+                
+                # Call prepare_ai_prompt
+                prompt = bot.prepare_ai_prompt(commits, [mock_ticket])
+                
+                # Verify prepare_pr_prompt_data was called with empty commits list
+                mock_prepare.assert_called_once()
+                call_args = mock_prepare.call_args[1]
+                assert len(call_args["commits"]) == 0

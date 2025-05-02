@@ -7,7 +7,8 @@ along with utility functions to load and create these models from prompt files.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Type, TypeVar
+import re
+from typing import Dict, List, Type, TypeVar, Optional, Any
 
 
 class PromptName(Enum):
@@ -39,6 +40,14 @@ class SummarizeAsPullRequestTitle(BasePrompt):
 @dataclass(frozen=True)
 class GeneratePRDescriptionPrompt(BasePrompt):
     """Prompt model for generating pull request descriptions."""
+
+
+@dataclass(frozen=True)
+class PRPromptData:
+    """Data model for processed PR prompt data."""
+    
+    title: str
+    description: str
 
 
 # Add other prompt models as needed
@@ -81,7 +90,7 @@ def create_prompt_model(model_class: Type[T], prompt_name: PromptName) -> T:
     """
     # Determine the prompt directory
     prompts_dir = Path(__file__).parent
-    prompt_file = prompts_dir / f"{prompt_name}.prompt"
+    prompt_file = prompts_dir / f"{prompt_name.value}.prompt"
 
     # Load the prompt content
     content = load_prompt_from_file(prompt_file)
@@ -116,3 +125,81 @@ def get_prompt_model(prompt_name: PromptName) -> BasePrompt:
 
     model_class = PROMPT_MODEL_MAPPING[prompt_name]
     return create_prompt_model(model_class, prompt_name)
+
+
+def process_prompt_template(
+    prompt_content: str,
+    task_tickets_details: List[Dict[str, Any]],
+    commits: List[Dict[str, str]]
+) -> str:
+    """
+    Process a prompt template by replacing variables with actual values.
+
+    Args:
+        prompt_content: The content of the prompt template.
+        task_tickets_details: List of task ticket details.
+        commits: List of commit details.
+
+    Returns:
+        The processed prompt with variables replaced.
+    """
+    # Replace task tickets details
+    if "{{ task_tickets_details }}" in prompt_content:
+        # Convert task tickets to JSON string
+        import json
+        task_tickets_json = json.dumps(task_tickets_details, indent=2)
+        prompt_content = prompt_content.replace("{{ task_tickets_details }}", task_tickets_json)
+    
+    # Replace commits
+    if "{{ all_commits }}" in prompt_content:
+        # Format commits as a list of short_hash and message
+        formatted_commits = []
+        for commit in commits:
+            if "short_hash" in commit and "message" in commit:
+                formatted_commits.append(f"{commit['short_hash']}: {commit['message']}")
+        
+        commits_text = "\n".join(formatted_commits)
+        prompt_content = prompt_content.replace("{{ all_commits }}", commits_text)
+    
+    return prompt_content
+
+
+def prepare_pr_prompt_data(
+    task_tickets_details: List[Dict[str, Any]],
+    commits: List[Dict[str, str]]
+) -> PRPromptData:
+    """
+    Prepare PR prompt data by processing prompt templates.
+
+    Args:
+        task_tickets_details: List of task ticket details.
+        commits: List of commit details with short_hash and message.
+
+    Returns:
+        PRPromptData object with processed title and description prompts.
+
+    Raises:
+        FileNotFoundError: If any prompt file is not found.
+    """
+    # Get prompt models
+    title_prompt_model = get_prompt_model(PromptName.SUMMARIZE_AS_CLEAR_TITLE)
+    description_prompt_model = get_prompt_model(PromptName.SUMMARIZE_CHANGE_CONTENT)
+    
+    # Process prompt templates
+    title_prompt = process_prompt_template(
+        title_prompt_model.content,
+        task_tickets_details,
+        commits
+    )
+    
+    description_prompt = process_prompt_template(
+        description_prompt_model.content,
+        task_tickets_details,
+        commits
+    )
+    
+    # Return processed prompts
+    return PRPromptData(
+        title=title_prompt,
+        description=description_prompt
+    )

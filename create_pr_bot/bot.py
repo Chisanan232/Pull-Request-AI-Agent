@@ -20,7 +20,7 @@ from .project_management_tool._base.client import BaseProjectManagementAPIClient
 from .project_management_tool._base.model import BaseImmutableModel
 from .project_management_tool.clickup.client import ClickUpAPIClient
 from .project_management_tool.jira.client import JiraAPIClient
-
+from .ai_bot.prompts.model import prepare_pr_prompt_data
 
 logger = logging.getLogger(__name__)
 
@@ -381,54 +381,64 @@ class CreatePrAIBot:
         Returns:
             Formatted prompt string
         """
-        # Start with a general instruction
-        prompt = "I need you to generate a pull request title and description based on the following information:\n\n"
-
-        # Add commit information
-        prompt += "## Commits\n"
-        for i, commit in enumerate(commits, 1):
-            prompt += f"{i}. {commit['short_hash']} - {commit['message']}\n"
-
-        prompt += "\n"
-
-        # Add ticket information
-        if ticket_details:
-            prompt += "## Related Tickets\n"
-            for i, ticket in enumerate(ticket_details, 1):
-                # Extract ticket information based on its type
-                ticket_info = self._extract_ticket_info(ticket)
-                
-                prompt += f"{i}. {ticket_info['id']}: {ticket_info['title']}\n"
-                if ticket_info['description']:
-                    # Truncate long descriptions
-                    short_desc = ticket_info['description'][:200] + "..." if len(ticket_info['description']) > 200 else ticket_info['description']
-                    prompt += f"   Description: {short_desc}\n"
-                
-                # Add status if available
-                if ticket_info.get('status'):
-                    prompt += f"   Status: {ticket_info['status']}\n"
-
+        # Extract ticket information
+        ticket_info_list = []
+        for ticket in ticket_details:
+            ticket_info = self._extract_ticket_info(ticket)
+            ticket_info_list.append(ticket_info)
+        
+        # Ensure commits have required fields
+        formatted_commits = []
+        for commit in commits:
+            if 'short_hash' in commit and 'message' in commit:
+                formatted_commits.append({
+                    'short_hash': commit['short_hash'],
+                    'message': commit['message']
+                })
+        
+        try:
+            # Process prompt templates
+            prompt_data = prepare_pr_prompt_data(
+                task_tickets_details=ticket_info_list,
+                commits=formatted_commits
+            )
+            
+            # For now, we'll just use the title prompt
+            # In the future, we could use both title and description separately
+            return prompt_data.title
+            
+        except FileNotFoundError as e:
+            logger.error(f"Failed to load prompt template: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Error preparing AI prompt: {str(e)}")
+            
+            # Fallback to a simple prompt
+            prompt = "I need you to generate a pull request title and description based on the following information:\n\n"
+            
+            # Add commit information
+            prompt += "## Commits\n"
+            for i, commit in enumerate(commits, 1):
+                prompt += f"{i}. {commit.get('short_hash', '')} - {commit.get('message', '')}\n"
+            
             prompt += "\n"
-
-        # Add formatting instructions
-        prompt += """
-## Instructions
-Please generate:
-1. A clear and concise pull request title (one line)
-2. A detailed pull request description that includes:
-   - A summary of changes
-   - The purpose of the changes
-   - Any notable implementation details
-   - References to the related tickets
-
-Format your response as follows:
-TITLE: [Your suggested PR title]
-
-BODY:
-[Your suggested PR description]
-"""
-
-        return prompt
+            
+            # Add ticket information
+            if ticket_info_list:
+                prompt += "## Related Tickets\n"
+                for i, ticket_info in enumerate(ticket_info_list, 1):
+                    prompt += f"{i}. {ticket_info.get('id', '')}: {ticket_info.get('title', '')}\n"
+                    if ticket_info.get('description'):
+                        # Truncate long descriptions
+                        short_desc = ticket_info['description'][:200] + "..." if len(ticket_info['description']) > 200 else ticket_info['description']
+                        prompt += f"   Description: {short_desc}\n"
+                    
+                    # Add status if available
+                    if ticket_info.get('status'):
+                        prompt += f"   Status: {ticket_info['status']}\n"
+                
+                prompt += "\n"
+            return prompt
 
     def _extract_ticket_info(self, ticket: BaseImmutableModel) -> Dict[str, str]:
         """
