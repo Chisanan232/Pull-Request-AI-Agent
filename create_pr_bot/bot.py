@@ -16,6 +16,7 @@ from .ai_bot.gpt.client import GPTClient
 from .ai_bot.prompts.model import prepare_pr_prompt_data
 from .git_hdlr import GitCodeConflictError, GitHandler
 from .github_opt import GitHubOperations
+from .project_management_tool import ProjectManagementToolType
 from .project_management_tool._base.client import BaseProjectManagementAPIClient
 from .project_management_tool._base.model import BaseImmutableModel
 from .project_management_tool.clickup.client import ClickUpAPIClient
@@ -28,11 +29,6 @@ class AiModuleClient(Enum):
     GPT = "gpt"
     CLAUDE = "claude"
     GEMINI = "gemini"
-
-
-class ProjectManagementToolType(Enum):
-    CLICKUP = "clickup"
-    JIRA = "jira"
 
 
 class CreatePrAIBot:
