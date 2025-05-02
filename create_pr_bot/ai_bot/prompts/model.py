@@ -7,8 +7,7 @@ along with utility functions to load and create these models from prompt files.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-import re
-from typing import Dict, List, Type, TypeVar, Optional, Any
+from typing import Any, Dict, List, Type, TypeVar
 
 
 class PromptName(Enum):
@@ -45,7 +44,7 @@ class GeneratePRDescriptionPrompt(BasePrompt):
 @dataclass(frozen=True)
 class PRPromptData:
     """Data model for processed PR prompt data."""
-    
+
     title: str
     description: str
 
@@ -128,9 +127,7 @@ def get_prompt_model(prompt_name: PromptName) -> BasePrompt:
 
 
 def process_prompt_template(
-    prompt_content: str,
-    task_tickets_details: List[Dict[str, Any]],
-    commits: List[Dict[str, str]]
+    prompt_content: str, task_tickets_details: List[Dict[str, Any]], commits: List[Dict[str, str]]
 ) -> str:
     """
     Process a prompt template by replacing variables with actual values.
@@ -147,9 +144,10 @@ def process_prompt_template(
     if "{{ task_tickets_details }}" in prompt_content:
         # Convert task tickets to JSON string
         import json
+
         task_tickets_json = json.dumps(task_tickets_details, indent=2)
         prompt_content = prompt_content.replace("{{ task_tickets_details }}", task_tickets_json)
-    
+
     # Replace commits
     if "{{ all_commits }}" in prompt_content:
         # Format commits as a list of short_hash and message
@@ -157,17 +155,14 @@ def process_prompt_template(
         for commit in commits:
             if "short_hash" in commit and "message" in commit:
                 formatted_commits.append(f"{commit['short_hash']}: {commit['message']}")
-        
+
         commits_text = "\n".join(formatted_commits)
         prompt_content = prompt_content.replace("{{ all_commits }}", commits_text)
-    
+
     return prompt_content
 
 
-def prepare_pr_prompt_data(
-    task_tickets_details: List[Dict[str, Any]],
-    commits: List[Dict[str, str]]
-) -> PRPromptData:
+def prepare_pr_prompt_data(task_tickets_details: List[Dict[str, Any]], commits: List[Dict[str, str]]) -> PRPromptData:
     """
     Prepare PR prompt data by processing prompt templates.
 
@@ -184,22 +179,11 @@ def prepare_pr_prompt_data(
     # Get prompt models
     title_prompt_model = get_prompt_model(PromptName.SUMMARIZE_AS_CLEAR_TITLE)
     description_prompt_model = get_prompt_model(PromptName.SUMMARIZE_CHANGE_CONTENT)
-    
+
     # Process prompt templates
-    title_prompt = process_prompt_template(
-        title_prompt_model.content,
-        task_tickets_details,
-        commits
-    )
-    
-    description_prompt = process_prompt_template(
-        description_prompt_model.content,
-        task_tickets_details,
-        commits
-    )
-    
+    title_prompt = process_prompt_template(title_prompt_model.content, task_tickets_details, commits)
+
+    description_prompt = process_prompt_template(description_prompt_model.content, task_tickets_details, commits)
+
     # Return processed prompts
-    return PRPromptData(
-        title=title_prompt,
-        description=description_prompt
-    )
+    return PRPromptData(title=title_prompt, description=description_prompt)
