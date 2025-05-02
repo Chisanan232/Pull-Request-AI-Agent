@@ -8,12 +8,12 @@ from unittest.mock import MagicMock, PropertyMock, call, mock_open, patch
 import pytest
 from github.PullRequest import PullRequest
 
+from create_pr_bot.ai_bot import AiModuleClient
 from create_pr_bot.ai_bot.gpt.client import GPTClient
 from create_pr_bot.bot import CreatePrAIBot
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.project_management_tool import ProjectManagementToolType
 from create_pr_bot.git_hdlr import GitCodeConflictError, GitHandler
 from create_pr_bot.github_opt import GitHubOperations
+from create_pr_bot.project_management_tool import ProjectManagementToolType
 from create_pr_bot.project_management_tool._base.model import BaseImmutableModel
 from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
 
