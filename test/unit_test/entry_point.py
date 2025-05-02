@@ -3,13 +3,9 @@ Unit tests for the entry point module.
 """
 
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from create_pr_bot.__main__ import (
-    parse_args,
-    run_bot,
-    main
-)
+from create_pr_bot.__main__ import main, parse_args, run_bot
 from create_pr_bot.ai_bot import AiModuleClient
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
@@ -35,17 +31,26 @@ class TestParseArgs:
         """Test parsing command line arguments with values."""
         test_args = [
             "create_pr_bot",
-            "--repo-path", "/path/to/repo",
-            "--base-branch", "master",
-            "--branch-name", "feature/test",
-            "--github-token", "test-token",
-            "--github-repo", "owner/repo",
-            "--ai-client-type", "claude",
-            "--ai-api-key", "test-ai-key",
-            "--pm-tool-type", "jira",
-            "--pm-tool-api-key", "test-pm-key",
+            "--repo-path",
+            "/path/to/repo",
+            "--base-branch",
+            "master",
+            "--branch-name",
+            "feature/test",
+            "--github-token",
+            "test-token",
+            "--github-repo",
+            "owner/repo",
+            "--ai-client-type",
+            "claude",
+            "--ai-api-key",
+            "test-ai-key",
+            "--pm-tool-type",
+            "jira",
+            "--pm-tool-api-key",
+            "test-pm-key",
         ]
-        
+
         with patch.object(sys, "argv", test_args):
             args = parse_args()
             assert args.repo_path == "/path/to/repo"
@@ -75,17 +80,17 @@ class TestRunBot:
         mock_settings.ai.api_key = "test-ai-key"
         mock_settings.pm_tool.tool_type = ProjectManagementToolType.CLICKUP
         mock_settings.pm_tool.to_config_dict.return_value = {"api_key": "test-pm-key"}
-        
+
         # Create mock bot and PR result
         mock_bot = MagicMock()
         mock_pr = MagicMock()
         mock_pr.html_url = "https://github.com/owner/repo/pull/1"
         mock_bot.run.return_value = mock_pr
-        
+
         with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot) as mock_create_bot:
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
-                
+
                 # Verify bot was created with correct settings
                 mock_create_bot.assert_called_once_with(
                     repo_path="/path/to/repo",
@@ -97,10 +102,10 @@ class TestRunBot:
                     ai_client_type=AiModuleClient.GPT,
                     ai_client_api_key="test-ai-key",
                 )
-                
+
                 # Verify bot.run was called with correct branch name
                 mock_bot.run.assert_called_once_with(branch_name="feature/test")
-                
+
                 # Verify success message was logged
                 mock_info.assert_any_call(f"Successfully created PR: {mock_pr.html_url}")
 
@@ -108,15 +113,15 @@ class TestRunBot:
         """Test running the bot with no PR created."""
         # Create mock settings
         mock_settings = MagicMock()
-        
+
         # Create mock bot that returns None (no PR created)
         mock_bot = MagicMock()
         mock_bot.run.return_value = None
-        
+
         with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot):
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
-                
+
                 # Verify info message was logged
                 mock_info.assert_any_call("No PR was created. See logs for details.")
 
@@ -124,20 +129,20 @@ class TestRunBot:
         """Test running the bot with an exception."""
         # Create mock settings
         mock_settings = MagicMock()
-        
+
         # Create mock bot that raises an exception
         mock_bot = MagicMock()
         mock_bot.run.side_effect = Exception("Test error")
-        
+
         with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot):
             with patch("logging.Logger.error") as mock_error:
                 with patch("sys.exit") as mock_exit:
                     run_bot(mock_settings)
-                    
+
                     # Verify error was logged
                     mock_error.assert_called_once()
                     assert "Test error" in mock_error.call_args[0][0]
-                    
+
                     # Verify sys.exit was called with code 1
                     mock_exit.assert_called_once_with(1)
 
@@ -149,12 +154,12 @@ class TestMain:
         """Test the main function."""
         mock_args = MagicMock()
         mock_settings = MagicMock()
-        
+
         with patch("create_pr_bot.__main__.parse_args", return_value=mock_args) as mock_parse_args:
             with patch("create_pr_bot.__main__.BotSettings.from_args", return_value=mock_settings) as mock_from_args:
                 with patch("create_pr_bot.__main__.run_bot") as mock_run_bot:
                     main()
-                    
+
                     # Verify functions were called in the correct order
                     mock_parse_args.assert_called_once()
                     mock_from_args.assert_called_once_with(mock_args)

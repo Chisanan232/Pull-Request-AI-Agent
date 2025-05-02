@@ -3,7 +3,7 @@ import logging
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from create_pr_bot.ai_bot import AiModuleClient
 from create_pr_bot.project_management_tool import ProjectManagementToolType
@@ -113,11 +113,7 @@ class GitHubSettings:
         prefix = f"{EnvVarPrefix.CREATE_PR_BOT.value}_GITHUB"
 
         # Try both specific and generic GitHub token env vars
-        token = (
-            os.environ.get(f"{prefix}_TOKEN") or
-            os.environ.get("GITHUB_TOKEN") or
-            os.environ.get("GH_TOKEN")
-        )
+        token = os.environ.get(f"{prefix}_TOKEN") or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
 
         return cls(
             token=token,
