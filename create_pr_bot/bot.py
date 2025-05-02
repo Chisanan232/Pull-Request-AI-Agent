@@ -4,11 +4,11 @@ CreatePrAIBot - A bot that helps developers create pull requests with AI-generat
 
 import logging
 import re
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from github.PullRequest import PullRequest
 
+from .ai_bot import AiModuleClient
 from .ai_bot._base.client import BaseAIClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
@@ -23,12 +23,6 @@ from .project_management_tool.clickup.client import ClickUpAPIClient
 from .project_management_tool.jira.client import JiraAPIClient
 
 logger = logging.getLogger(__name__)
-
-
-class AiModuleClient(Enum):
-    GPT = "gpt"
-    CLAUDE = "claude"
-    GEMINI = "gemini"
 
 
 class CreatePrAIBot:
