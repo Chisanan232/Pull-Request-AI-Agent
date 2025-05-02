@@ -25,7 +25,7 @@ class SpyBot(CreatePrAIBot):
         github_repo: Optional[str] = None,
         project_management_tool_type: Optional[ProjectManagementToolType] = None,
         project_management_tool_config: Optional[Dict[str, Any]] = None,
-        ai_client_type: AiModuleClient = AiModuleClient,
+        ai_client_type: AiModuleClient = AiModuleClient.GPT,
         ai_client_api_key: Optional[str] = None,
     ):
         # Initialize attributes directly
@@ -39,10 +39,10 @@ class SpyBot(CreatePrAIBot):
         self.ai_client_api_key = ai_client_api_key
 
         # Initialize components
-        self.git_handler = None
+        self.git_handler = None  # type: ignore[assignment]
         self.github_operations = None
         self.project_management_client = None
-        self.ai_client = None
+        self.ai_client = None  # type: ignore[assignment]
 
 
 class TestCreatePrAIBot:
