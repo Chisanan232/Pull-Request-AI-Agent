@@ -13,13 +13,13 @@ from .ai_bot._base.client import BaseAIClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
 from .ai_bot.gpt.client import GPTClient
+from .ai_bot.prompts.model import prepare_pr_prompt_data
 from .git_hdlr import GitCodeConflictError, GitHandler
 from .github_opt import GitHubOperations
 from .project_management_tool._base.client import BaseProjectManagementAPIClient
 from .project_management_tool._base.model import BaseImmutableModel
 from .project_management_tool.clickup.client import ClickUpAPIClient
 from .project_management_tool.jira.client import JiraAPIClient
-from .ai_bot.prompts.model import prepare_pr_prompt_data
 
 logger = logging.getLogger(__name__)
 
@@ -389,11 +389,9 @@ class CreatePrAIBot:
         try:
             # Process prompt templates
             prompt_data = prepare_pr_prompt_data(
-                task_tickets_details=ticket_info_list,
-                commits=formatted_commits,
-                project_root=self.repo_path
+                task_tickets_details=ticket_info_list, commits=formatted_commits, project_root=self.repo_path
             )
-            
+
             # For now, we'll just use the title prompt
             # In the future, we could use both title and description separately
             return prompt_data.title
@@ -439,6 +437,7 @@ class CreatePrAIBot:
             # Add PR template if available
             try:
                 from pathlib import Path
+
                 pr_template_path = Path(self.repo_path) / ".github" / "PULL_REQUEST_TEMPLATE.md"
                 if pr_template_path.exists():
                     with open(pr_template_path, "r", encoding="utf-8") as file:

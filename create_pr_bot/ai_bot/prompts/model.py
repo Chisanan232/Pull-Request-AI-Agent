@@ -130,7 +130,7 @@ def process_prompt_template(
     prompt_content: str,
     task_tickets_details: List[Dict[str, Any]],
     commits: List[Dict[str, str]],
-    project_root: str = None
+    project_root: str = None,
 ) -> str:
     """
     Process a prompt template by replacing variables with actual values.
@@ -182,9 +182,7 @@ def process_prompt_template(
 
 
 def prepare_pr_prompt_data(
-    task_tickets_details: List[Dict[str, Any]],
-    commits: List[Dict[str, str]],
-    project_root: str = None
+    task_tickets_details: List[Dict[str, Any]], commits: List[Dict[str, str]], project_root: str = None
 ) -> PRPromptData:
     """
     Prepare PR prompt data by processing prompt templates.
@@ -205,19 +203,11 @@ def prepare_pr_prompt_data(
     description_prompt_model = get_prompt_model(PromptName.SUMMARIZE_CHANGE_CONTENT)
 
     # Process prompt templates
-    title_prompt = process_prompt_template(
-        title_prompt_model.content,
-        task_tickets_details,
-        commits,
-        project_root
-    )
+    title_prompt = process_prompt_template(title_prompt_model.content, task_tickets_details, commits, project_root)
 
     description_prompt = process_prompt_template(
-        description_prompt_model.content,
-        task_tickets_details,
-        commits,
-        project_root
+        description_prompt_model.content, task_tickets_details, commits, project_root
     )
-    
+
     # Return processed prompts
     return PRPromptData(title=title_prompt, description=description_prompt)

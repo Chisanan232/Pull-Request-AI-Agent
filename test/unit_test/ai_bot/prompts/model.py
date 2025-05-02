@@ -271,30 +271,30 @@ class TestPromptModel:
         ```json
         {{ task_tickets_details }}
         ```
-        
+
         Commits:
         ```shell
         {{ all_commits }}
         ```
-        
+
         PR Template:
         ```
         {{ pull_request_template }}
         ```
         """
-        
+
         # Create test data
         task_tickets = [{"id": "PROJ-123", "title": "Fix bug"}]
         commits = [{"short_hash": "abc123", "message": "Fix login bug"}]
-        
+
         # Mock project root and PR template file
         mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
-        
+
         with patch("pathlib.Path.exists", return_value=True):
             with patch("builtins.open", mock_open(read_data=mock_pr_template)):
                 # Process the template
                 result = process_prompt_template(template, task_tickets, commits, project_root="/fake/path")
-                
+
                 # Verify the result
                 assert "Task tickets:" in result
                 assert "Commits:" in result
@@ -310,12 +310,12 @@ class TestPromptModel:
         {{ pull_request_template }}
         ```
         """
-        
+
         # Mock project root but PR template file doesn't exist
         with patch("pathlib.Path.exists", return_value=False):
             # Process the template
             result = process_prompt_template(template, [], [], project_root="/fake/path")
-            
+
             # Verify the result
             assert "PR Template:" in result
             assert "{{ pull_request_template }}" not in result
@@ -360,15 +360,15 @@ class TestPromptModel:
             title_prompt = SummarizeAsPullRequestTitle(content="Title: {{ pull_request_template }}")
             description_prompt = SummarizeChangeContentPrompt(content="Description: {{ pull_request_template }}")
             mock_get_prompt.side_effect = [title_prompt, description_prompt]
-            
+
             # Mock PR template file
             mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
-            
+
             with patch("pathlib.Path.exists", return_value=True):
                 with patch("builtins.open", mock_open(read_data=mock_pr_template)):
                     # Prepare PR prompt data
                     result = prepare_pr_prompt_data([], [], project_root="/fake/path")
-                    
+
                     # Verify the result
                     assert isinstance(result, PRPromptData)
                     assert "Title: " in result.title

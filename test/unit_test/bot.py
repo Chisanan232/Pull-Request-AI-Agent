@@ -3,11 +3,7 @@ Unit tests for the CreatePrAIBot class.
 """
 
 from typing import Any, Dict, Optional
-from unittest.mock import MagicMock, PropertyMock, call, patch
-import json
-import os
-from typing import Dict, List, Optional, Any
-from unittest.mock import patch, MagicMock, PropertyMock, call, mock_open
+from unittest.mock import MagicMock, PropertyMock, call, mock_open, patch
 
 import pytest
 from github.PullRequest import PullRequest
@@ -963,9 +959,7 @@ class TestCreatePrAIBot:
     def test_prepare_ai_prompt_with_pr_template(self, bot):
         """Test prepare_ai_prompt method with PR template."""
         # Mock commits and tickets
-        commits = [
-            {"short_hash": "abc123", "message": "Fix bug in login form"}
-        ]
+        commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
 
         # Create mock ticket
         mock_ticket = MagicMock()
@@ -981,7 +975,7 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 }
 
                 # Call prepare_ai_prompt
@@ -999,9 +993,7 @@ class TestCreatePrAIBot:
     def test_prepare_ai_prompt_fallback_with_pr_template(self, bot):
         """Test prepare_ai_prompt fallback with PR template."""
         # Mock commits and tickets
-        commits = [
-            {"short_hash": "abc123", "message": "Fix bug in login form"}
-        ]
+        commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
 
         # Create mock ticket
         mock_ticket = MagicMock()
@@ -1017,7 +1009,7 @@ class TestCreatePrAIBot:
                     "id": "PROJ-123",
                     "title": "Fix login bug",
                     "description": "The login form has a bug that needs to be fixed",
-                    "status": "In Progress"
+                    "status": "In Progress",
                 }
 
                 # Mock Path.exists and open for PR template
