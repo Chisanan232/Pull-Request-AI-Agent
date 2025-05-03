@@ -50,7 +50,7 @@ Changelog = "https://chisanan232.github.io/Create-PR-Bot/latest/release_note/"
 [tool.poetry.group.dev.dependencies]
 # Dependency for test
 pytest = "^8.1.1"
-pytest-cov = "^5.0.0"
+pytest-cov = "^6.1.1"
 pytest-rerunfailures = "^15.0"
 coverage = "^7.8"
 # Dependency for CI
