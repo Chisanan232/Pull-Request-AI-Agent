@@ -8,11 +8,12 @@ which automates the creation of pull requests with AI-generated content.
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 from create_pr_bot.ai_bot import AiModuleClient
 from create_pr_bot.bot import CreatePrAIBot
 from create_pr_bot.log import init_logger_config
-from create_pr_bot.model import BotSettings
+from create_pr_bot.model import BotSettings, find_default_config_path
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
 # Configure logging
@@ -24,6 +25,13 @@ def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description="Create PR Bot - Automate pull request creation with AI-generated content"
+    )
+
+    # Configuration file
+    parser.add_argument(
+        "--config", 
+        dest="config_file",
+        help="Path to configuration file (default: .github/pr-creator.yaml or .github/pr-creator.yml in the repository)"
     )
 
     # Git settings
@@ -94,6 +102,12 @@ def main() -> None:
     """Main entry point for the Create PR Bot."""
     # Parse command line arguments
     args = parse_args()
+    
+    # Check for default config file if not specified
+    if not args.config_file:
+        default_config_path = find_default_config_path(args.repo_path if args.repo_path else ".")
+        if default_config_path:
+            logger.info(f"Found default configuration file: {default_config_path}")
 
     # Load settings
     settings = BotSettings.from_args(args)
