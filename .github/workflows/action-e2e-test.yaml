@@ -51,7 +51,7 @@ jobs:
           github:
             repo: ${{ github.repository }}
           ai:
-            client_type: claude
+            client_type: gpt
           project_management_tool:
             type: clickup
           EOF
