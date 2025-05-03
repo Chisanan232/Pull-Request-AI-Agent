@@ -1,4 +1,3 @@
-import argparse
 import os
 import tempfile
 from pathlib import Path
@@ -13,7 +12,9 @@ from create_pr_bot.model import (
     BotSettings,
     GitHubSettings,
     GitSettings,
-    ProjectManagementToolSettings, load_yaml_config, find_default_config_path,
+    ProjectManagementToolSettings,
+    find_default_config_path,
+    load_yaml_config,
 )
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
@@ -23,15 +24,17 @@ class TestLoadYamlConfig:
 
     def test_load_yaml_config_success(self):
         """Test loading a valid YAML configuration file."""
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp:
-            temp.write("""
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
+            temp.write(
+                """
             git:
               repo_path: "/path/to/repo"
               base_branch: "main"
             github:
               token: "test-token"
               repo: "owner/repo"
-            """)
+            """
+            )
             temp_path = temp.name
 
         try:
@@ -45,7 +48,7 @@ class TestLoadYamlConfig:
 
     def test_load_yaml_config_empty_file(self):
         """Test loading an empty YAML file."""
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
             temp.write("")
             temp_path = temp.name
 
@@ -57,7 +60,7 @@ class TestLoadYamlConfig:
 
     def test_load_yaml_config_comments_only(self):
         """Test loading a YAML file with only comments."""
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
             temp.write("# This is a comment\n# Another comment")
             temp_path = temp.name
 
@@ -74,7 +77,7 @@ class TestLoadYamlConfig:
 
     def test_load_yaml_config_invalid_yaml(self):
         """Test loading an invalid YAML file."""
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
             temp.write("invalid: yaml: :")
             temp_path = temp.name
 
@@ -86,7 +89,7 @@ class TestLoadYamlConfig:
 
     def test_load_yaml_config_invalid_format(self):
         """Test loading a YAML file with invalid format (not a dictionary)."""
-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.yaml', delete=False) as temp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
             temp.write("- item1\n- item2")
             temp_path = temp.name
 
@@ -554,18 +557,18 @@ class TestBotSettings:
         # Create mock args
         args = MagicMock()
         args.config_file = "/path/to/config.yaml"
-        
+
         # Create mock settings
         env_settings = MagicMock()
         config_settings = MagicMock()
-        
+
         with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
             with patch("create_pr_bot.model.BotSettings.from_config_file", return_value=config_settings):
                 # Mock the validation methods to avoid ValueError with MagicMock objects
                 with patch("create_pr_bot.model.AiModuleClient") as mock_ai_client:
                     with patch("create_pr_bot.model.ProjectManagementToolType") as mock_pm_tool_type:
                         settings = BotSettings.from_args(args)
-                        
+
                         # Verify settings were updated from config file
                         assert settings.git == config_settings.git
                         assert settings.github == config_settings.github
@@ -578,11 +581,11 @@ class TestBotSettings:
         args = MagicMock()
         args.config_file = None
         args.repo_path = "/path/to/repo"
-        
+
         # Create mock settings
         env_settings = MagicMock()
         config_settings = MagicMock()
-        
+
         with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
             with patch("create_pr_bot.model.find_default_config_path", return_value="/path/to/default/config.yaml"):
                 with patch("create_pr_bot.model.BotSettings.from_config_file", return_value=config_settings):
@@ -591,13 +594,13 @@ class TestBotSettings:
                         with patch("create_pr_bot.model.AiModuleClient") as mock_ai_client:
                             with patch("create_pr_bot.model.ProjectManagementToolType") as mock_pm_tool_type:
                                 settings = BotSettings.from_args(args)
-                                
+
                                 # Verify settings were updated from default config file
                                 assert settings.git == config_settings.git
                                 assert settings.github == config_settings.github
                                 assert settings.ai == config_settings.ai
                                 assert settings.pm_tool == config_settings.pm_tool
-                                
+
                                 # Verify log message
                                 mock_info.assert_called_once()
 
