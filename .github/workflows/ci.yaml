@@ -13,7 +13,7 @@ on:
 #     For source code and test
       - "create_pr_bot/**/*.py"
       - "!**/__pkg_info__.py"
-      - "!create_pr_bot/ai_bot/prompts/*.txt"
+      - "!create_pr_bot/ai_bot/vibe_coding/**/*.txt"
       - "test/**/*.py"
 #     For configurations for test or CI
       - ".coveragerc"
@@ -36,7 +36,7 @@ on:
 #     For source code and test
       - "create_pr_bot/**/*.py"
       - "!**/__pkg_info__.py"
-      - "!create_pr_bot/ai_bot/prompts/*.txt"
+      - "!create_pr_bot/ai_bot/vibe_coding/**/*.txt"
       - "test/**/*.py"
 #     For configurations for test or CI
       - ".coveragerc"
