@@ -1,9 +1,15 @@
 import argparse
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.model import ProjectManagementToolSettings, AISettings, GitHubSettings, GitSettings, BotSettings
+from create_pr_bot.model import (
+    AISettings,
+    BotSettings,
+    GitHubSettings,
+    GitSettings,
+    ProjectManagementToolSettings,
+)
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
 
