@@ -86,7 +86,7 @@ class AISettings:
         prefix = f"{EnvVarPrefix.CREATE_PR_BOT.value}_AI"
 
         # Get client type
-        client_type_str = os.environ.get(f"{prefix}_CLIENT_TYPE", "gpt")
+        client_type_str = os.environ.get(f"{prefix}_CLIENT_TYPE", AiModuleClient.GPT.value)
         client_type = AiModuleClient.GPT  # Default to GPT
 
         try:
