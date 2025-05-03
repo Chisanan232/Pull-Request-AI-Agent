@@ -43,62 +43,9 @@ RUN poetry config virtualenvs.create false
 # Create a volume for configuration
 VOLUME ["/config"]
 
-# Create entrypoint script
-RUN echo '#!/bin/bash\n\
-\n\
-# Build command arguments based on environment variables\n\
-ARGS=""\n\
-\n\
-# Add config file if provided\n\
-if [ ! -z "$CREATE_PR_BOT_CONFIG_FILE" ]; then\n\
-  ARGS="$ARGS --config $CREATE_PR_BOT_CONFIG_FILE"\n\
-fi\n\
-\n\
-# Add git settings if provided\n\
-if [ ! -z "$CREATE_PR_BOT_GIT_REPO_PATH" ]; then\n\
-  ARGS="$ARGS --repo-path $CREATE_PR_BOT_GIT_REPO_PATH"\n\
-fi\n\
-\n\
-if [ ! -z "$CREATE_PR_BOT_GIT_BASE_BRANCH" ]; then\n\
-  ARGS="$ARGS --base-branch $CREATE_PR_BOT_GIT_BASE_BRANCH"\n\
-fi\n\
-\n\
-if [ ! -z "$CREATE_PR_BOT_GIT_BRANCH_NAME" ]; then\n\
-  ARGS="$ARGS --branch-name $CREATE_PR_BOT_GIT_BRANCH_NAME"\n\
-fi\n\
-\n\
-# Add GitHub settings if provided\n\
-if [ ! -z "$CREATE_PR_BOT_GITHUB_TOKEN" ]; then\n\
-  ARGS="$ARGS --github-token $CREATE_PR_BOT_GITHUB_TOKEN"\n\
-fi\n\
-\n\
-if [ ! -z "$CREATE_PR_BOT_GITHUB_REPO" ]; then\n\
-  ARGS="$ARGS --github-repo $CREATE_PR_BOT_GITHUB_REPO"\n\
-fi\n\
-\n\
-# Add AI settings if provided\n\
-if [ ! -z "$CREATE_PR_BOT_AI_CLIENT_TYPE" ]; then\n\
-  ARGS="$ARGS --ai-client-type $CREATE_PR_BOT_AI_CLIENT_TYPE"\n\
-fi\n\
-\n\
-if [ ! -z "$CREATE_PR_BOT_AI_API_KEY" ]; then\n\
-  ARGS="$ARGS --ai-api-key $CREATE_PR_BOT_AI_API_KEY"\n\
-fi\n\
-\n\
-# Add PM tool settings if provided\n\
-if [ ! -z "$CREATE_PR_BOT_PM_TOOL_TYPE" ]; then\n\
-  ARGS="$ARGS --pm-tool-type $CREATE_PR_BOT_PM_TOOL_TYPE"\n\
-fi\n\
-\n\
-if [ ! -z "$CREATE_PR_BOT_PM_TOOL_API_KEY" ]; then\n\
-  ARGS="$ARGS --pm-tool-api-key $CREATE_PR_BOT_PM_TOOL_API_KEY"\n\
-fi\n\
-\n\
-# Run the bot with the constructed arguments\n\
-# Note: Other PM tool settings (organization_id, project_id, base_url, username)\n\
-# will be picked up from environment variables by BotSettings.from_env()\n\
-poetry run create-pr-bot $ARGS\n\
-' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+# Copy entrypoint script
+COPY scripts/docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Set the entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
