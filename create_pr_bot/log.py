@@ -1,5 +1,4 @@
 import logging
-import sys
 
 DEBUG_LEVEL_LOG_FORMAT: str = "%(asctime)s [%(levelname)8s] (%(name)s - %(funcName)s at %(lineno)d): %(message)s"
 DEBUG_LEVEL_LOG_DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S UTC%z"
