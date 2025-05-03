@@ -1,0 +1,21 @@
+================ create =======================
+------------------ one prompt start ------------------
+Please help me implement a feature about using a configuration file named *.github/pr-creator.yaml* to configure options.
+1. Current development runtime environment using *Poetry* to manage the project. So please use Poetry way to run relative commands.
+2. Please use Python 3.11 or later.
+3. You have the existing software architecture of this feature at Python module *create_pr_bot/model.py*. Please adjust
+   the existing implementations for this feature.
+4. Please use the library *pytest* for the test part.
+5. Please also help me generate the unit test for each function of each object includes protected one or public one in this object.
+
+The code change points are as follows:
+1. A utility function about loading the configration file from the specific file path. And the specific file path would be a command line argument.
+2. Use the existing software architecture to modify. Please implement a utility function about serializing data from the dict type value of configuration as a data model.
+------------------ one prompt end ------------------
+
+================ improvement (or refactoring) =======================
+------------------ one prompt start ------------------
+Please rename the utility functions about serializing data from the dict type value to a data model in module
+*create_pr_bot/model.py* as *serialize*, doesn't name it as *from_dict*.
+And please also adjust the unit test naming in test module **test/unit_test/model.py** to align the functions naming.
+------------------ one prompt end ------------------
