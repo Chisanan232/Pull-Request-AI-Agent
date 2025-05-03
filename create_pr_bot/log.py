@@ -15,16 +15,9 @@ def init_logger_config(
         formatter = DEBUG_LEVEL_LOG_FORMAT
         datefmt = DEBUG_LEVEL_LOG_DATETIME_FORMAT
 
-    if sys.version_info >= (3, 9):
-        logging.basicConfig(
-            format=formatter,
-            datefmt=datefmt,
-            level=level,
-            encoding=encoding,
-        )
-    else:
-        logging.basicConfig(
-            format=formatter,
-            datefmt=datefmt,
-            level=level,
-        )
+    logging.basicConfig(
+        format=formatter,
+        datefmt=datefmt,
+        level=level,
+        encoding=encoding,
+    )
