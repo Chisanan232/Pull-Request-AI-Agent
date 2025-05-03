@@ -11,15 +11,12 @@ import sys
 
 from create_pr_bot.ai_bot import AiModuleClient
 from create_pr_bot.bot import CreatePrAIBot
+from create_pr_bot.log import init_logger_config
 from create_pr_bot.model import BotSettings
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(sys.stdout)],
-)
+init_logger_config()
 logger = logging.getLogger(__name__)
 
 
