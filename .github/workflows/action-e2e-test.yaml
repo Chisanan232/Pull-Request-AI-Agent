@@ -47,7 +47,7 @@ jobs:
           mkdir -p .github
           cat > .github/pr-creator.yaml << EOF
           git:
-            base_branch: main
+            base_branch: ${{ github.base_ref }}
           github:
             repo: ${{ github.repository }}
           ai:
