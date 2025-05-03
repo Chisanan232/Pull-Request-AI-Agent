@@ -22,9 +22,9 @@ class TestParseArgs:
             assert args.branch_name is None
             assert args.github_token is None
             assert args.github_repo is None
-            assert args.ai_client_type == "claude"
+            assert args.ai_client_type == AiModuleClient.CLAUDE.value
             assert args.ai_api_key is None
-            assert args.pm_tool_type == "clickup"
+            assert args.pm_tool_type == ProjectManagementToolType.CLICKUP.value
             assert args.pm_tool_api_key is None
 
     def test_parse_args_with_values(self):
