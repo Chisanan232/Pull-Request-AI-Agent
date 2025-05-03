@@ -187,19 +187,13 @@ class BotSettings:
             settings.github.repo = args.github_repo
 
         if args.ai_client_type:
-            try:
-                settings.ai.client_type = AiModuleClient(args.ai_client_type.lower())
-            except ValueError:
-                logger.warning(f"Invalid AI client type: {args.ai_client_type}")
+            settings.ai.client_type = AiModuleClient(args.ai_client_type.lower())
 
         if args.ai_api_key:
             settings.ai.api_key = args.ai_api_key
 
         if args.pm_tool_type:
-            try:
-                settings.pm_tool.tool_type = ProjectManagementToolType(args.pm_tool_type.lower())
-            except ValueError:
-                logger.warning(f"Invalid project management tool type: {args.pm_tool_type}")
+            settings.pm_tool.tool_type = ProjectManagementToolType(args.pm_tool_type.lower())
 
         if args.pm_tool_api_key:
             settings.pm_tool.api_key = args.pm_tool_api_key

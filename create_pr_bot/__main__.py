@@ -55,6 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--ai-client-type", 
         choices=["gpt", "claude", "gemini"],
+        default="claude",
         help="Type of AI client to use"
     )
     parser.add_argument(
@@ -66,6 +67,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--pm-tool-type", 
         choices=["clickup", "jira"],
+        default="clickup",
         help="Type of project management tool to use"
     )
     parser.add_argument(
