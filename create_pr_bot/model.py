@@ -113,7 +113,7 @@ class ProjectManagementToolSettings:
         )
     
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "ProjectManagementToolSettings":
+    def serialize(cls, config: Dict[str, Any]) -> "ProjectManagementToolSettings":
         """
         Load settings from a configuration dictionary.
         
@@ -195,7 +195,7 @@ class AISettings:
         )
     
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "AISettings":
+    def serialize(cls, config: Dict[str, Any]) -> "AISettings":
         """
         Load settings from a configuration dictionary.
         
@@ -214,10 +214,11 @@ class AISettings:
         client_type_str = ai_config.get("client_type", AiModuleClient.GPT.value)
         client_type = AiModuleClient.GPT  # Default to GPT
         
-        try:
-            client_type = AiModuleClient(client_type_str.lower())
-        except ValueError:
-            logger.warning(f"Invalid AI client type: {client_type_str}. Using default: {client_type.value}")
+        if client_type_str:
+            try:
+                client_type = AiModuleClient(client_type_str.lower())
+            except ValueError:
+                logger.warning(f"Invalid AI client type: {client_type_str}. Using default: {client_type.value}")
         
         return cls(
             client_type=client_type,
@@ -246,7 +247,7 @@ class GitHubSettings:
         )
     
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "GitHubSettings":
+    def serialize(cls, config: Dict[str, Any]) -> "GitHubSettings":
         """
         Load settings from a configuration dictionary.
         
@@ -287,7 +288,7 @@ class GitSettings:
         )
     
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "GitSettings":
+    def serialize(cls, config: Dict[str, Any]) -> "GitSettings":
         """
         Load settings from a configuration dictionary.
         
@@ -340,10 +341,10 @@ class BotSettings:
             BotSettings object
         """
         config = load_yaml_config(config_path)
-        return cls.from_dict(config)
+        return cls.serialize(config)
     
     @classmethod
-    def from_dict(cls, config: Dict[str, Any]) -> "BotSettings":
+    def serialize(cls, config: Dict[str, Any]) -> "BotSettings":
         """
         Load settings from a configuration dictionary.
         
@@ -354,10 +355,10 @@ class BotSettings:
             BotSettings object
         """
         return cls(
-            git=GitSettings.from_dict(config),
-            github=GitHubSettings.from_dict(config),
-            ai=AISettings.from_dict(config),
-            pm_tool=ProjectManagementToolSettings.from_dict(config),
+            git=GitSettings.serialize(config),
+            github=GitHubSettings.serialize(config),
+            ai=AISettings.serialize(config),
+            pm_tool=ProjectManagementToolSettings.serialize(config),
         )
 
     @classmethod
