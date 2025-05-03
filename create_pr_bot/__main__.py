@@ -40,13 +40,19 @@ def parse_args() -> argparse.Namespace:
 
     # AI settings
     parser.add_argument(
-        "--ai-client-type", choices=[client.value for client in AiModuleClient], default=AiModuleClient.CLAUDE.value, help="Type of AI client to use"
+        "--ai-client-type",
+        choices=[client.value for client in AiModuleClient],
+        default=AiModuleClient.CLAUDE.value,
+        help="Type of AI client to use",
     )
     parser.add_argument("--ai-api-key", help="API key for the AI service")
 
     # Project management tool settings
     parser.add_argument(
-        "--pm-tool-type", choices=[pm.value for pm in ProjectManagementToolType], default=ProjectManagementToolType.CLICKUP.value, help="Type of project management tool to use"
+        "--pm-tool-type",
+        choices=[pm.value for pm in ProjectManagementToolType],
+        default=ProjectManagementToolType.CLICKUP.value,
+        help="Type of project management tool to use",
     )
     parser.add_argument("--pm-tool-api-key", help="API key for the project management tool")
 
