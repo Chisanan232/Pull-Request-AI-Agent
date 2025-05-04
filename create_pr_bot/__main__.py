@@ -69,7 +69,7 @@ def run_bot(settings: BotSettings) -> None:
         logger.info("Initializing Create PR Bot...")
 
         # Create project management tool config
-        pm_tool_config = settings.pm_tool.to_config_dict() if settings.pm_tool.tool_type else None
+        pm_tool_config = settings.pm_tool if settings.pm_tool.tool_type else None
 
         # Initialize the bot
         bot = CreatePrAIBot(

@@ -16,6 +16,7 @@ from .ai_bot.gpt.client import GPTClient
 from .ai_bot.prompts.model import prepare_pr_prompt_data
 from .git_hdlr import GitCodeConflictError, GitHandler
 from .github_opt import GitHubOperations
+from .model import ProjectManagementToolSettings
 from .project_management_tool import ProjectManagementToolType
 from .project_management_tool._base.client import BaseProjectManagementAPIClient
 from .project_management_tool._base.model import BaseImmutableModel
@@ -47,7 +48,7 @@ class CreatePrAIBot:
         github_token: Optional[str] = None,
         github_repo: Optional[str] = None,
         project_management_tool_type: Optional[ProjectManagementToolType] = None,
-        project_management_tool_config: Optional[Dict[str, Any]] = None,
+        project_management_tool_config: Optional[ProjectManagementToolSettings] = None,
         ai_client_type: AiModuleClient = AI_CLIENT_GPT,
         ai_client_api_key: Optional[str] = None,
     ):
@@ -85,7 +86,7 @@ class CreatePrAIBot:
         self.ai_client = self._initialize_ai_client(ai_client_type, ai_client_api_key)
 
     def _initialize_project_management_client(
-        self, tool_type: ProjectManagementToolType, config: Dict[str, Any]
+        self, tool_type: ProjectManagementToolType, config: ProjectManagementToolSettings
     ) -> Optional[BaseProjectManagementAPIClient]:
         """
         Initialize the project management client based on the specified type.
@@ -101,15 +102,15 @@ class CreatePrAIBot:
             ValueError: If the tool type is not supported or required config is missing
         """
         if tool_type == self.PM_TOOL_CLICKUP:
-            if "api_token" not in config:
+            if not config.api_key:
                 raise ValueError("ClickUp API token is required")
-            return ClickUpAPIClient(api_token=config["api_token"])
+            return ClickUpAPIClient(api_token=config.api_key)
         elif tool_type == self.PM_TOOL_JIRA:
-            required_keys = ["base_url", "email", "api_token"]
+            required_keys = ["base_url", "username", "api_key"]
             for key in required_keys:
-                if key not in config:
+                if getattr(config, key) is None:
                     raise ValueError(f"Jira {key} is required")
-            return JiraAPIClient(base_url=config["base_url"], email=config["email"], api_token=config["api_token"])
+            return JiraAPIClient(base_url=config.base_url, email=config.username, api_token=config.api_key)
         else:
             raise ValueError(f"Unsupported project management tool type: {tool_type}")
 
