@@ -4,6 +4,7 @@ CreatePrAIBot - A bot that helps developers create pull requests with AI-generat
 
 import logging
 import re
+import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
 from github.PullRequest import PullRequest
@@ -253,6 +254,7 @@ class CreatePrAIBot:
             return commits
         except Exception as e:
             logger.error(f"Error getting branch commits: {str(e)}")
+            traceback.print_exc()
             return []
 
     def extract_ticket_ids(self, commits: List[Dict[str, Any]]) -> List[str]:
