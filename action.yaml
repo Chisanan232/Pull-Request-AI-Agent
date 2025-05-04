@@ -13,7 +13,7 @@ inputs:
   base-branch:
     description: "Name of the base branch to compare against (default: main)"
     required: false
-    default: "main"
+    default: "master"
   branch-name:
     description: "Name of the branch to create PR from (default: current branch)"
     required: false
