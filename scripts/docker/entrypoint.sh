@@ -1,5 +1,7 @@
 #!/bin/bash
 
+git config --global --add safe.directory /github/workspace
+
 # Build command arguments based on environment variables
 ARGS=""
 
