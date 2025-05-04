@@ -225,7 +225,7 @@ class CreatePrAIBot:
         repo = self.git_handler.repo
 
         try:
-            merge_base = repo.merge_base(f"refs/heads/{branch_name}", f"refs/heads/{self.base_branch}")
+            merge_base = repo.merge_base(branch_name, self.base_branch)
             if not merge_base:
                 return []
 
