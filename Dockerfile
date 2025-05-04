@@ -48,7 +48,7 @@ COPY scripts/docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Mark repo as safe
-RUN git config --global --add safe.directory /app
+RUN git config --global --add safe.directory /app/*
 
 # Set the entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
