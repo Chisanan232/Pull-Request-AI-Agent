@@ -54,6 +54,7 @@ jobs:
             client_type: gpt
           project_management_tool:
             type: clickup
+            api_key: ${{ secrets.PM_TOOL_API_KEY }}
           EOF
 
       # Run the action
