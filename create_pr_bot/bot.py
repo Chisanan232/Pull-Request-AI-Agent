@@ -217,6 +217,9 @@ class CreatePrAIBot:
 
         Returns:
             List of commit details
+            
+        Raises:
+            ValueError: If the feature branch or base branch cannot be found
         """
         if not branch_name:
             branch_name = self._get_current_branch()
@@ -247,10 +250,16 @@ class CreatePrAIBot:
             feature_branch_ref = next(filter(lambda ref: ref in refs, feature_ref_options), None)
             base_branch_ref = next(filter(lambda ref: ref in refs, base_ref_options), None)
             
-            # If we couldn't find valid references, return empty list
-            if not feature_branch_ref or not base_branch_ref:
-                logger.error(f"Could not find valid references for branches: feature={branch_name}, base={self.base_branch}")
-                return []
+            # If we couldn't find valid references, raise an error
+            if not feature_branch_ref:
+                error_msg = f"Feature branch '{branch_name}' not found. Available references: {list(refs.keys())}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+                
+            if not base_branch_ref:
+                error_msg = f"Base branch '{self.base_branch}' not found. Available references: {list(refs.keys())}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
             
             # Get the merge base between the branches
             merge_base = repo.merge_base(feature_branch_ref, base_branch_ref)
@@ -280,6 +289,9 @@ class CreatePrAIBot:
                 )
 
             return commits
+        except ValueError:
+            # Re-raise ValueError exceptions (our custom errors)
+            raise
         except Exception as e:
             logger.error(f"Error getting branch commits: {str(e)}")
             traceback.print_exc()
