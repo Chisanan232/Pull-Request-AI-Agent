@@ -272,6 +272,16 @@ class TestCreatePrAIBot:
         mock_base_commit = MagicMock()
         mock_base_commit.hexsha = "base123"
 
+        # Setup refs
+        mock_feature_ref = MagicMock()
+        mock_feature_ref.name = "test-branch"
+        
+        mock_base_ref = MagicMock()
+        mock_base_ref.name = "main"
+        
+        # Set up repo.refs
+        mock_repo.refs = [mock_feature_ref, mock_base_ref]
+
         # Setup merge_base
         mock_repo.merge_base.return_value = [mock_base_commit]
 
@@ -282,7 +292,7 @@ class TestCreatePrAIBot:
         commits = bot.get_branch_commits("test-branch")
 
         # Verify calls
-        mock_repo.merge_base.assert_called_once_with("refs/heads/test-branch", "refs/heads/main")
+        mock_repo.merge_base.assert_called_once_with("test-branch", "main")
         mock_repo.iter_commits.assert_called_once_with("test-branch")
 
         # Verify returned commits (should exclude base commit)
@@ -293,9 +303,36 @@ class TestCreatePrAIBot:
     def test_get_branch_commits_no_commits(self, bot, mock_git_handler):
         """Test get_branch_commits method with no commits."""
         mock_repo = mock_git_handler.repo
+        
+        # Setup refs
+        mock_feature_ref = MagicMock()
+        mock_feature_ref.name = "test-branch"
+        
+        mock_base_ref = MagicMock()
+        mock_base_ref.name = "main"
+        
+        # Set up repo.refs
+        mock_repo.refs = [mock_feature_ref, mock_base_ref]
+        
         mock_repo.merge_base.return_value = []
 
         commits = bot.get_branch_commits("test-branch")
+        
+        # Verify merge_base was called with the correct arguments
+        mock_repo.merge_base.assert_called_once_with("test-branch", "main")
+        
+        assert commits == []
+        
+    def test_get_branch_commits_branch_not_found(self, bot, mock_git_handler):
+        """Test get_branch_commits method when branches don't exist."""
+        mock_repo = mock_git_handler.repo
+        
+        # Setup empty refs
+        mock_repo.refs = []
+        
+        commits = bot.get_branch_commits("test-branch")
+        
+        # Verify we got an empty list back
         assert commits == []
 
     def test_extract_ticket_ids(self, bot):

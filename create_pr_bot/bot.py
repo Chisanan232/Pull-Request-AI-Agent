@@ -225,7 +225,35 @@ class CreatePrAIBot:
         repo = self.git_handler.repo
 
         try:
-            merge_base = repo.merge_base(branch_name, self.base_branch)
+            # Check if branches exist using repo.refs
+            refs = {ref.name: ref for ref in repo.refs}
+            
+            # Try different possible reference formats
+            feature_ref_options = [
+                branch_name,
+                f"refs/heads/{branch_name}",
+                f"origin/{branch_name}",
+                f"refs/remotes/origin/{branch_name}"
+            ]
+            
+            base_ref_options = [
+                self.base_branch,
+                f"refs/heads/{self.base_branch}",
+                f"origin/{self.base_branch}",
+                f"refs/remotes/origin/{self.base_branch}"
+            ]
+            
+            # Find valid references using filter
+            feature_branch_ref = next(filter(lambda ref: ref in refs, feature_ref_options), None)
+            base_branch_ref = next(filter(lambda ref: ref in refs, base_ref_options), None)
+            
+            # If we couldn't find valid references, return empty list
+            if not feature_branch_ref or not base_branch_ref:
+                logger.error(f"Could not find valid references for branches: feature={branch_name}, base={self.base_branch}")
+                return []
+            
+            # Get the merge base between the branches
+            merge_base = repo.merge_base(feature_branch_ref, base_branch_ref)
             if not merge_base:
                 return []
 
