@@ -275,10 +275,10 @@ class TestCreatePrAIBot:
         # Setup refs
         mock_feature_ref = MagicMock()
         mock_feature_ref.name = "test-branch"
-        
+
         mock_base_ref = MagicMock()
         mock_base_ref.name = "main"
-        
+
         # Set up repo.refs
         mock_repo.refs = [mock_feature_ref, mock_base_ref]
 
@@ -303,58 +303,58 @@ class TestCreatePrAIBot:
     def test_get_branch_commits_no_commits(self, bot, mock_git_handler):
         """Test get_branch_commits method with no commits."""
         mock_repo = mock_git_handler.repo
-        
+
         # Setup refs
         mock_feature_ref = MagicMock()
         mock_feature_ref.name = "test-branch"
-        
+
         mock_base_ref = MagicMock()
         mock_base_ref.name = "main"
-        
+
         # Set up repo.refs
         mock_repo.refs = [mock_feature_ref, mock_base_ref]
-        
+
         mock_repo.merge_base.return_value = []
 
         commits = bot.get_branch_commits("test-branch")
-        
+
         # Verify merge_base was called with the correct arguments
         mock_repo.merge_base.assert_called_once_with("test-branch", "main")
-        
+
         assert commits == []
-        
+
     def test_get_branch_commits_feature_branch_not_found(self, bot, mock_git_handler):
         """Test get_branch_commits method when feature branch doesn't exist."""
         mock_repo = mock_git_handler.repo
-        
+
         # Setup refs with only base branch
         mock_base_ref = MagicMock()
         mock_base_ref.name = "main"
         mock_repo.refs = [mock_base_ref]
-        
+
         # Expect ValueError to be raised
         with pytest.raises(ValueError) as excinfo:
             bot.get_branch_commits("test-branch")
-        
+
         # Verify error message contains branch name
         assert "Feature branch 'test-branch' not found" in str(excinfo.value)
-        
+
     def test_get_branch_commits_base_branch_not_found(self, bot, mock_git_handler):
         """Test get_branch_commits method when base branch doesn't exist."""
         mock_repo = mock_git_handler.repo
-        
+
         # Setup refs with only feature branch
         mock_feature_ref = MagicMock()
         mock_feature_ref.name = "test-branch"
         mock_repo.refs = [mock_feature_ref]
-        
+
         # Expect ValueError to be raised
         with pytest.raises(ValueError) as excinfo:
             bot.get_branch_commits("test-branch")
-        
+
         # Verify error message contains branch name
         assert "Base branch 'main' not found" in str(excinfo.value)
-        
+
     def test_extract_ticket_ids(self, bot):
         """Test extract_ticket_ids method."""
         # Create test commits with various ticket patterns

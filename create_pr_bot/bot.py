@@ -217,7 +217,7 @@ class CreatePrAIBot:
 
         Returns:
             List of commit details
-            
+
         Raises:
             ValueError: If the feature branch or base branch cannot be found
         """
@@ -230,37 +230,37 @@ class CreatePrAIBot:
         try:
             # Check if branches exist using repo.refs
             refs = {ref.name: ref for ref in repo.refs}
-            
+
             # Try different possible reference formats
             feature_ref_options = [
                 branch_name,
                 f"refs/heads/{branch_name}",
                 f"origin/{branch_name}",
-                f"refs/remotes/origin/{branch_name}"
+                f"refs/remotes/origin/{branch_name}",
             ]
-            
+
             base_ref_options = [
                 self.base_branch,
                 f"refs/heads/{self.base_branch}",
                 f"origin/{self.base_branch}",
-                f"refs/remotes/origin/{self.base_branch}"
+                f"refs/remotes/origin/{self.base_branch}",
             ]
-            
+
             # Find valid references using filter
             feature_branch_ref = next(filter(lambda ref: ref in refs, feature_ref_options), None)
             base_branch_ref = next(filter(lambda ref: ref in refs, base_ref_options), None)
-            
+
             # If we couldn't find valid references, raise an error
             if not feature_branch_ref:
                 error_msg = f"Feature branch '{branch_name}' not found. Available references: {list(refs.keys())}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
-                
+
             if not base_branch_ref:
                 error_msg = f"Base branch '{self.base_branch}' not found. Available references: {list(refs.keys())}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
-            
+
             # Get the merge base between the branches
             merge_base = repo.merge_base(feature_branch_ref, base_branch_ref)
             if not merge_base:
