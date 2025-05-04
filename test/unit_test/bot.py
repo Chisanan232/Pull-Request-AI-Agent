@@ -660,7 +660,9 @@ class TestCreatePrAIBot:
     def test_initialize_project_management_client_jira(self):
         """Test initialization of Jira project management client."""
         with patch("create_pr_bot.bot.JiraAPIClient") as mock_jira_client:
-            config = ProjectManagementToolSettings(base_url="https://example.atlassian.net", username="test@example.com", api_key="mock-api-token")
+            config = ProjectManagementToolSettings(
+                base_url="https://example.atlassian.net", username="test@example.com", api_key="mock-api-token"
+            )
             client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.JIRA, config)
             mock_jira_client.assert_called_once_with(
                 base_url="https://example.atlassian.net", email="test@example.com", api_token="mock-api-token"
@@ -670,9 +672,18 @@ class TestCreatePrAIBot:
         ("service_type", "config"),
         [
             (ProjectManagementToolType.CLICKUP, ProjectManagementToolSettings()),
-            (ProjectManagementToolType.JIRA, ProjectManagementToolSettings(username="test@example.com", api_key="mock-token")),
-            (ProjectManagementToolType.JIRA, ProjectManagementToolSettings(base_url="example.com", api_key="mock-token")),
-            (ProjectManagementToolType.JIRA, ProjectManagementToolSettings(base_url="example.com", username="test@example.com")),
+            (
+                ProjectManagementToolType.JIRA,
+                ProjectManagementToolSettings(username="test@example.com", api_key="mock-token"),
+            ),
+            (
+                ProjectManagementToolType.JIRA,
+                ProjectManagementToolSettings(base_url="example.com", api_key="mock-token"),
+            ),
+            (
+                ProjectManagementToolType.JIRA,
+                ProjectManagementToolSettings(base_url="example.com", username="test@example.com"),
+            ),
         ],
     )
     def test_initialize_project_management_client_missing_config(
