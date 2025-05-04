@@ -27,14 +27,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Test
-        run: |
-          pwd
-          ls -la
-
-      - name: Mark repo as safe
-        run: git config --global --add safe.directory /github/workspace
-
       # Setup test environment
       - name: Set up test branch
         run: |
