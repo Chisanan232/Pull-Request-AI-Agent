@@ -16,7 +16,7 @@ from create_pr_bot.model import BotSettings, find_default_config_path
 from create_pr_bot.project_management_tool import ProjectManagementToolType
 
 # Configure logging
-init_logger_config()
+init_logger_config(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
