@@ -57,6 +57,7 @@ class GitHandler:
                 )
             branch = branches[0]
             logging.debug(f"branch: {branch}")
+            logging.debug(f"type of branch: {type(branch)}")
             commit = branch.commit
 
             return {
