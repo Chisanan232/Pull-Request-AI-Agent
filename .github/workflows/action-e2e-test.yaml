@@ -33,7 +33,7 @@ jobs:
           ls -la
 
       - name: Mark repo as safe
-        run: git config --global --add safe.directory /home/runner/work/Create-PR-Bot/Create-PR-Bot/*
+        run: git config --global --add safe.directory /github/workspace
 
       # Setup test environment
       - name: Set up test branch
