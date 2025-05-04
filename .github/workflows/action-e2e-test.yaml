@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       - name: Mark repo as safe
-        run: git config --global --add safe.directory ./
+        run: git config --global --add safe.directory *
 
       # Setup test environment
       - name: Set up test branch
