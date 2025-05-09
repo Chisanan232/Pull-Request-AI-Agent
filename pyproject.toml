@@ -52,7 +52,7 @@ Changelog = "https://chisanan232.github.io/Create-PR-Bot/latest/release_note/"
 # Dependency for test
 pytest = "^8.1.1"
 pytest-cov = "^6.1.1"
-pytest-rerunfailures = "^15.0"
+pytest-rerunfailures = "^15.1"
 coverage = "^7.8"
 # Dependency for CI
 pre-commit = "^4.2.0"
