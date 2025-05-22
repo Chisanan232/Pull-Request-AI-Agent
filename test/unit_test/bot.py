@@ -355,21 +355,23 @@ class TestCreatePrAIBot:
         # Verify error message contains branch name
         assert "Base branch 'main' not found" in str(excinfo.value)
 
-    def test_extract_ticket_ids(self, bot):
-        """Test extract_ticket_ids method."""
+    @pytest.mark.parametrize(
+        "git_branch",
+        [
+            "#123/fix_bug",
+            "PROJ-456/implement_feature",
+            "CU-abc123/update-docs",
+            "Task-789/refactor-code",
+            "no-ticket/just-test",
+        ],
+    )
+    def test_extract_ticket_id(self, bot, git_branch: str):
+        """Test extract_ticket_id method."""
         # Create test commits with various ticket patterns
-        commits = [
-            {"message": "Fix bug #123"},
-            {"message": "Implement feature PROJ-456"},
-            {"message": "Update docs CU-abc123"},
-            {"message": "Refactor code Task-789"},
-            {"message": "Non-ticket commit"},
-        ]
-
-        ticket_ids = bot.extract_ticket_ids(commits)
+        ticket_id = bot.extract_ticket_id(git_branch)
 
         # Verify extracted ticket IDs
-        assert sorted(ticket_ids) == sorted(["123", "PROJ-456", "abc123", "789"])
+        assert ticket_id in sorted(["#123", "PROJ-456", "CU-abc123", "Task-789", ""])
 
     def test_get_ticket_details(self, bot, mock_project_management_client):
         """Test get_ticket_details method."""
@@ -613,7 +615,7 @@ class TestCreatePrAIBot:
             patch.object(bot, "is_pr_already_opened", return_value=False),
             patch.object(bot, "fetch_and_merge_latest_from_base_branch", return_value=True),
             patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
-            patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]),
+            patch.object(bot, "extract_ticket_id", return_value=["PROJ-123"]),
             patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
             patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
             patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
@@ -633,7 +635,7 @@ class TestCreatePrAIBot:
             patch.object(bot, "is_branch_outdated", return_value=False),
             patch.object(bot, "is_pr_already_opened", return_value=False),
             patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
-            patch.object(bot, "extract_ticket_ids", return_value=["PROJ-123"]),
+            patch.object(bot, "extract_ticket_id", return_value=["PROJ-123"]),
             patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
             patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
             patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
@@ -688,7 +690,7 @@ class TestCreatePrAIBot:
             patch.object(bot, "is_branch_outdated", return_value=False),
             patch.object(bot, "is_pr_already_opened", return_value=False),
             patch.object(bot, "get_branch_commits", return_value=[{"message": "Test commit"}]),
-            patch.object(bot, "extract_ticket_ids", return_value=[]),
+            patch.object(bot, "extract_ticket_id", return_value=[]),
             patch.object(bot, "get_ticket_details", return_value=[]),
             patch.object(bot, "prepare_ai_prompt", return_value="Test prompt"),
         ):
