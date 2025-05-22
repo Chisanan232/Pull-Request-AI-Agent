@@ -68,7 +68,8 @@ jobs:
           pm-tool-api-key: ${{ secrets.PM_TOOL_API_KEY }}
 
       # Cleanup test branch regardless of success or failure
-      - name: Cleanup test branch
-        if: always()
-        run: |
-          git push origin --delete $TEST_BRANCH || true
+      - name: Remove the git branch which for end-to-end test only
+        uses: ./.github/actions/clear_remote_branch/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_BRANCH: ${{ env.TEST_BRANCH }}
