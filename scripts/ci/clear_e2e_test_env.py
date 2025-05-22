@@ -22,7 +22,7 @@ GITHUB: Optional[Github] = None
 
 def init_git() -> None:
     global REPO
-    REPO = Repo("./")
+    REPO = Repo("../")
 
 
 def get_all_branch() -> List[str]:
