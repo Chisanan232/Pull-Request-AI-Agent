@@ -308,8 +308,6 @@ class CreatePrAIBot:
         Returns:
             The unique ticket ID
         """
-        # ticket_ids = set()
-
         # Common patterns for ticket IDs in commit messages
         # Adjust patterns based on your project's conventions
         patterns = [
