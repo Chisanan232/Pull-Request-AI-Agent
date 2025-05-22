@@ -26,7 +26,7 @@ inputs:
   ai-client-type:
     description: "Type of AI client to use (gpt, claude, gemini)"
     required: false
-    default: "claude"
+    default: "gpt"
   ai-api-key:
     description: "API key for the AI service"
     required: true
