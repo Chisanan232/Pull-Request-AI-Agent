@@ -13,6 +13,10 @@ on:
 #     End-to-End test
       - ".github/workflows/action-e2e-test.yaml"
 
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   TEST_BRANCH: test-pr-bot-action
 
@@ -20,10 +24,6 @@ jobs:
   test-action:
     name: Test Create PR Bot Action
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
