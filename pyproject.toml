@@ -52,11 +52,11 @@ create-pr-bot = "create_pr_bot.__main__:main"
 # Dependency for test
 pytest = "^8.1.1"
 pytest-cov = "^6.1.1"
-pytest-rerunfailures = "^15.0"
+pytest-rerunfailures = "^15.1"
 coverage = "^7.8"
 # Dependency for CI
 pre-commit = "^4.2.0"
-pylint = "^3.1.0"
+pylint = "^3.3.7"
 mypy = "^1.2.0"
 
 [tool.poetry.group.docs]
@@ -64,8 +64,8 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.3"
-mkdocs-material = "^9.6.12"
-mkdocs-autorefs = "^1.0.1"
+mkdocs-material = "^9.6.14"
+mkdocs-autorefs = "^1.4.2"
 mkdocstrings = ">=0.24.1,<0.30.0"
 mkdocstrings-python = "^1.16.10"
 mike = "^2.1.3"
