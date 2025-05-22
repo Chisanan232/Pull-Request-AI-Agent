@@ -111,6 +111,7 @@ class CreatePrAIBot:
             for key in required_keys:
                 if getattr(config, key) is None:
                     raise ValueError(f"Jira {key} is required")
+            assert config.base_url and config.username and config.api_key
             return JiraAPIClient(base_url=config.base_url, email=config.username, api_token=config.api_key)
         else:
             raise ValueError(f"Unsupported project management tool type: {tool_type}")
