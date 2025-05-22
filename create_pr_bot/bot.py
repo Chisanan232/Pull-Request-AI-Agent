@@ -298,17 +298,17 @@ class CreatePrAIBot:
             traceback.print_exc()
             return []
 
-    def extract_ticket_ids(self, commits: List[Dict[str, Any]]) -> List[str]:
+    def extract_ticket_id(self, branch_name: str) -> str:
         """
-        Extract ticket IDs from commit messages.
+        Extract ticket ID from the git branch name.
 
         Args:
-            commits: List of commit details
+            branch_name: the git branch name
 
         Returns:
-            List of unique ticket IDs
+            The unique ticket ID
         """
-        ticket_ids = set()
+        # ticket_ids = set()
 
         # Common patterns for ticket IDs in commit messages
         # Adjust patterns based on your project's conventions
@@ -319,14 +319,11 @@ class CreatePrAIBot:
             r"Task-(\d+)",  # Generic task format: Task-123
         ]
 
-        for commit in commits:
-            message = commit["message"]
-
-            for pattern in patterns:
-                matches = re.findall(pattern, message)
-                ticket_ids.update(matches)
-
-        return list(ticket_ids)
+        for pattern in patterns:
+            matches = re.search(pattern, branch_name)
+            if matches:
+                return matches.group(0)
+        return ""
 
     def get_ticket_details(self, ticket_ids: List[str]) -> List[BaseImmutableModel]:
         """
@@ -629,11 +626,11 @@ class CreatePrAIBot:
                     return None
 
                 # Step 4-3: Get ticket details
-                logger.info("Extracting ticket IDs from commits...")
-                ticket_ids = self.extract_ticket_ids(commits)
+                logger.info("Extracting ticket IDs from git branch...")
+                ticket_id = self.extract_ticket_id(branch_name)
 
-                logger.info(f"Found ticket IDs: {ticket_ids}")
-                ticket_details = self.get_ticket_details(ticket_ids)
+                logger.info(f"Found ticket ID: {ticket_id}")
+                ticket_details = self.get_ticket_details([ticket_id])
 
                 # Step 4-4: Prepare AI prompt
                 logger.info("Preparing AI prompt...")
