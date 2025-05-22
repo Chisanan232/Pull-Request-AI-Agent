@@ -69,6 +69,7 @@ jobs:
 
       # Cleanup test branch regardless of success or failure
       - name: Remove the git branch which for end-to-end test only
+        if: always()
         uses: ./.github/actions/clear_remote_branch/
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
