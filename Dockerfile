@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 LABEL maintainer="Chisanan232 <chi10211201@cycu.org.tw>"
-LABEL org.opencontainers.image.source="https://github.com/Chisanan232/Create-PR-Bot"
+LABEL org.opencontainers.image.source="https://github.com/Chisanan232/Pull-Request-AI-Agent"
 LABEL org.opencontainers.image.description="Create PR Bot - Automate pull request creation with AI-generated content"
 LABEL org.opencontainers.image.licenses="MIT"
 
