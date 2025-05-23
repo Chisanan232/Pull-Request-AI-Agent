@@ -5,7 +5,7 @@ on:
   push:
     paths:
 #     For source code
-      - "../../pull_request_ai_agent/**/*.py"
+      - "pull_request_ai_agent/**/*.py"
       - "!**/__pkg_info__.py"
 #     For config
       - "action.yaml"

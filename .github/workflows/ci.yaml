@@ -11,7 +11,7 @@ on:
       - ".github/workflows/ci.yaml"
       - ".github/workflows/rw_*.yaml"
 #     For source code and test
-      - "../../pull_request_ai_agent/**/*.py"
+      - "pull_request_ai_agent/**/*.py"
       - "!**/__pkg_info__.py"
       - "!pull_request_ai_agent/ai_bot/vibe_coding/**/*.txt"
       - "test/**/*.py"
@@ -34,7 +34,7 @@ on:
       - ".github/workflows/ci.yaml"
       - ".github/workflows/rw_*.yaml"
 #     For source code and test
-      - "../../pull_request_ai_agent/**/*.py"
+      - "pull_request_ai_agent/**/*.py"
       - "!**/__pkg_info__.py"
       - "!pull_request_ai_agent/ai_bot/vibe_coding/**/*.txt"
       - "test/**/*.py"
