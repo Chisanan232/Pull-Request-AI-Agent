@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
-from create_pr_bot.project_management_tool._base.model import BaseImmutableModel
+from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
 
 
 @dataclass(frozen=True)

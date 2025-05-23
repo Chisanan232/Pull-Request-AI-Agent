@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from github import GithubException
 from github.PullRequest import PullRequest
 
-from create_pr_bot.github_opt import GitHubOperations
+from pull_request_ai_agent.github_opt import GitHubOperations
 
 
 class TestGitHubOperations(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestGitHubOperations(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.patcher = patch("create_pr_bot.github_opt.Github")
+        self.patcher = patch("pull_request_ai_agent.github_opt.Github")
         self.mock_github = self.patcher.start()
         self.mock_repo = MagicMock()
         self.mock_github.return_value.get_repo.return_value = self.mock_repo

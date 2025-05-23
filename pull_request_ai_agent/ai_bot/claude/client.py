@@ -9,8 +9,12 @@ from typing import Any, Dict, Optional
 
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot._base.client import BaseAIClient
-from create_pr_bot.ai_bot.claude.model import ClaudeContent, ClaudeResponse, ClaudeUsage
+from pull_request_ai_agent.ai_bot._base.client import BaseAIClient
+from pull_request_ai_agent.ai_bot.claude.model import (
+    ClaudeContent,
+    ClaudeResponse,
+    ClaudeUsage,
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)

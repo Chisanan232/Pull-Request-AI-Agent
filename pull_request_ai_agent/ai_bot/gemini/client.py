@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional
 
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot._base.client import BaseAIClient
-from create_pr_bot.ai_bot.gemini.model import (
+from pull_request_ai_agent.ai_bot._base.client import BaseAIClient
+from pull_request_ai_agent.ai_bot.gemini.model import (
     GeminiCandidate,
     GeminiContent,
     GeminiPromptFeedback,

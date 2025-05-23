@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from create_pr_bot.log import (
+from pull_request_ai_agent.log import (
     DEBUG_LEVEL_LOG_DATETIME_FORMAT,
     DEBUG_LEVEL_LOG_FORMAT,
     init_logger_config,
