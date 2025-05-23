@@ -9,11 +9,11 @@ import argparse
 import logging
 import sys
 
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.bot import CreatePrAIBot
-from create_pr_bot.log import init_logger_config
-from create_pr_bot.model import BotSettings, find_default_config_path
-from create_pr_bot.project_management_tool import ProjectManagementToolType
+from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.bot import CreatePrAIBot
+from pull_request_ai_agent.log import init_logger_config
+from pull_request_ai_agent.model import BotSettings, find_default_config_path
+from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
 
 # Configure logging
 init_logger_config(level=logging.DEBUG)

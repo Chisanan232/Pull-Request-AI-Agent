@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.gemini.client import GeminiClient
-from create_pr_bot.ai_bot.gemini.model import (
+from pull_request_ai_agent.ai_bot.gemini.client import GeminiClient
+from pull_request_ai_agent.ai_bot.gemini.model import (
     GeminiCandidate,
     GeminiContent,
     GeminiPromptFeedback,
@@ -377,7 +377,7 @@ def test_ask_connection_error(mock_request, gemini_client, sample_prompt):
     assert "Failed to call Gemini API" in str(excinfo.value)
 
 
-@patch("create_pr_bot.ai_bot.gemini.client.GeminiClient.ask")
+@patch("pull_request_ai_agent.ai_bot.gemini.client.GeminiClient.ask")
 def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_response):
     """Test that get_content returns just the content from the first candidate."""
     # Set up the mock to return a sample response
@@ -394,7 +394,7 @@ def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_respo
     assert content == expected_content
 
 
-@patch("create_pr_bot.ai_bot.gemini.client.GeminiClient.ask")
+@patch("pull_request_ai_agent.ai_bot.gemini.client.GeminiClient.ask")
 def test_get_content_no_candidates(mock_ask, gemini_client, sample_prompt):
     """Test that get_content raises IndexError when there are no candidates in the response."""
     # Create a response with no candidates

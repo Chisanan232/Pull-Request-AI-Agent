@@ -8,7 +8,7 @@ import git
 import pytest
 from git.exc import GitCommandError
 
-from create_pr_bot.git_hdlr import GitCodeConflictError, GitHandler
+from pull_request_ai_agent.git_hdlr import GitCodeConflictError, GitHandler
 
 
 class TestGitHandler:
@@ -76,7 +76,7 @@ class TestGitHandler:
     @pytest.fixture
     def git_handler(self, mock_repo):
         """Create a GitHandler instance with a mock repo."""
-        with patch("create_pr_bot.git_hdlr.git.Repo", return_value=mock_repo):
+        with patch("pull_request_ai_agent.git_hdlr.git.Repo", return_value=mock_repo):
             handler = GitHandler("/mock/repo/path")
             return handler
 

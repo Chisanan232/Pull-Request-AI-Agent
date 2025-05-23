@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from create_pr_bot.project_management_tool._base.model import BaseImmutableModel
+from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
 
 
 @dataclass(frozen=True)

@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from create_pr_bot.project_management_tool.jira.model import JiraTicket
+from pull_request_ai_agent.project_management_tool.jira.model import JiraTicket
 
 
 class TestJiraTicket:

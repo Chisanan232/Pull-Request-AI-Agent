@@ -8,15 +8,15 @@ from unittest.mock import MagicMock, PropertyMock, call, mock_open, patch
 import pytest
 from github.PullRequest import PullRequest
 
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.ai_bot.gpt.client import GPTClient
-from create_pr_bot.bot import CreatePrAIBot
-from create_pr_bot.git_hdlr import GitCodeConflictError, GitHandler
-from create_pr_bot.github_opt import GitHubOperations
-from create_pr_bot.model import ProjectManagementToolSettings
-from create_pr_bot.project_management_tool import ProjectManagementToolType
-from create_pr_bot.project_management_tool._base.model import BaseImmutableModel
-from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
+from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.ai_bot.gpt.client import GPTClient
+from pull_request_ai_agent.bot import CreatePrAIBot
+from pull_request_ai_agent.git_hdlr import GitCodeConflictError, GitHandler
+from pull_request_ai_agent.github_opt import GitHubOperations
+from pull_request_ai_agent.model import ProjectManagementToolSettings
+from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
+from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
+from pull_request_ai_agent.project_management_tool.clickup.client import ClickUpAPIClient
 
 
 class SpyBot(CreatePrAIBot):
@@ -138,8 +138,8 @@ class TestCreatePrAIBot:
     def bot(self, mock_git_handler, mock_github_operations, mock_ai_client, mock_project_management_client):
         """Create a CreatePrAIBot instance with mocked dependencies."""
         with (
-            patch("create_pr_bot.bot.GitHandler", return_value=mock_git_handler),
-            patch("create_pr_bot.bot.GitHubOperations", return_value=mock_github_operations),
+            patch("pull_request_ai_agent.bot.GitHandler", return_value=mock_git_handler),
+            patch("pull_request_ai_agent.bot.GitHubOperations", return_value=mock_github_operations),
             patch.object(CreatePrAIBot, "_initialize_ai_client", return_value=mock_ai_client),
             patch.object(
                 CreatePrAIBot, "_initialize_project_management_client", return_value=mock_project_management_client
@@ -161,19 +161,19 @@ class TestCreatePrAIBot:
 
     def test_initialize_ai_client_gpt(self):
         """Test initialization of GPT AI client."""
-        with patch("create_pr_bot.bot.GPTClient") as mock_gpt_client:
+        with patch("pull_request_ai_agent.bot.GPTClient") as mock_gpt_client:
             SpyBot()._initialize_ai_client(AiModuleClient.GPT, "mock-api-key")
             mock_gpt_client.assert_called_once_with(api_key="mock-api-key")
 
     def test_initialize_ai_client_claude(self):
         """Test initialization of Claude AI client."""
-        with patch("create_pr_bot.bot.ClaudeClient") as mock_claude_client:
+        with patch("pull_request_ai_agent.bot.ClaudeClient") as mock_claude_client:
             SpyBot()._initialize_ai_client(AiModuleClient.CLAUDE, "mock-api-key")
             mock_claude_client.assert_called_once_with(api_key="mock-api-key")
 
     def test_initialize_ai_client_gemini(self):
         """Test initialization of Gemini AI client."""
-        with patch("create_pr_bot.bot.GeminiClient") as mock_gemini_client:
+        with patch("pull_request_ai_agent.bot.GeminiClient") as mock_gemini_client:
             SpyBot()._initialize_ai_client(AiModuleClient.GEMINI, "mock-api-key")
             mock_gemini_client.assert_called_once_with(api_key="mock-api-key")
 
@@ -711,14 +711,14 @@ class TestCreatePrAIBot:
 
     def test_initialize_project_management_client_clickup(self):
         """Test initialization of ClickUp project management client."""
-        with patch("create_pr_bot.bot.ClickUpAPIClient") as mock_clickup_client:
+        with patch("pull_request_ai_agent.bot.ClickUpAPIClient") as mock_clickup_client:
             config = ProjectManagementToolSettings(api_key="mock-api-token")
             client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.CLICKUP, config)
             mock_clickup_client.assert_called_once_with(api_token="mock-api-token")
 
     def test_initialize_project_management_client_jira(self):
         """Test initialization of Jira project management client."""
-        with patch("create_pr_bot.bot.JiraAPIClient") as mock_jira_client:
+        with patch("pull_request_ai_agent.bot.JiraAPIClient") as mock_jira_client:
             config = ProjectManagementToolSettings(
                 base_url="https://example.atlassian.net", username="test@example.com", api_key="mock-api-token"
             )
@@ -904,7 +904,7 @@ class TestCreatePrAIBot:
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt"
 
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.side_effect = [
@@ -950,7 +950,7 @@ class TestCreatePrAIBot:
         mock_ticket = MagicMock()
 
         # Mock prepare_pr_prompt_data to raise FileNotFoundError
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=FileNotFoundError("Test error")):
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", side_effect=FileNotFoundError("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.return_value = {
@@ -973,7 +973,7 @@ class TestCreatePrAIBot:
         mock_ticket = MagicMock()
 
         # Mock prepare_pr_prompt_data to raise a generic Exception
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.return_value = {
@@ -1007,7 +1007,7 @@ class TestCreatePrAIBot:
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt"
 
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.return_value = {
@@ -1037,7 +1037,7 @@ class TestCreatePrAIBot:
         mock_prompt_data = MagicMock()
         mock_prompt_data.title = "Test title prompt with PR template"
 
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", return_value=mock_prompt_data) as mock_prepare:
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.return_value = {
@@ -1071,7 +1071,7 @@ class TestCreatePrAIBot:
         mock_pr_template = "## PR Template\n* Task ID: \n* Description: "
 
         # Mock prepare_pr_prompt_data to raise Exception
-        with patch("create_pr_bot.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
+        with patch("pull_request_ai_agent.bot.prepare_pr_prompt_data", side_effect=Exception("Test error")):
             # Set up _extract_ticket_info to return structured ticket info
             with patch.object(bot, "_extract_ticket_info") as mock_extract_info:
                 mock_extract_info.return_value = {

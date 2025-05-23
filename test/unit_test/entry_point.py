@@ -5,9 +5,9 @@ Unit tests for the entry point module.
 import sys
 from unittest.mock import MagicMock, patch
 
-from create_pr_bot.__main__ import main, parse_args, run_bot
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.project_management_tool import ProjectManagementToolType
+from pull_request_ai_agent.__main__ import main, parse_args, run_bot
+from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
 
 
 class TestParseArgs:
@@ -15,7 +15,7 @@ class TestParseArgs:
 
     def test_parse_args_empty(self):
         """Test parsing empty command line arguments."""
-        with patch.object(sys, "argv", ["create_pr_bot"]):
+        with patch.object(sys, "argv", ["pull_request_ai_agent"]):
             args = parse_args()
             assert args.repo_path is None
             assert args.base_branch is None
@@ -30,7 +30,7 @@ class TestParseArgs:
     def test_parse_args_with_values(self):
         """Test parsing command line arguments with values."""
         test_args = [
-            "create_pr_bot",
+            "pull_request_ai_agent",
             "--repo-path",
             "/path/to/repo",
             "--base-branch",
@@ -86,7 +86,7 @@ class TestRunBot:
         mock_pr.html_url = "https://github.com/owner/repo/pull/1"
         mock_bot.run.return_value = mock_pr
 
-        with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot) as mock_create_bot:
+        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot) as mock_create_bot:
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
 
@@ -117,7 +117,7 @@ class TestRunBot:
         mock_bot = MagicMock()
         mock_bot.run.return_value = None
 
-        with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot):
+        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot):
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
 
@@ -133,7 +133,7 @@ class TestRunBot:
         mock_bot = MagicMock()
         mock_bot.run.side_effect = Exception("Test error")
 
-        with patch("create_pr_bot.__main__.CreatePrAIBot", return_value=mock_bot):
+        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot):
             with patch("logging.Logger.error") as mock_error:
                 with patch("sys.exit") as mock_exit:
                     run_bot(mock_settings)
@@ -154,9 +154,9 @@ class TestMain:
         mock_args = MagicMock()
         mock_settings = MagicMock()
 
-        with patch("create_pr_bot.__main__.parse_args", return_value=mock_args) as mock_parse_args:
-            with patch("create_pr_bot.__main__.BotSettings.from_args", return_value=mock_settings) as mock_from_args:
-                with patch("create_pr_bot.__main__.run_bot") as mock_run_bot:
+        with patch("pull_request_ai_agent.__main__.parse_args", return_value=mock_args) as mock_parse_args:
+            with patch("pull_request_ai_agent.__main__.BotSettings.from_args", return_value=mock_settings) as mock_from_args:
+                with patch("pull_request_ai_agent.__main__.run_bot") as mock_run_bot:
                     main()
 
                     # Verify functions were called in the correct order

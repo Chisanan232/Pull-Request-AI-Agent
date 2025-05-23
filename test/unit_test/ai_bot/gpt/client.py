@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.gpt.client import GPTClient
-from create_pr_bot.ai_bot.gpt.model import GPTChoice, GPTMessage, GPTResponse, GPTUsage
+from pull_request_ai_agent.ai_bot.gpt.client import GPTClient
+from pull_request_ai_agent.ai_bot.gpt.model import GPTChoice, GPTMessage, GPTResponse, GPTUsage
 
 
 @pytest.fixture
@@ -364,7 +364,7 @@ def test_ask_connection_error(mock_request, gpt_client, sample_prompt):
     assert "Failed to call GPT API" in str(excinfo.value)
 
 
-@patch("create_pr_bot.ai_bot.gpt.client.GPTClient.ask")
+@patch("pull_request_ai_agent.ai_bot.gpt.client.GPTClient.ask")
 def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
     """Test that get_content returns just the content from the first choice."""
     # Set up the mock to return a sample response
@@ -381,7 +381,7 @@ def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
     assert content == expected_content
 
 
-@patch("create_pr_bot.ai_bot.gpt.client.GPTClient.ask")
+@patch("pull_request_ai_agent.ai_bot.gpt.client.GPTClient.ask")
 def test_get_content_no_choices(mock_ask, gpt_client, sample_prompt):
     """Test that get_content raises IndexError when there are no choices in the response."""
     # Create a response with no choices

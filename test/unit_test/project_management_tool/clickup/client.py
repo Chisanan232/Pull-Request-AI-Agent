@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 import pytest
 import urllib3
 
-from create_pr_bot.project_management_tool.clickup.client import ClickUpAPIClient
-from create_pr_bot.project_management_tool.clickup.model import (
+from pull_request_ai_agent.project_management_tool.clickup.client import ClickUpAPIClient
+from pull_request_ai_agent.project_management_tool.clickup.model import (
     ClickUpStatus,
     ClickUpTask,
     ClickUpUser,

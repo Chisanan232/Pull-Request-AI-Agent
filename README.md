@@ -44,7 +44,7 @@ You can configure the bot using a YAML configuration file. By default, the bot w
 You can also specify a custom configuration file path using the `--config` command line argument:
 
 ```bash
-poetry run python -m create_pr_bot --config /path/to/your/config.yaml
+poetry run python -m pr-ai-agent --config /path/to/your/config.yaml
 ```
 
 #### Example Configuration File

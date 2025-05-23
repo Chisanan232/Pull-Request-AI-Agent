@@ -6,8 +6,8 @@ import pytest
 import urllib3
 from pytest import MonkeyPatch
 
-from create_pr_bot.project_management_tool.jira.client import JiraAPIClient
-from create_pr_bot.project_management_tool.jira.model import JiraTicket
+from pull_request_ai_agent.project_management_tool.jira.client import JiraAPIClient
+from pull_request_ai_agent.project_management_tool.jira.model import JiraTicket
 
 
 class TestJIRAAPIClient:

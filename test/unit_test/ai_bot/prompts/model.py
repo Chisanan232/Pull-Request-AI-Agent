@@ -9,7 +9,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from create_pr_bot.ai_bot.prompts.model import (
+from pull_request_ai_agent.ai_bot.prompts.model import (
     PROMPT_MODEL_MAPPING,
     BasePrompt,
     PromptName,
@@ -91,7 +91,7 @@ def test_create_prompt_model(mock_prompt_content):
     # Mock the load_prompt_from_file function
     prompt_name = Mock()
     prompt_name.value = "test-prompt"
-    with patch("create_pr_bot.ai_bot.prompts.model.load_prompt_from_file", return_value=mock_prompt_content):
+    with patch("pull_request_ai_agent.ai_bot.prompts.model.load_prompt_from_file", return_value=mock_prompt_content):
         # Test with each model class
         for model_class in [SummarizeChangeContentPrompt, SummarizeAsPullRequestTitle]:
             prompt = create_prompt_model(model_class, prompt_name)
@@ -117,7 +117,7 @@ def test_get_prompt_model(mock_prompt_content):
     """Test getting a prompt model by name."""
     # Mock create_prompt_model to avoid file system access
     with patch(
-        "create_pr_bot.ai_bot.prompts.model.create_prompt_model",
+        "pull_request_ai_agent.ai_bot.prompts.model.create_prompt_model",
         return_value=SummarizeChangeContentPrompt(content=mock_prompt_content),
     ):
         # Test with a valid prompt name
@@ -138,7 +138,7 @@ def test_real_prompt_file_exists():
     """Test that the actual prompt files exist in the expected location."""
     # This test helps ensure the code will work with the actual project structure
     for prompt_name in PROMPT_MODEL_MAPPING.keys():
-        prompts_dir = Path(__file__).parent.parent.parent.parent.parent / "create_pr_bot" / "ai_bot" / "prompts"
+        prompts_dir = Path(__file__).parent.parent.parent.parent.parent / "pull_request_ai_agent" / "ai_bot" / "prompts"
         prompt_file = prompts_dir / f"{prompt_name.value}.prompt"
 
         # Skip this assertion if we're in a CI environment without the actual files
@@ -170,7 +170,7 @@ class TestPromptModel:
     def test_create_prompt_model(self):
         """Test creating a prompt model."""
         # Mock load_prompt_from_file
-        with patch("create_pr_bot.ai_bot.prompts.model.load_prompt_from_file", return_value="Test content"):
+        with patch("pull_request_ai_agent.ai_bot.prompts.model.load_prompt_from_file", return_value="Test content"):
             # Create a prompt model
             model = create_prompt_model(SummarizeAsPullRequestTitle, PromptName.SUMMARIZE_AS_CLEAR_TITLE)
 
@@ -181,7 +181,7 @@ class TestPromptModel:
     def test_get_prompt_model(self):
         """Test getting a prompt model by name."""
         # Mock create_prompt_model
-        with patch("create_pr_bot.ai_bot.prompts.model.create_prompt_model") as mock_create:
+        with patch("pull_request_ai_agent.ai_bot.prompts.model.create_prompt_model") as mock_create:
             mock_create.return_value = SummarizeAsPullRequestTitle(content="Test content")
 
             # Get a prompt model
@@ -326,7 +326,7 @@ class TestPromptModel:
     def test_prepare_pr_prompt_data(self):
         """Test preparing PR prompt data."""
         # Mock get_prompt_model
-        with patch("create_pr_bot.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
+        with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
             # Mock the prompt models
             title_prompt = SummarizeAsPullRequestTitle(
                 content="Title template: {{ task_tickets_details }} {{ all_commits }}"
@@ -355,7 +355,7 @@ class TestPromptModel:
     def test_prepare_pr_prompt_data_with_project_root(self):
         """Test preparing PR prompt data with project root."""
         # Mock get_prompt_model
-        with patch("create_pr_bot.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
+        with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
             # Mock the prompt models
             title_prompt = SummarizeAsPullRequestTitle(content="Title: {{ pull_request_template }}")
             description_prompt = SummarizeChangeContentPrompt(content="Description: {{ pull_request_template }}")
@@ -379,7 +379,7 @@ class TestPromptModel:
     def test_prepare_pr_prompt_data_file_not_found(self):
         """Test preparing PR prompt data with a missing file."""
         # Mock get_prompt_model to raise FileNotFoundError
-        with patch("create_pr_bot.ai_bot.prompts.model.get_prompt_model", side_effect=FileNotFoundError("Test error")):
+        with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model", side_effect=FileNotFoundError("Test error")):
             # Create test data
             task_tickets = [{"id": "PROJ-123", "title": "Fix bug"}]
             commits = [{"short_hash": "abc123", "message": "Fix login bug"}]

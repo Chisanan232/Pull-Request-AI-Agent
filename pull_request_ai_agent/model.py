@@ -8,8 +8,8 @@ from typing import Any, Dict, Optional, Union
 
 import yaml
 
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.project_management_tool import ProjectManagementToolType
+from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
 
 logger = logging.getLogger(__name__)
 

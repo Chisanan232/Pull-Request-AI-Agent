@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from urllib3.response import HTTPResponse
 
-from create_pr_bot.ai_bot.claude.client import ClaudeClient
-from create_pr_bot.ai_bot.claude.model import (
+from pull_request_ai_agent.ai_bot.claude.client import ClaudeClient
+from pull_request_ai_agent.ai_bot.claude.model import (
     ClaudeContent,
     ClaudeMessage,
     ClaudeResponse,
@@ -369,7 +369,7 @@ def test_ask_connection_error(mock_request, claude_client, sample_prompt):
     assert "Failed to call Claude API" in str(excinfo.value)
 
 
-@patch("create_pr_bot.ai_bot.claude.client.ClaudeClient.ask")
+@patch("pull_request_ai_agent.ai_bot.claude.client.ClaudeClient.ask")
 def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_response):
     """Test that get_content returns just the content from the response."""
     # Set up the mock to return a sample response
@@ -386,7 +386,7 @@ def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_respo
     assert content == expected_content
 
 
-@patch("create_pr_bot.ai_bot.claude.client.ClaudeClient.ask")
+@patch("pull_request_ai_agent.ai_bot.claude.client.ClaudeClient.ask")
 def test_get_content_no_content(mock_ask, claude_client, sample_prompt):
     """Test that get_content raises IndexError when there is no content in the response."""
     # Create a response with no content

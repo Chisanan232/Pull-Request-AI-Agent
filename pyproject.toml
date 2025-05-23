@@ -32,7 +32,7 @@ dependencies = [
 
 [tool.poetry]
 packages = [
-    { include = "create_pr_bot/" },
+    { include = "pull_request_ai_agent/" },
 ]
 
 [project.urls]
@@ -43,7 +43,7 @@ Changelog = "https://chisanan232.github.io/Pull-Request-AI-Agent/latest/release_
 "Project Management" = "https://app.clickup.com/9018752317/v/f/90184463981/90182761188"
 
 [project.scripts]
-pr-ai-agent = "create_pr_bot.__main__:main"
+pr-ai-agent = "pull_request_ai_agent.__main__:main"
 
 #[tool.poetry.group.dev]
 #optional = true

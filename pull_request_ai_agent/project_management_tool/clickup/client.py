@@ -6,7 +6,7 @@ from typing import Optional
 
 import urllib3
 
-from create_pr_bot.project_management_tool._base.client import (
+from pull_request_ai_agent.project_management_tool._base.client import (
     BaseProjectManagementAPIClient,
 )
 

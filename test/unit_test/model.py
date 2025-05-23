@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-from create_pr_bot.ai_bot import AiModuleClient
-from create_pr_bot.model import (
+from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.model import (
     AISettings,
     BotSettings,
     GitHubSettings,
@@ -16,7 +16,7 @@ from create_pr_bot.model import (
     find_default_config_path,
     load_yaml_config,
 )
-from create_pr_bot.project_management_tool import ProjectManagementToolType
+from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
 
 
 class TestLoadYamlConfig:
@@ -433,10 +433,10 @@ class TestBotSettings:
 
     def test_from_env(self):
         """Test loading settings from environment variables."""
-        with patch("create_pr_bot.model.GitSettings.from_env") as mock_git:
-            with patch("create_pr_bot.model.GitHubSettings.from_env") as mock_github:
-                with patch("create_pr_bot.model.AISettings.from_env") as mock_ai:
-                    with patch("create_pr_bot.model.ProjectManagementToolSettings.from_env") as mock_pm:
+        with patch("pull_request_ai_agent.model.GitSettings.from_env") as mock_git:
+            with patch("pull_request_ai_agent.model.GitHubSettings.from_env") as mock_github:
+                with patch("pull_request_ai_agent.model.AISettings.from_env") as mock_ai:
+                    with patch("pull_request_ai_agent.model.ProjectManagementToolSettings.from_env") as mock_pm:
                         mock_git.return_value = "git_settings"
                         mock_github.return_value = "github_settings"
                         mock_ai.return_value = "ai_settings"
@@ -476,8 +476,8 @@ class TestBotSettings:
         env_settings.ai = MagicMock()
         env_settings.pm_tool = MagicMock()
 
-        with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
-            with patch("create_pr_bot.model.find_default_config_path", return_value=None):
+        with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
+            with patch("pull_request_ai_agent.model.find_default_config_path", return_value=None):
                 settings = BotSettings.from_args(args)
 
                 # Verify settings were updated from args
@@ -493,10 +493,10 @@ class TestBotSettings:
 
     def test_serialize(self):
         """Test loading settings from a dictionary."""
-        with patch("create_pr_bot.model.GitSettings.serialize") as mock_git:
-            with patch("create_pr_bot.model.GitHubSettings.serialize") as mock_github:
-                with patch("create_pr_bot.model.AISettings.serialize") as mock_ai:
-                    with patch("create_pr_bot.model.ProjectManagementToolSettings.serialize") as mock_pm:
+        with patch("pull_request_ai_agent.model.GitSettings.serialize") as mock_git:
+            with patch("pull_request_ai_agent.model.GitHubSettings.serialize") as mock_github:
+                with patch("pull_request_ai_agent.model.AISettings.serialize") as mock_ai:
+                    with patch("pull_request_ai_agent.model.ProjectManagementToolSettings.serialize") as mock_pm:
                         mock_git.return_value = "git_settings"
                         mock_github.return_value = "github_settings"
                         mock_ai.return_value = "ai_settings"
@@ -517,8 +517,8 @@ class TestBotSettings:
 
     def test_from_config_file(self):
         """Test loading settings from a configuration file."""
-        with patch("create_pr_bot.model.load_yaml_config") as mock_load:
-            with patch("create_pr_bot.model.BotSettings.serialize") as mock_serialize:
+        with patch("pull_request_ai_agent.model.load_yaml_config") as mock_load:
+            with patch("pull_request_ai_agent.model.BotSettings.serialize") as mock_serialize:
                 mock_load.return_value = {"test": "config"}
                 mock_serialize.return_value = "bot_settings"
 
@@ -538,11 +538,11 @@ class TestBotSettings:
         env_settings = MagicMock()
         config_settings = MagicMock()
 
-        with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
-            with patch("create_pr_bot.model.BotSettings.from_config_file", return_value=config_settings):
+        with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
+            with patch("pull_request_ai_agent.model.BotSettings.from_config_file", return_value=config_settings):
                 # Mock the validation methods to avoid ValueError with MagicMock objects
-                with patch("create_pr_bot.model.AiModuleClient") as mock_ai_client:
-                    with patch("create_pr_bot.model.ProjectManagementToolType") as mock_pm_tool_type:
+                with patch("pull_request_ai_agent.model.AiModuleClient") as mock_ai_client:
+                    with patch("pull_request_ai_agent.model.ProjectManagementToolType") as mock_pm_tool_type:
                         settings = BotSettings.from_args(args)
 
                         # Verify settings were updated from config file
@@ -562,13 +562,13 @@ class TestBotSettings:
         env_settings = MagicMock()
         config_settings = MagicMock()
 
-        with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
-            with patch("create_pr_bot.model.find_default_config_path", return_value="/path/to/default/config.yaml"):
-                with patch("create_pr_bot.model.BotSettings.from_config_file", return_value=config_settings):
+        with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
+            with patch("pull_request_ai_agent.model.find_default_config_path", return_value="/path/to/default/config.yaml"):
+                with patch("pull_request_ai_agent.model.BotSettings.from_config_file", return_value=config_settings):
                     with patch("logging.Logger.info") as mock_info:
                         # Mock the validation methods to avoid ValueError with MagicMock objects
-                        with patch("create_pr_bot.model.AiModuleClient") as mock_ai_client:
-                            with patch("create_pr_bot.model.ProjectManagementToolType") as mock_pm_tool_type:
+                        with patch("pull_request_ai_agent.model.AiModuleClient") as mock_ai_client:
+                            with patch("pull_request_ai_agent.model.ProjectManagementToolType") as mock_pm_tool_type:
                                 settings = BotSettings.from_args(args)
 
                                 # Verify settings were updated from default config file
@@ -602,8 +602,8 @@ class TestBotSettings:
         env_settings.ai = MagicMock()
         env_settings.pm_tool = MagicMock()
 
-        with patch("create_pr_bot.model.BotSettings.from_env", return_value=env_settings):
-            with patch("create_pr_bot.model.find_default_config_path", return_value=None):
+        with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
+            with patch("pull_request_ai_agent.model.find_default_config_path", return_value=None):
                 settings = BotSettings.from_args(args)
 
                 # Verify settings were updated from args

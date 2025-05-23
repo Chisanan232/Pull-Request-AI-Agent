@@ -1,11 +1,11 @@
 [run]
 parallel = True
 relative_files = True
-include=./create_pr_bot
+include=./pull_request_ai_agent
 
 omit =
 #    */__init__.py
-    ./create_pr_bot/__main__.py
+    ./pull_request_ai_agent/__main__.py
 
 
 [report]
