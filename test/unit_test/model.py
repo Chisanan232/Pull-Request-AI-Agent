@@ -563,7 +563,9 @@ class TestBotSettings:
         config_settings = MagicMock()
 
         with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
-            with patch("pull_request_ai_agent.model.find_default_config_path", return_value="/path/to/default/config.yaml"):
+            with patch(
+                "pull_request_ai_agent.model.find_default_config_path", return_value="/path/to/default/config.yaml"
+            ):
                 with patch("pull_request_ai_agent.model.BotSettings.from_config_file", return_value=config_settings):
                     with patch("logging.Logger.info") as mock_info:
                         # Mock the validation methods to avoid ValueError with MagicMock objects

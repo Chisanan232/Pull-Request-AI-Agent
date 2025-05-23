@@ -1,6 +1,8 @@
 """ClickUp integration module."""
 
-from pull_request_ai_agent.project_management_tool.clickup.client import ClickUpAPIClient
+from pull_request_ai_agent.project_management_tool.clickup.client import (
+    ClickUpAPIClient,
+)
 from pull_request_ai_agent.project_management_tool.clickup.model import (
     ClickUpChecklist,
     ClickUpChecklistItem,

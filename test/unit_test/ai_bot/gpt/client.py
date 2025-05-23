@@ -11,7 +11,12 @@ import pytest
 from urllib3.response import HTTPResponse
 
 from pull_request_ai_agent.ai_bot.gpt.client import GPTClient
-from pull_request_ai_agent.ai_bot.gpt.model import GPTChoice, GPTMessage, GPTResponse, GPTUsage
+from pull_request_ai_agent.ai_bot.gpt.model import (
+    GPTChoice,
+    GPTMessage,
+    GPTResponse,
+    GPTUsage,
+)
 
 
 @pytest.fixture

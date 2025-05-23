@@ -379,7 +379,9 @@ class TestPromptModel:
     def test_prepare_pr_prompt_data_file_not_found(self):
         """Test preparing PR prompt data with a missing file."""
         # Mock get_prompt_model to raise FileNotFoundError
-        with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model", side_effect=FileNotFoundError("Test error")):
+        with patch(
+            "pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model", side_effect=FileNotFoundError("Test error")
+        ):
             # Create test data
             task_tickets = [{"id": "PROJ-123", "title": "Fix bug"}]
             commits = [{"short_hash": "abc123", "message": "Fix login bug"}]

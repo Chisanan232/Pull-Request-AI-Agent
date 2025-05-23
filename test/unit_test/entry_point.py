@@ -155,7 +155,9 @@ class TestMain:
         mock_settings = MagicMock()
 
         with patch("pull_request_ai_agent.__main__.parse_args", return_value=mock_args) as mock_parse_args:
-            with patch("pull_request_ai_agent.__main__.BotSettings.from_args", return_value=mock_settings) as mock_from_args:
+            with patch(
+                "pull_request_ai_agent.__main__.BotSettings.from_args", return_value=mock_settings
+            ) as mock_from_args:
                 with patch("pull_request_ai_agent.__main__.run_bot") as mock_run_bot:
                     main()
 

@@ -16,7 +16,9 @@ from pull_request_ai_agent.github_opt import GitHubOperations
 from pull_request_ai_agent.model import ProjectManagementToolSettings
 from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
 from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
-from pull_request_ai_agent.project_management_tool.clickup.client import ClickUpAPIClient
+from pull_request_ai_agent.project_management_tool.clickup.client import (
+    ClickUpAPIClient,
+)
 
 
 class SpyBot(CreatePrAIBot):
