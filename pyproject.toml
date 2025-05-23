@@ -1,5 +1,5 @@
 [project]
-name = "create-pr-bot"
+name = "pull-request-ai-agent"
 version = "0.0.0"
 description = "🤖 A bot helps developers open pull request with details."
 authors = [
@@ -36,14 +36,14 @@ packages = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Chisanan232/Create-PR-Bot"
-Documentation = "https://chisanan232.github.io/Create-PR-Bot/stable/"
-Repository = "https://github.com/Chisanan232/Create-PR-Bot"
-Changelog = "https://chisanan232.github.io/Create-PR-Bot/latest/release_note/"
+Homepage = "https://github.com/Chisanan232/Pull-Request-AI-Agent"
+Documentation = "https://chisanan232.github.io/Pull-Request-AI-Agent/stable/"
+Repository = "https://github.com/Chisanan232/Pull-Request-AI-Agent"
+Changelog = "https://chisanan232.github.io/Pull-Request-AI-Agent/latest/release_note/"
 "Project Management" = "https://app.clickup.com/9018752317/v/f/90184463981/90182761188"
 
 [project.scripts]
-create-pr-bot = "create_pr_bot.__main__:main"
+pr-ai-agent = "create_pr_bot.__main__:main"
 
 #[tool.poetry.group.dev]
 #optional = true
