@@ -53,4 +53,4 @@ fi
 # Run the bot with the constructed arguments
 # Note: Other PM tool settings (organization_id, project_id, base_url, username)
 # will be picked up from environment variables by BotSettings.from_env()
-poetry run create-pr-bot $ARGS
+poetry run pr-ai-agent $ARGS
