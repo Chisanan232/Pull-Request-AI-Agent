@@ -1,9 +1,13 @@
 from abc import ABCMeta, abstractmethod
+import logging
 from typing import Optional
 
 import urllib3
 
 from .model import BaseImmutableModel
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class BaseProjectManagementAPIClient(metaclass=ABCMeta):
@@ -14,8 +18,10 @@ class BaseProjectManagementAPIClient(metaclass=ABCMeta):
         Args:
             api_token (str): Your ClickUp API personal token
         """
+        logger.debug("Initializing base project management API client")
         self.api_token = api_token
         self.http = urllib3.PoolManager()
+        logger.debug("HTTP client initialized for project management API")
 
     @abstractmethod
     def get_ticket(self, ticket_id: str) -> Optional[BaseImmutableModel]:
