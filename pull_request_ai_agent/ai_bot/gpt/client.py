@@ -52,7 +52,11 @@ class GPTClient(BaseAIClient):
         logger.debug(f"Initializing GPT client with model: {model or self.DEFAULT_MODEL}")
         try:
             super().__init__(
-                api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="OPENAI_API_KEY"
+                api_key=api_key,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                env_var_name="OPENAI_API_KEY",
             )
             logger.info(f"Successfully initialized GPT client with model: {self.model}")
             logger.debug(f"GPT client settings: temperature={temperature}, max_tokens={max_tokens}")
@@ -82,11 +86,11 @@ class GPTClient(BaseAIClient):
             Dictionary payload for the API request.
         """
         logger.debug(f"Preparing payload for GPT API request to model: {self.model}")
-        
+
         # Log prompt length for debugging token usage
         prompt_length = len(prompt)
         logger.debug(f"Prompt length: {prompt_length} characters")
-        
+
         messages = []
 
         # Add system message if provided
@@ -105,7 +109,7 @@ class GPTClient(BaseAIClient):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
-        
+
         logger.debug(f"Payload prepared with {len(messages)} message(s)")
         return payload
 
@@ -123,7 +127,7 @@ class GPTClient(BaseAIClient):
             ValueError: If the response is invalid or contains an error
         """
         logger.debug(f"Parsing GPT API response with status code: {response.status}")
-        
+
         if response.status != 200:
             error_message = self._handle_error_response(response)
             logger.error(f"GPT API request failed: {error_message}")
@@ -132,19 +136,21 @@ class GPTClient(BaseAIClient):
         try:
             data = json.loads(response.data.decode("utf-8"))
             logger.debug("Successfully parsed JSON response from GPT API")
-            
+
             # Extract usage data
             usage_data = data.get("usage", {})
             prompt_tokens = usage_data.get("prompt_tokens", 0)
             completion_tokens = usage_data.get("completion_tokens", 0)
             total_tokens = usage_data.get("total_tokens", 0)
-            
-            logger.info(f"GPT API token usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total")
-            
+
+            logger.info(
+                f"GPT API token usage: {prompt_tokens} prompt + {completion_tokens} completion = {total_tokens} total"
+            )
+
             # Log warning if getting close to context window limits
             if completion_tokens > 0.8 * self.max_tokens:
                 logger.warning(f"High token usage: {completion_tokens} completion tokens (80%+ of max_tokens setting)")
-            
+
             usage = GPTUsage(
                 prompt_tokens=prompt_tokens,
                 completion_tokens=completion_tokens,
@@ -159,20 +165,20 @@ class GPTClient(BaseAIClient):
                     role=message_data.get("role", "assistant"),
                     content=message_data.get("content", ""),
                 )
-                
+
                 finish_reason = choice_data.get("finish_reason", "")
-                
+
                 # Log finish reason which can be important for debugging
                 if finish_reason == "length":
                     logger.warning(f"GPT response was cut off due to token limit (finish_reason: {finish_reason})")
-                
+
                 choice = GPTChoice(
                     index=choice_data.get("index", 0),
                     message=message,
                     finish_reason=finish_reason,
                 )
                 choices.append(choice)
-                
+
             logger.debug(f"Parsed {len(choices)} choices from GPT response")
 
             return GPTResponse(
@@ -204,16 +210,18 @@ class GPTClient(BaseAIClient):
         """
         logger.info(f"Sending prompt to GPT model: {self.model}")
         logger.debug(f"Prompt begins with: {prompt[:50]}..." if len(prompt) > 50 else f"Prompt: {prompt}")
-        
+
         endpoint = f"{self.BASE_URL}/chat/completions"
         logger.debug(f"Using GPT API endpoint: {endpoint}")
-        
+
         headers = self._prepare_headers()
         payload = self._prepare_payload(prompt, system_message)
-        
+
         try:
             logger.debug("Making request to GPT API")
-            response = self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="GPT")
+            response = self._make_request(
+                method="POST", url=endpoint, headers=headers, payload=payload, service_name="GPT"
+            )
             logger.info("Successfully received response from GPT API")
             return response
         except ValueError as e:
@@ -242,17 +250,17 @@ class GPTClient(BaseAIClient):
         logger.info("Requesting content from GPT model")
         try:
             response = self.ask(prompt, system_message)
-            
+
             if not response.choices:
                 error_msg = "GPT response contains no choices"
                 logger.error(error_msg)
                 raise IndexError(error_msg)
-                
+
             content = response.choices[0].message.content
             content_preview = content[:50] + "..." if len(content) > 50 else content
             logger.info(f"Successfully received content from GPT, begins with: {content_preview}")
             logger.debug(f"Content length: {len(content)} characters")
-            
+
             return content
         except (ValueError, IndexError) as e:
             logger.error(f"Failed to get content from GPT: {str(e)}")

@@ -386,7 +386,7 @@ class TestCreatePrAIBot:
 
         # Verify get_ticket was called with formatted ticket IDs
         assert mock_project_management_client.get_ticket.call_count >= 2
-        
+
         # Check that get_ticket was called with the expected arguments (using any_order=True)
         # This is more robust than checking exact call sequence, as it ignores any __str__ calls
         mock_project_management_client.get_ticket.assert_any_call("123456")

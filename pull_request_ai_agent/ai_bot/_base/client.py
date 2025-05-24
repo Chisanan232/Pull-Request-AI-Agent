@@ -51,11 +51,13 @@ class BaseAIClient(ABC, Generic[T]):
             ValueError: If no API key is provided or found in environment variables
         """
         logger.debug(f"Initializing base AI client with env var: {env_var_name}")
-        
+
         # Set API key from parameter or environment variable
         self.api_key = api_key or os.environ.get(env_var_name, "")
         if not self.api_key:
-            error_msg = f"API key is required. Provide it as a parameter or set the {env_var_name} environment variable."
+            error_msg = (
+                f"API key is required. Provide it as a parameter or set the {env_var_name} environment variable."
+            )
             logger.error(error_msg)
             raise ValueError(error_msg)
         else:
@@ -66,7 +68,7 @@ class BaseAIClient(ABC, Generic[T]):
         self.temperature = temperature
         self.max_tokens = max_tokens
         logger.debug(f"Base client settings: model={self.model}, temperature={temperature}, max_tokens={max_tokens}")
-        
+
         # Initialize HTTP client
         self._http = urllib3.PoolManager()
         logger.debug("HTTP client initialized for API requests")
@@ -120,11 +122,15 @@ class BaseAIClient(ABC, Generic[T]):
         """
         logger.debug(f"Handling error response with status code: {response.status}")
         error_message = f"API request failed with status {response.status}"
-        
+
         try:
             response_body = response.data.decode("utf-8")
-            logger.debug(f"Error response body: {response_body[:200]}..." if len(response_body) > 200 else f"Error response body: {response_body}")
-            
+            logger.debug(
+                f"Error response body: {response_body[:200]}..."
+                if len(response_body) > 200
+                else f"Error response body: {response_body}"
+            )
+
             error_data = json.loads(response_body)
             if "error" in error_data:
                 if "message" in error_data["error"]:
@@ -138,7 +144,7 @@ class BaseAIClient(ABC, Generic[T]):
         except Exception as e:
             logger.error(f"Unexpected error when parsing error response: {str(e)}")
             traceback.print_exc()
-            
+
         logger.debug(f"Final error message: {error_message}")
         return error_message
 
@@ -195,25 +201,25 @@ class BaseAIClient(ABC, Generic[T]):
         """
         logger.debug(f"Making {method} request to {service_name} API")
         logger.debug(f"Request URL: {url.split('?')[0]}")  # Log URL without query parameters for security
-        
+
         # Log headers (excluding authorization)
-        safe_headers = {k: v for k, v in headers.items() if k.lower() != 'authorization'}
+        safe_headers = {k: v for k, v in headers.items() if k.lower() != "authorization"}
         logger.debug(f"Request headers: {safe_headers}")
-        
+
         # Log payload size but not content (for security/privacy)
         payload_size = len(json.dumps(payload))
         logger.debug(f"Request payload size: {payload_size} bytes")
-        
+
         try:
             logger.debug(f"Sending request to {service_name} API")
             response = self._http.request(method, url, headers=headers, body=json.dumps(payload).encode("utf-8"))
             logger.debug(f"Received response with status code: {response.status}")
-            
+
             if response.status >= 200 and response.status < 300:
                 logger.info(f"Successful {service_name} API request with status: {response.status}")
             else:
                 logger.warning(f"{service_name} API request returned non-success status: {response.status}")
-                
+
             return self._parse_response(response)
         except urllib3.exceptions.HTTPError as e:
             error_msg = f"HTTP error in {service_name} API request: {str(e)}"
