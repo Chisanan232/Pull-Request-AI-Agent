@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Type, TypeVar, Union
+from typing import Any, Dict, List, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def load_prompt_from_file(file_path: str | Path) -> str:
     """
     path = Path(file_path)
     logger.debug(f"Loading prompt file from: {path}")
-    
+
     if not path.exists():
         logger.error(f"Prompt file not found: {path}")
         raise FileNotFoundError(f"Prompt file not found: {path}")
@@ -82,7 +82,7 @@ def load_prompt_from_file(file_path: str | Path) -> str:
     try:
         with open(path, "r", encoding="utf-8") as file:
             content = file.read()
-        
+
         logger.debug(f"Successfully loaded prompt file ({len(content)} characters)")
         return content
     except Exception as e:
@@ -105,7 +105,7 @@ def create_prompt_model(model_class: Type[T], prompt_name: PromptName) -> T:
         FileNotFoundError: If the prompt file doesn't exist.
     """
     logger.debug(f"Creating prompt model of type {model_class.__name__} for {prompt_name.value}")
-    
+
     # Determine the prompt directory
     prompts_dir = Path(__file__).parent
     prompt_file = prompts_dir / f"{prompt_name.value}.prompt"
@@ -147,7 +147,7 @@ def get_prompt_model(prompt_name: PromptName) -> BasePrompt:
     """
     # Use the enum value for logging
     logger.debug(f"Getting prompt model for: {prompt_name.value}")
-    
+
     # Check if prompt name is in mapping
     if prompt_name not in PROMPT_MODEL_MAPPING:
         logger.error(f"Unknown prompt name: {prompt_name}")
@@ -155,7 +155,7 @@ def get_prompt_model(prompt_name: PromptName) -> BasePrompt:
 
     model_class = PROMPT_MODEL_MAPPING[prompt_name]
     logger.debug(f"Using model class: {model_class.__name__}")
-    
+
     try:
         return create_prompt_model(model_class, prompt_name)
     except Exception as e:
@@ -183,7 +183,7 @@ def process_prompt_template(
     """
     logger.debug(f"Processing prompt template (original length: {len(prompt_content)} characters)")
     logger.debug(f"Prompt variables to replace: task_tickets={len(task_tickets_details)}, commits={len(commits)}")
-    
+
     # Replace task tickets details
     prompt_var_task_details = PromptVariable.TASK_TICKETS_DETAILS.value
     if prompt_var_task_details in prompt_content:
@@ -259,7 +259,7 @@ def prepare_pr_prompt_data(
         PRPromptData containing processed title and description prompts.
     """
     logger.info("Preparing PR prompt data")
-    
+
     try:
         # Get title prompt
         logger.debug("Getting title prompt model")
@@ -273,9 +273,7 @@ def prepare_pr_prompt_data(
 
         # Process prompts
         logger.debug("Processing prompt templates with variable substitution")
-        title_prompt = process_prompt_template(
-            title_prompt_content, task_tickets_details, commits, project_root
-        )
+        title_prompt = process_prompt_template(title_prompt_content, task_tickets_details, commits, project_root)
         description_prompt = process_prompt_template(
             description_prompt_content, task_tickets_details, commits, project_root
         )

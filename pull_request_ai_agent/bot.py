@@ -70,7 +70,7 @@ class CreatePrAIBot:
         self.repo_path = repo_path
         self.base_branch = base_branch
         logger.debug(f"Using repository path: {repo_path}, base branch: {base_branch}")
-        
+
         # Initialize Git handler
         self.git_handler = GitHandler(repo_path)
         logger.debug("Git handler initialized")
@@ -87,7 +87,9 @@ class CreatePrAIBot:
         self.project_management_client = None
         self.project_management_tool_type = project_management_tool_type
         if project_management_tool_type and project_management_tool_config:
-            logger.debug(f"Initializing project management client of type: {project_management_tool_type.name if hasattr(project_management_tool_type, 'name') else project_management_tool_type}")
+            logger.debug(
+                f"Initializing project management client of type: {project_management_tool_type.name if hasattr(project_management_tool_type, 'name') else project_management_tool_type}"
+            )
             self.project_management_client = self._initialize_project_management_client(
                 project_management_tool_type, project_management_tool_config
             )
@@ -95,7 +97,9 @@ class CreatePrAIBot:
             logger.info("Project management tool not configured - tool type or config not provided")
 
         # Initialize AI client based on type
-        logger.debug(f"Initializing AI client of type: {ai_client_type.name if hasattr(ai_client_type, 'name') else ai_client_type}")
+        logger.debug(
+            f"Initializing AI client of type: {ai_client_type.name if hasattr(ai_client_type, 'name') else ai_client_type}"
+        )
         self.ai_client = self._initialize_ai_client(ai_client_type, ai_client_api_key)
         logger.info("CreatePrAIBot initialization complete")
 
@@ -115,8 +119,10 @@ class CreatePrAIBot:
         Raises:
             ValueError: If the tool type is not supported or required config is missing
         """
-        logger.debug(f"Initializing project management client for tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}")
-        
+        logger.debug(
+            f"Initializing project management client for tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}"
+        )
+
         if tool_type == self.PM_TOOL_CLICKUP:
             if not config.api_key:
                 logger.error("ClickUp API token is missing but required")
@@ -133,8 +139,12 @@ class CreatePrAIBot:
             logger.debug(f"Creating Jira API client with base URL: {config.base_url}")
             return JiraAPIClient(base_url=config.base_url, email=config.username, api_token=config.api_key)
         else:
-            logger.error(f"Unsupported project management tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}")
-            raise ValueError(f"Unsupported project management tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}")
+            logger.error(
+                f"Unsupported project management tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}"
+            )
+            raise ValueError(
+                f"Unsupported project management tool type: {tool_type.name if hasattr(tool_type, 'name') else tool_type}"
+            )
 
     def _initialize_ai_client(self, client_type: AiModuleClient, api_key: Optional[str] = None) -> BaseAIClient:
         """
@@ -150,11 +160,15 @@ class CreatePrAIBot:
         Raises:
             ValueError: If the client type is not supported
         """
-        logger.debug(f"Initializing AI client of type: {client_type.name if hasattr(client_type, 'name') else client_type}")
-        
+        logger.debug(
+            f"Initializing AI client of type: {client_type.name if hasattr(client_type, 'name') else client_type}"
+        )
+
         if api_key is None:
-            logger.warning(f"No API key provided for {client_type.name if hasattr(client_type, 'name') else client_type} AI client")
-        
+            logger.warning(
+                f"No API key provided for {client_type.name if hasattr(client_type, 'name') else client_type} AI client"
+            )
+
         if client_type == self.AI_CLIENT_GPT:
             logger.debug("Creating GPT client")
             return GPTClient(api_key=api_key)
@@ -165,8 +179,12 @@ class CreatePrAIBot:
             logger.debug("Creating Gemini client")
             return GeminiClient(api_key=api_key)
         else:
-            logger.error(f"Unsupported AI client type: {client_type.name if hasattr(client_type, 'name') else client_type}")
-            raise ValueError(f"Unsupported AI client type: {client_type.name if hasattr(client_type, 'name') else client_type}")
+            logger.error(
+                f"Unsupported AI client type: {client_type.name if hasattr(client_type, 'name') else client_type}"
+            )
+            raise ValueError(
+                f"Unsupported AI client type: {client_type.name if hasattr(client_type, 'name') else client_type}"
+            )
 
     def _get_current_branch(self) -> str:
         """
@@ -192,7 +210,7 @@ class CreatePrAIBot:
         """
         if not branch_name:
             branch_name = self._get_current_branch()
-            
+
         logger.debug(f"Checking if branch '{branch_name}' is outdated compared to '{self.base_branch}'")
         is_outdated = self.git_handler.is_branch_outdated(branch_name, self.base_branch)
         logger.debug(f"Branch '{branch_name}' outdated status: {is_outdated}")
@@ -212,7 +230,7 @@ class CreatePrAIBot:
             branch_name = self._get_current_branch()
 
         logger.debug(f"Checking if PR already exists for branch: {branch_name}")
-        
+
         if not self.github_operations:
             logger.warning("GitHub operations not configured. Cannot check if PR exists.")
             return False
@@ -245,16 +263,22 @@ class CreatePrAIBot:
             branch_name = self._get_current_branch()
 
         logger.info(f"Fetching and merging latest changes from '{self.base_branch}' into '{branch_name}'")
-        
+
         try:
             result = self.git_handler.fetch_and_merge_remote_branch(branch_name)
             if result:
-                logger.info(f"Successfully updated branch '{branch_name}' with latest changes from '{self.base_branch}'")
+                logger.info(
+                    f"Successfully updated branch '{branch_name}' with latest changes from '{self.base_branch}'"
+                )
             else:
-                logger.warning(f"No changes were applied when updating branch '{branch_name}' from '{self.base_branch}'")
+                logger.warning(
+                    f"No changes were applied when updating branch '{branch_name}' from '{self.base_branch}'"
+                )
             return result
         except GitCodeConflictError as e:
-            logger.error(f"Merge conflict detected when updating branch '{branch_name}' from '{self.base_branch}': {str(e)}")
+            logger.error(
+                f"Merge conflict detected when updating branch '{branch_name}' from '{self.base_branch}': {str(e)}"
+            )
             raise
         except Exception as e:
             logger.error(f"Unexpected error during fetch and merge operation: {str(e)}", exc_info=True)
@@ -277,7 +301,7 @@ class CreatePrAIBot:
             branch_name = self._get_current_branch()
 
         logger.info(f"Getting commits from branch '{branch_name}' that are not in '{self.base_branch}'")
-        
+
         # Get the commits between the base branch and the current branch
         repo = self.git_handler.repo
 
@@ -374,7 +398,7 @@ class CreatePrAIBot:
             The unique ticket ID
         """
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
-        
+
         # Common patterns for ticket IDs in commit messages
         # Adjust patterns based on your project's conventions
         patterns = [
@@ -390,7 +414,7 @@ class CreatePrAIBot:
                 ticket_id = matches.group(0)
                 logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
                 return ticket_id
-                
+
         logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
         return ""
 
@@ -405,7 +429,7 @@ class CreatePrAIBot:
             List of ticket details as BaseImmutableModel objects
         """
         logger.debug(f"Getting ticket details for IDs: {ticket_ids}")
-        
+
         if not self.project_management_client:
             logger.warning("Project management client not configured. Cannot get ticket details.")
             return []
@@ -421,11 +445,11 @@ class CreatePrAIBot:
             if not formatted_ticket_id:
                 logger.warning(f"Ticket ID '{ticket_id}' could not be formatted properly, skipping")
                 continue
-                
+
             try:
                 logger.info(f"Getting details for ticket ID: '{ticket_id}' (formatted: '{formatted_ticket_id}')")
                 ticket = self.project_management_client.get_ticket(formatted_ticket_id)
-                
+
                 if ticket:
                     logger.info("Successfully retrieved ticket details")
                     logger.debug(f"Ticket data: {ticket}")
@@ -451,15 +475,17 @@ class CreatePrAIBot:
         if ticket_id is None:
             logger.warning("Cannot format None ticket ID")
             return None
-            
+
         # Trim whitespace from ticket ID
         ticket_id = ticket_id.strip()
         logger.debug(f"Formatting ticket ID: {ticket_id}")
-        
+
         if self.project_management_tool_type:
             pm_tool_type = self.project_management_tool_type
-            logger.debug(f"Using project management tool type: {pm_tool_type.name if hasattr(pm_tool_type, 'name') else pm_tool_type}")
-            
+            logger.debug(
+                f"Using project management tool type: {pm_tool_type.name if hasattr(pm_tool_type, 'name') else pm_tool_type}"
+            )
+
             if pm_tool_type == self.PM_TOOL_CLICKUP:
                 # For ClickUp, remove the 'CU-' prefix if it exists
                 if ticket_id.startswith("CU-"):
@@ -471,7 +497,9 @@ class CreatePrAIBot:
                 # JIRA IDs already have a proper format, return as is
                 return ticket_id
             else:
-                logger.warning(f"Unknown project management tool type: {pm_tool_type.name if hasattr(pm_tool_type, 'name') else pm_tool_type}")
+                logger.warning(
+                    f"Unknown project management tool type: {pm_tool_type.name if hasattr(pm_tool_type, 'name') else pm_tool_type}"
+                )
                 return ticket_id
         else:
             logger.debug("No project management tool configured, returning ticket ID as is")
@@ -481,10 +509,10 @@ class CreatePrAIBot:
         """
         Legacy method retained for backward compatibility with tests.
         Use format_ticket_id() instead.
-        
+
         Args:
             ticket_id: Raw ticket ID from commit message
-            
+
         Returns:
             Formatted ticket ID or None if formatting fails
         """
@@ -504,7 +532,7 @@ class CreatePrAIBot:
         """
         logger.info("Preparing AI prompt for PR generation")
         logger.debug(f"Using {len(commits)} commits and {len(ticket_details)} tickets to generate prompt")
-        
+
         # Extract ticket information
         ticket_info_list = []
         for ticket in ticket_details:
@@ -602,7 +630,7 @@ class CreatePrAIBot:
         """
         logger.info("Parsing AI-generated response")
         logger.debug(f"Raw AI response length: {len(response)} characters")
-        
+
         # Extract title and body from the response
         title_match = re.search(r"TITLE:\s*(.*?)(?:\n|$)", response)
         if title_match:
@@ -715,7 +743,7 @@ class CreatePrAIBot:
         # Step 5: Extract ticket IDs from branch name
         logger.info("Extracting ticket ID from branch name")
         ticket_id = self.extract_ticket_id(branch_name)
-        
+
         # Step 6: Get ticket details
         ticket_details = []
         if ticket_id:
@@ -727,7 +755,7 @@ class CreatePrAIBot:
         # Step 7: Prepare AI prompt
         logger.info("Preparing AI prompt")
         prompt = self.prepare_ai_prompt(commits, ticket_details)
-        
+
         # Step 8: Generate PR content using AI
         logger.info("Generating PR content using AI")
         try:
@@ -750,12 +778,12 @@ class CreatePrAIBot:
         # Step 10: Create PR
         logger.info("Creating pull request")
         pr = self.create_pull_request(title, body, branch_name)
-        
+
         if pr:
             logger.info(f"PR creation workflow completed successfully: {pr.html_url}")
         else:
             logger.warning("PR creation workflow completed but no PR was created")
-            
+
         return pr
 
     def _extract_ticket_info(self, ticket: BaseImmutableModel) -> Dict[str, str]:
@@ -806,5 +834,7 @@ class CreatePrAIBot:
                     else:
                         ticket_info[field] = value
 
-        logger.debug(f"Extracted ticket info: ID={ticket_info['id']}, Title={ticket_info['title']}, Status={ticket_info['status']}")
+        logger.debug(
+            f"Extracted ticket info: ID={ticket_info['id']}, Title={ticket_info['title']}, Status={ticket_info['status']}"
+        )
         return ticket_info

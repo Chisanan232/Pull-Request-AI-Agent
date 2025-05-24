@@ -77,7 +77,7 @@ class GitHubOperations:
                     logger.info(f"Found existing PR #{pr.number} for branch '{head_branch}'")
                     logger.debug(f"PR details: Title='{pr.title}', State={pr.state}, URL={pr.html_url}")
                     return pr
-            
+
             logger.info(f"No existing pull request found for branch '{head_branch}'")
             return None
         except GithubException as e:
@@ -111,7 +111,7 @@ class GitHubOperations:
         """
         logger.info(f"Creating new pull request from '{head_branch}' to '{base_branch}'")
         logger.debug(f"PR details: Title='{title}', Draft={draft}")
-        
+
         try:
             pr = self.repo.create_pull(
                 title=title,
@@ -148,7 +148,7 @@ class GitHubOperations:
         logger.debug(f"Adding labels to PR based on changed files")
         pr_id = pull_request if isinstance(pull_request, int) else pull_request.number
         logger.debug(f"Processing PR #{pr_id} with labels config: {labels_config}")
-        
+
         try:
             # Get PR object if number is provided
             if isinstance(pull_request, int):
@@ -178,7 +178,9 @@ class GitHubOperations:
                         labels_to_add.update(labels)
                     # Extension match
                     elif pattern.startswith("*.") and file_path.endswith(pattern[1:]):
-                        logger.debug(f"File '{file_path}' matches extension pattern '{pattern}', adding labels: {labels}")
+                        logger.debug(
+                            f"File '{file_path}' matches extension pattern '{pattern}', adding labels: {labels}"
+                        )
                         labels_to_add.update(labels)
 
             # Add labels to PR

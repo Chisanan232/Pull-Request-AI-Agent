@@ -82,13 +82,13 @@ class JiraAPIClient(BaseProjectManagementAPIClient):
 
             logger.debug("Parsing JIRA API response")
             data = json.loads(response.data.decode("utf-8"))
-            
+
             # Log some basic info about the ticket
             if "key" in data and "fields" in data:
                 logger.info(f"Successfully retrieved JIRA ticket: {data['key']}")
                 if "summary" in data["fields"]:
                     logger.debug(f"Ticket summary: {data['fields']['summary']}")
-            
+
             ticket = JiraTicket.serialize(data)
             logger.debug("Successfully created JiraTicket object from API response")
             return ticket
@@ -124,7 +124,7 @@ class JiraAPIClient(BaseProjectManagementAPIClient):
         logger.info(f"Searching JIRA tickets with JQL: {jql}")
         logger.debug(f"Max results: {max_results}")
         url = f"{self.base_url}/rest/api/2/search"
-        
+
         try:
             logger.debug(f"Making request to JIRA search API: {url}")
             response = self.http.request(
@@ -140,15 +140,15 @@ class JiraAPIClient(BaseProjectManagementAPIClient):
 
             logger.debug("Parsing JIRA search API response")
             data = json.loads(response.data.decode("utf-8"))
-            
+
             # Log some basic info about the search results
             total = data.get("total", 0)
             logger.info(f"JIRA search returned {total} total results, processing up to {max_results}")
-            
+
             tickets = JiraTicket.serialize_list(data)
             logger.debug(f"Successfully created {len(tickets)} JiraTicket objects from search results")
             return tickets
-            
+
         except urllib3.exceptions.HTTPError as e:
             logger.error(f"HTTP error while searching JIRA tickets: {str(e)}")
             raise

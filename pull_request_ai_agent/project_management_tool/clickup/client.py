@@ -62,7 +62,7 @@ class ClickUpAPIClient(BaseProjectManagementAPIClient):
             if response.status == 200:
                 logger.debug("Successfully received response from ClickUp API")
                 response_data = json.loads(response.data.decode("utf-8"))
-                
+
                 # Log basic task info if available
                 if "id" in response_data:
                     logger.info(f"Successfully retrieved ClickUp task: {response_data['id']}")
@@ -70,7 +70,7 @@ class ClickUpAPIClient(BaseProjectManagementAPIClient):
                     logger.debug(f"Task name: {response_data['name']}")
                 if "status" in response_data and "status" in response_data["status"]:
                     logger.debug(f"Task status: {response_data['status']['status']}")
-                
+
                 task = ClickUpTask.serialize(response_data)
                 logger.debug("Successfully created ClickUpTask object from API response")
                 return task
