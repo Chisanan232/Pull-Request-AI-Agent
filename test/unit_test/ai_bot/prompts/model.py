@@ -131,7 +131,7 @@ def test_get_prompt_model(mock_prompt_content):
 def test_get_prompt_model_unknown_prompt():
     """Test that get_prompt_model raises KeyError for unknown prompt names."""
     with pytest.raises(KeyError):
-        get_prompt_model("nonexistent-prompt-name")
+        get_prompt_model(PromptName["nonexistent-prompt-name"])
 
 
 def test_real_prompt_file_exists():
