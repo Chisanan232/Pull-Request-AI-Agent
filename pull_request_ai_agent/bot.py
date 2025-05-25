@@ -516,7 +516,7 @@ class CreatePrAIBot:
         Returns:
             Formatted ticket ID or None if formatting fails
         """
-        logger.debug(f"Using legacy _format_ticket_id method, consider updating to format_ticket_id")
+        logger.debug("Using legacy _format_ticket_id method, consider updating to format_ticket_id")
         return self.format_ticket_id(ticket_id)
 
     def prepare_ai_prompt(
