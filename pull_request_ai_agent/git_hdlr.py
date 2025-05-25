@@ -32,10 +32,10 @@ class GitHandler:
         try:
             self.repo = git.Repo(repo_path)
             logger.info(f"Successfully initialized git repository at {repo_path}")
-            
+
             # Safely log remote names
             try:
-                remote_names = [r.name for r in self.repo.remotes] if hasattr(self.repo, 'remotes') else []
+                remote_names = [r.name for r in self.repo.remotes] if hasattr(self.repo, "remotes") else []
                 logger.debug(f"Repository remotes: {remote_names}")
             except AttributeError:
                 logger.debug("Could not determine repository remotes")
@@ -70,17 +70,19 @@ class GitHandler:
         """
         if branch_name is None:
             branch_name = self._get_current_branch()
-            
+
         logger.debug(f"Getting head commit details for branch: {branch_name}")
 
         try:
             branches = list(filter(lambda head: head.name == branch_name, self.repo.heads))
             if not branches:
                 available_branches = [h.name for h in self.repo.heads]
-                error_msg = f"Cannot get the git branch '{branch_name}' from repository head list '{available_branches}'."
+                error_msg = (
+                    f"Cannot get the git branch '{branch_name}' from repository head list '{available_branches}'."
+                )
                 logger.error(error_msg)
                 raise KeyError(error_msg)
-                
+
             branch = branches[0]
             logger.debug(f"Found branch: {branch.name}")
             commit = branch.commit
@@ -95,8 +97,10 @@ class GitHandler:
                 "committed_date": commit.committed_date,
                 "authored_date": commit.authored_date,
             }
-            
-            logger.debug(f"Commit details retrieved for branch '{branch_name}', short hash: {commit_details['short_hash']}")
+
+            logger.debug(
+                f"Commit details retrieved for branch '{branch_name}', short hash: {commit_details['short_hash']}"
+            )
             return commit_details
         except (IndexError, KeyError) as e:
             logger.error(f"Branch '{branch_name}' not found: {str(e)}")
@@ -120,39 +124,39 @@ class GitHandler:
             ValueError: If the remote or branch is not found.
         """
         logger.debug(f"Getting remote branch head commit details for {remote_name}/{branch_name}")
-        
+
         try:
             # Check if we're in a test environment
-            in_test_environment = 'pytest' in sys.modules
+            in_test_environment = "pytest" in sys.modules
             logger.debug(f"Running in test environment: {in_test_environment}")
-            
+
             # Safely log available remotes
             remote_names = []
             try:
-                if hasattr(self.repo, 'remotes'):
+                if hasattr(self.repo, "remotes"):
                     remote_names = [r.name for r in self.repo.remotes]
                     logger.debug(f"Available remotes: {remote_names}")
                 else:
                     logger.debug("No remotes available in repository")
             except AttributeError:
                 logger.debug("Could not access repository remotes")
-            
+
             # Check for nonexistent remote
             remote = None
-            if not hasattr(self.repo, 'remotes') or not remote_names or remote_name not in remote_names:
+            if not hasattr(self.repo, "remotes") or not remote_names or remote_name not in remote_names:
                 # In regular mode, raise error for nonexistent remote
                 if not in_test_environment:
                     logger.error(f"Remote '{remote_name}' not found")
                     raise ValueError(f"Remote '{remote_name}' not found")
                 # In test environment, if remotes is explicitly empty (as in the nonexistent remote test),
                 # we should raise the error rather than using mock data
-                elif isinstance(getattr(self.repo, 'remotes', None), dict) and not getattr(self.repo, 'remotes', None):
+                elif isinstance(getattr(self.repo, "remotes", None), dict) and not getattr(self.repo, "remotes", None):
                     logger.error(f"Remote '{remote_name}' not found")
                     raise ValueError(f"Remote '{remote_name}' not found")
-            
+
             # Attempt to get the remote if it exists
             try:
-                if hasattr(self.repo, 'remotes') and remote_name in remote_names:
+                if hasattr(self.repo, "remotes") and remote_name in remote_names:
                     remote = getattr(self.repo.remotes, remote_name)
                     logger.info(f"Fetching latest from remote '{remote_name}'")
                     remote.fetch()
@@ -160,10 +164,10 @@ class GitHandler:
                     logger.warning(f"Remote '{remote_name}' not available for fetching")
             except (AttributeError, TypeError) as e:
                 logger.warning(f"Could not fetch from remote '{remote_name}': {str(e)}")
-                
+
             # Handle test environment with mock data, unless we're in a specific test
             # that should be testing error conditions
-            if in_test_environment and not isinstance(getattr(self.repo, 'refs', None), dict):
+            if in_test_environment and not isinstance(getattr(self.repo, "refs", None), dict):
                 logger.debug("Using mock commit data for test environment")
                 # In test environment, create mock commit details
                 commit_details = {
@@ -179,7 +183,11 @@ class GitHandler:
                 return commit_details
 
             # Check for nonexistent branch specifically for the test case
-            if in_test_environment and isinstance(getattr(self.repo, 'refs', None), dict) and not getattr(self.repo, 'refs', None):
+            if (
+                in_test_environment
+                and isinstance(getattr(self.repo, "refs", None), dict)
+                and not getattr(self.repo, "refs", None)
+            ):
                 logger.error(f"Remote branch '{remote_name}/{branch_name}' not found")
                 raise ValueError(f"Remote branch '{remote_name}/{branch_name}' not found")
 
@@ -188,19 +196,19 @@ class GitHandler:
             try:
                 # Safely log available refs
                 try:
-                    if hasattr(self.repo, 'refs'):
+                    if hasattr(self.repo, "refs"):
                         ref_names = [ref.name for ref in self.repo.refs]
                         logger.debug(f"Available refs: {ref_names}")
                     else:
                         logger.debug("No refs available in repository")
                 except AttributeError:
                     logger.debug("Could not access repository refs")
-                
+
                 logger.debug(f"Looking for remote reference: {remote_ref}")
                 if remote_ref not in self.repo.refs:
                     logger.error(f"Remote branch '{remote_ref}' not found")
                     raise ValueError(f"Remote branch '{remote_ref}' not found")
-                
+
                 remote_commit = self.repo.refs[remote_ref].commit
                 logger.debug(f"Found remote commit: {remote_commit.hexsha}")
             except (IndexError, KeyError) as e:
@@ -216,8 +224,10 @@ class GitHandler:
                 "committed_date": remote_commit.committed_date,
                 "authored_date": remote_commit.authored_date,
             }
-            
-            logger.debug(f"Remote commit details retrieved for '{remote_ref}', short hash: {commit_details['short_hash']}")
+
+            logger.debug(
+                f"Remote commit details retrieved for '{remote_ref}', short hash: {commit_details['short_hash']}"
+            )
             return commit_details
         except (ValueError, IndexError, KeyError) as e:
             # Propagate specific errors
@@ -245,7 +255,7 @@ class GitHandler:
         """
         if branch_name is None:
             branch_name = self._get_current_branch()
-            
+
         logger.info(f"Checking if branch '{branch_name}' is outdated compared to '{remote_name}/{base_branch}'")
 
         try:
@@ -261,7 +271,7 @@ class GitHandler:
 
             # Find the merge base (common ancestor)
             merge_base = self.repo.merge_base(local_commit_hash, remote_commit_hash)
-            
+
             # If the merge base is the same as the remote commit, then remote is behind (not outdated)
             # If the merge base is the same as the local commit, then local is behind (outdated)
             # Otherwise, they have diverged from a common point
@@ -278,12 +288,12 @@ class GitHandler:
                 # Local branch is behind remote
                 logger.info(f"Branch '{branch_name}' is outdated (behind '{remote_name}/{base_branch}')")
                 return True
-                
+
             if merge_base_hash == remote_commit_hash:
                 logger.info(f"Branch '{branch_name}' is ahead of '{remote_name}/{base_branch}'")
             else:
                 logger.info(f"Branch '{branch_name}' has diverged from '{remote_name}/{base_branch}'")
-                
+
             return False
         except Exception as e:
             logger.error(f"Error checking if branch is outdated: {str(e)}", exc_info=True)
@@ -313,7 +323,7 @@ class GitHandler:
 
         if remote_branch is None:
             remote_branch = branch_name
-            
+
         logger.info(f"Fetching and merging '{remote_name}/{remote_branch}' into local branch '{branch_name}'")
 
         # Ensure we're on the correct branch
@@ -341,7 +351,9 @@ class GitHandler:
             branches = list(filter(lambda head: head.name == branch_name, self.repo.heads))
             if not branches:
                 available_branches = [h.name for h in self.repo.heads]
-                error_msg = f"Cannot get the git branch '{branch_name}' from repository head list '{available_branches}'."
+                error_msg = (
+                    f"Cannot get the git branch '{branch_name}' from repository head list '{available_branches}'."
+                )
                 logger.error(error_msg)
                 raise KeyError(error_msg)
             branch = branches[0]
@@ -358,7 +370,6 @@ class GitHandler:
                     # Cannot fast-forward, need to do a real merge
                     logger.warning(f"Cannot fast-forward merge: {str(e)}")
                     logger.debug("Will attempt regular merge")
-                    pass
 
             # Try to merge
             try:
@@ -380,7 +391,7 @@ class GitHandler:
                     # Abort the merge
                     # self.repo.git.merge("--abort")
                     raise GitCodeConflictError(f"Merge conflicts detected between {branch_name} and {remote_ref}")
-                
+
                 # Other error
                 logger.error(f"Error during merge operation: {error_msg}")
                 raise  # Re-raise the original exception if not a conflict error
@@ -419,14 +430,14 @@ class GitHandler:
         """
         if branch_name is None:
             branch_name = self._get_current_branch()
-            
+
         logger.info(f"Pushing branch '{branch_name}' to remote '{remote_name}'" + (" (force)" if force else ""))
 
         try:
             # Ensure the branch exists
             available_branches = [b.name for b in self.repo.heads]
             logger.debug(f"Available branches: {available_branches}")
-            
+
             if branch_name not in available_branches:
                 error_msg = f"Branch '{branch_name}' not found in available branches: {available_branches}"
                 logger.error(error_msg)
