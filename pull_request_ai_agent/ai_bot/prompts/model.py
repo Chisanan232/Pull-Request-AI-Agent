@@ -282,7 +282,9 @@ def prepare_pr_prompt_data(
 
         logger.info("Successfully prepared PR prompt data")
         logger.debug(f"Title prompt: {len(title_prompt)} characters")
+        logger.debug(f"Title prompt: {title_prompt}")
         logger.debug(f"Description prompt: {len(description_prompt)} characters")
+        logger.debug(f"Description: {description_prompt}")
 
         return PRPromptData(title=title_prompt, description=description_prompt)
     except Exception as e:
