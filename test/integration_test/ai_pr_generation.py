@@ -169,8 +169,8 @@ BODY:
 
         def get_content(prompt):
             # Handle PRPromptData object instead of string
-            prompt_text = prompt.description if hasattr(prompt, 'description') else str(prompt)
-            
+            prompt_text = prompt.description if hasattr(prompt, "description") else str(prompt)
+
             if "Add AI-powered PR generation" in prompt_text or "CU-abc123" in prompt_text:
                 return feature_response
             elif "Fix parsing bug" in prompt_text or "CU-def456" in prompt_text:
