@@ -343,7 +343,7 @@ class GitHandler:
 
         try:
             # Check if merge is necessary
-            logger.debug(f"Checking if merge is necessary")
+            logger.debug("Checking if merge is necessary")
             merge_base = self.repo.merge_base(f"refs/heads/{branch_name}", f"refs/remotes/{remote_ref}")
             logger.debug(f"Found merge base: {merge_base[0].hexsha if merge_base else 'None'}")
 

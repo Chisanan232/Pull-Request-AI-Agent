@@ -145,7 +145,7 @@ class GitHubOperations:
             GithubException: If GitHub API request fails
             ValueError: If the pull request is not found
         """
-        logger.debug(f"Adding labels to PR based on changed files")
+        logger.debug("Adding labels to PR based on changed files")
         pr_id = pull_request if isinstance(pull_request, int) else pull_request.number
         logger.debug(f"Processing PR #{pr_id} with labels config: {labels_config}")
 
