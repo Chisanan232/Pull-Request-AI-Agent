@@ -616,7 +616,17 @@ class CreatePrAIBot:
                 logger.error(f"Error setting pull request template into AI prompt: {str(e)}")
 
             logger.debug("Fallback prompt generated successfully")
-            return prompt
+            
+            # Wrap the string prompt in a PRPromptData object to maintain consistent return type
+            from pull_request_ai_agent.ai_bot.prompts.model import PRPromptData
+            
+            # Create a fallback title based on ticket info or a generic title
+            fallback_title = "Pull Request"
+            if ticket_info_list and ticket_info_list[0].get('title'):
+                fallback_title = f"Fix: {ticket_info_list[0]['title']}"
+            
+            logger.debug(f"Created fallback PRPromptData with title: {fallback_title}")
+            return PRPromptData(title=fallback_title, description=prompt)
 
     def parse_ai_response(self, response: str) -> Tuple[str, str]:
         """
