@@ -14,7 +14,7 @@ from .ai_bot._base.client import BaseAIClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
 from .ai_bot.gpt.client import GPTClient
-from .ai_bot.prompts.model import prepare_pr_prompt_data, PRPromptData
+from .ai_bot.prompts.model import PRPromptData, prepare_pr_prompt_data
 from .git_hdlr import GitCodeConflictError, GitHandler
 from .github_opt import GitHubOperations
 from .model import ProjectManagementToolSettings
@@ -519,7 +519,9 @@ class CreatePrAIBot:
         logger.debug(f"Using legacy _format_ticket_id method, consider updating to format_ticket_id")
         return self.format_ticket_id(ticket_id)
 
-    def prepare_ai_prompt(self, commits: List[Dict[str, Any]], ticket_details: List[BaseImmutableModel]) -> PRPromptData:
+    def prepare_ai_prompt(
+        self, commits: List[Dict[str, Any]], ticket_details: List[BaseImmutableModel]
+    ) -> PRPromptData:
         """
         Prepare a prompt for the AI to generate a PR title and body.
 
@@ -616,15 +618,15 @@ class CreatePrAIBot:
                 logger.error(f"Error setting pull request template into AI prompt: {str(e)}")
 
             logger.debug("Fallback prompt generated successfully")
-            
+
             # Wrap the string prompt in a PRPromptData object to maintain consistent return type
             from pull_request_ai_agent.ai_bot.prompts.model import PRPromptData
-            
+
             # Create a fallback title based on ticket info or a generic title
             fallback_title = "Pull Request"
-            if ticket_info_list and ticket_info_list[0].get('title'):
+            if ticket_info_list and ticket_info_list[0].get("title"):
                 fallback_title = f"Fix: {ticket_info_list[0]['title']}"
-            
+
             logger.debug(f"Created fallback PRPromptData with title: {fallback_title}")
             return PRPromptData(title=fallback_title, description=prompt)
 
