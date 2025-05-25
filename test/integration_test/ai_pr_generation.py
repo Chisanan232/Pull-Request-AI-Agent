@@ -168,11 +168,14 @@ BODY:
 """
 
         def get_content(prompt):
-            if "Add AI-powered PR generation" in prompt or "CU-abc123" in prompt:
+            # Handle PRPromptData object instead of string
+            prompt_text = prompt.description if hasattr(prompt, 'description') else str(prompt)
+            
+            if "Add AI-powered PR generation" in prompt_text or "CU-abc123" in prompt_text:
                 return feature_response
-            elif "Fix parsing bug" in prompt or "CU-def456" in prompt:
+            elif "Fix parsing bug" in prompt_text or "CU-def456" in prompt_text:
                 return bug_response
-            elif "Test Feature" in prompt or "CU-test123" in prompt:
+            elif "Test Feature" in prompt_text or "CU-test123" in prompt_text:
                 return default_response
             return default_response
 
