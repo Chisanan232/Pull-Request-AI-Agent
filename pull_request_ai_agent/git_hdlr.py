@@ -126,10 +126,6 @@ class GitHandler:
         logger.debug(f"Getting remote branch head commit details for {remote_name}/{branch_name}")
 
         try:
-            # Check if we're in a test environment
-            in_test_environment = "pytest" in sys.modules
-            logger.debug(f"Running in test environment: {in_test_environment}")
-
             # Safely log available remotes
             remote_names = []
             try:
@@ -144,100 +140,49 @@ class GitHandler:
             # Check for nonexistent remote
             remote = None
             if not hasattr(self.repo, "remotes") or not remote_names or remote_name not in remote_names:
-                # In regular mode, raise error for nonexistent remote
-                if not in_test_environment:
-                    logger.error(f"Remote '{remote_name}' not found")
-                    raise ValueError(f"Remote '{remote_name}' not found")
-                # In test environment, if remotes is explicitly empty (as in the nonexistent remote test),
-                # we should raise the error rather than using mock data
-                elif isinstance(getattr(self.repo, "remotes", None), dict) and not getattr(self.repo, "remotes", None):
-                    logger.error(f"Remote '{remote_name}' not found")
-                    raise ValueError(f"Remote '{remote_name}' not found")
+                logger.error(f"Remote '{remote_name}' not found")
+                raise ValueError(f"Remote '{remote_name}' not found")
 
             # Attempt to get the remote if it exists
             try:
-                if hasattr(self.repo, "remotes") and remote_name in remote_names:
-                    remote = getattr(self.repo.remotes, remote_name)
-                    logger.info(f"Fetching latest from remote '{remote_name}'")
-                    remote.fetch()
-                else:
-                    logger.warning(f"Remote '{remote_name}' not available for fetching")
+                remote = getattr(self.repo.remotes, remote_name)
+                logger.info(f"Fetching latest from remote '{remote_name}'")
+                remote.fetch()
             except (AttributeError, TypeError) as e:
                 logger.warning(f"Could not fetch from remote '{remote_name}': {str(e)}")
 
-            # Handle test environment with mock data, unless we're in a specific test
-            # that should be testing error conditions
-            if in_test_environment and not isinstance(getattr(self.repo, "refs", None), dict):
-                logger.debug("Using mock commit data for test environment")
-                # In test environment, create mock commit details
-                commit_details = {
-                    "hash": "1234567890abcdef1234567890abcdef12345678",
-                    "short_hash": "1234567",
-                    "author": {"name": "Test Author", "email": "test@example.com"},
-                    "committer": {"name": "Test Committer", "email": "test@example.com"},
-                    "message": "Test commit message",
-                    "committed_date": 1621234567,
-                    "authored_date": 1621234567,
-                }
-                logger.debug("Returning mock commit details for tests")
-                return commit_details
+            # Get the remote reference
+            remote_ref = f"{remote_name}/{branch_name}"
+            logger.debug(f"Looking for remote reference: {remote_ref}")
 
-            # Check for nonexistent branch specifically for the test case
-            if (
-                in_test_environment
-                and isinstance(getattr(self.repo, "refs", None), dict)
-                and not getattr(self.repo, "refs", None)
-            ):
+            if not hasattr(self.repo, "refs") or remote_ref not in self.repo.refs:
                 logger.error(f"Remote branch '{remote_name}/{branch_name}' not found")
                 raise ValueError(f"Remote branch '{remote_name}/{branch_name}' not found")
 
-            # Get the remote reference
-            remote_ref = f"{remote_name}/{branch_name}"
-            try:
-                # Safely log available refs
-                try:
-                    if hasattr(self.repo, "refs"):
-                        ref_names = [ref.name for ref in self.repo.refs]
-                        logger.debug(f"Available refs: {ref_names}")
-                    else:
-                        logger.debug("No refs available in repository")
-                except AttributeError:
-                    logger.debug("Could not access repository refs")
+            # Get the commit
+            commit = self.repo.refs[remote_ref].commit
+            logger.debug(f"Found commit {commit.hexsha[:7]} on {remote_name}/{branch_name}")
 
-                logger.debug(f"Looking for remote reference: {remote_ref}")
-                if remote_ref not in self.repo.refs:
-                    logger.error(f"Remote branch '{remote_ref}' not found")
-                    raise ValueError(f"Remote branch '{remote_ref}' not found")
-
-                remote_commit = self.repo.refs[remote_ref].commit
-                logger.debug(f"Found remote commit: {remote_commit.hexsha}")
-            except (IndexError, KeyError) as e:
-                logger.error(f"Remote branch '{remote_ref}' not found: {str(e)}")
-                raise ValueError(f"Remote branch '{remote_ref}' not found")
-
+            # Format the commit details
             commit_details = {
-                "hash": remote_commit.hexsha,
-                "short_hash": remote_commit.hexsha[:7],
-                "author": {"name": remote_commit.author.name, "email": remote_commit.author.email},
-                "committer": {"name": remote_commit.committer.name, "email": remote_commit.committer.email},
-                "message": remote_commit.message.strip(),
-                "committed_date": remote_commit.committed_date,
-                "authored_date": remote_commit.authored_date,
+                "hash": commit.hexsha,
+                "short_hash": commit.hexsha[:7],
+                "author": {"name": commit.author.name, "email": commit.author.email},
+                "committer": {"name": commit.committer.name, "email": commit.committer.email},
+                "message": commit.message.strip(),
+                "committed_date": commit.committed_date,
+                "authored_date": commit.authored_date,
             }
 
-            logger.debug(
-                f"Remote commit details retrieved for '{remote_ref}', short hash: {commit_details['short_hash']}"
-            )
+            logger.debug(f"Formatted commit details for {commit.hexsha[:7]}")
             return commit_details
-        except (ValueError, IndexError, KeyError) as e:
-            # Propagate specific errors
-            if isinstance(e, ValueError):
-                raise
-            logger.error(f"Error accessing remote '{remote_name}': {str(e)}")
-            raise ValueError(f"Remote branch '{remote_name}/{branch_name}' not found")
-        except Exception as e:
-            logger.error(f"Unexpected error getting remote branch head: {str(e)}")
+
+        except (git.GitCommandError, ValueError) as e:
+            logger.error(f"Error getting remote branch head commit: {str(e)}")
             raise
+        except Exception as e:
+            logger.error(f"Unexpected error getting remote branch head commit: {str(e)}", exc_info=True)
+            raise ValueError(f"Failed to get commit details: {str(e)}")
 
     def is_branch_outdated(
         self, branch_name: Optional[str] = None, base_branch: str = "main", remote_name: str = "origin"
