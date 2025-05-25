@@ -775,7 +775,9 @@ class CreatePrAIBot:
             ai_response_body = self.ai_client.get_content(prompt.description)
             logger.info("Successfully generated content using AI")
             logger.debug(f"AI response for PR title length: {len(ai_response_title)} characters")
+            logger.debug(f"AI response for PR title: {ai_response_title}")
             logger.debug(f"AI response for PR body length: {len(ai_response_body)} characters")
+            logger.debug(f"AI response for PR body: {ai_response_body}")
         except Exception as e:
             logger.error(f"Error generating content with AI: {str(e)}", exc_info=True)
             logger.info("Using fallback PR content due to AI failure")
@@ -793,7 +795,7 @@ class CreatePrAIBot:
 
         # Step 10: Create PR
         logger.info("Creating pull request")
-        pr = self.create_pull_request(title_title, body_body, branch_name)
+        pr = self.create_pull_request(ai_response_title, ai_response_body, branch_name)
 
         if pr:
             logger.info(f"PR creation workflow completed successfully: {pr.html_url}")
