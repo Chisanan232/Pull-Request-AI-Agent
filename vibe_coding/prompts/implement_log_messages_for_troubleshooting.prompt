@@ -30,3 +30,12 @@ If it has, could you help me adjust the code to fix it?
 And the test framework the project uses is Poetry. For run all tests, please use command line `poetry run bash
 ./scripts/run_all_tests.sh 'all-test’`
 ------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+This is a Python project uses Poetry to mange project settings. Could you help me add the edge cases in tests which is
+very close to reality scenarios for covering almost the source code? Please consider implementing the edge cases as the
+unit tests first, and if it cannot reach or need to involve with too many functions or components, please condition
+implementing the edge cases as the integration tests.
+And the test framework the project uses is Poetry. For run all tests, please use command line `poetry run bash
+./scripts/run_all_tests.sh 'all-test’`
+------------------ one prompt end ------------------
