@@ -14,7 +14,7 @@ from .ai_bot._base.client import BaseAIClient
 from .ai_bot.claude.client import ClaudeClient
 from .ai_bot.gemini.client import GeminiClient
 from .ai_bot.gpt.client import GPTClient
-from .ai_bot.prompts.model import prepare_pr_prompt_data
+from .ai_bot.prompts.model import prepare_pr_prompt_data, PRPromptData
 from .git_hdlr import GitCodeConflictError, GitHandler
 from .github_opt import GitHubOperations
 from .model import ProjectManagementToolSettings
@@ -491,7 +491,7 @@ class CreatePrAIBot:
         logger.debug(f"Using legacy _format_ticket_id method, consider updating to format_ticket_id")
         return self.format_ticket_id(ticket_id)
 
-    def prepare_ai_prompt(self, commits: List[Dict[str, Any]], ticket_details: List[BaseImmutableModel]) -> str:
+    def prepare_ai_prompt(self, commits: List[Dict[str, Any]], ticket_details: List[BaseImmutableModel]) -> PRPromptData:
         """
         Prepare a prompt for the AI to generate a PR title and body.
 
@@ -530,7 +530,7 @@ class CreatePrAIBot:
             # For now, we'll just use the title prompt
             # In the future, we could use both title and description separately
             logger.info("Successfully prepared AI prompt")
-            return prompt_data.title
+            return prompt_data
 
         except FileNotFoundError as e:
             logger.error(f"Failed to load prompt template: {str(e)}")
@@ -731,9 +731,11 @@ class CreatePrAIBot:
         # Step 8: Generate PR content using AI
         logger.info("Generating PR content using AI")
         try:
-            ai_response = self.ai_client.get_content(prompt)
+            ai_response_title = self.ai_client.get_content(prompt.title)
+            ai_response_body = self.ai_client.get_content(prompt.description)
             logger.info("Successfully generated content using AI")
-            logger.debug(f"AI response length: {len(ai_response)} characters")
+            logger.debug(f"AI response for PR title length: {len(ai_response_title)} characters")
+            logger.debug(f"AI response for PR body length: {len(ai_response_body)} characters")
         except Exception as e:
             logger.error(f"Error generating content with AI: {str(e)}", exc_info=True)
             logger.info("Using fallback PR content due to AI failure")
@@ -745,11 +747,13 @@ class CreatePrAIBot:
 
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
-        title, body = self.parse_ai_response(ai_response)
+        # FIXME: Adjust the parsing logic to be reasonable
+        title_title, title_body = self.parse_ai_response(ai_response_title)
+        body_title, body_body = self.parse_ai_response(ai_response_body)
 
         # Step 10: Create PR
         logger.info("Creating pull request")
-        pr = self.create_pull_request(title, body, branch_name)
+        pr = self.create_pull_request(title_title, body_body, branch_name)
         
         if pr:
             logger.info(f"PR creation workflow completed successfully: {pr.html_url}")
