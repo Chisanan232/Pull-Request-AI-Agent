@@ -1,0 +1,32 @@
+================ create =======================
+------------------ one prompt start ------------------
+This is a GitHub PR AI agent project which uses Python with Poetry. I want to add more log messages for being helpful in troubleshooting. Please help me add log messages at the necessary points and remember help me classify the log message as the appropiate log level.
+Remember, the log messages for being helpful in troubleshooting, so it doesn’t need to add too many log messages at the trivial logic. And please:
+1. Please use Python 3.12 or later.
+2. Please use the library *pytest* for the test part.
+
+Please help me add the log messages in my source code.
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+This is a Python project uses Poetry to mange project settings. I do some code change to fix the incorrect logic in
+source code. But it cause the tests be broken. Could you help me fix the broke tests without any breaking change in
+source code?
+And the test framework the project uses is Poetry. For run all tests, please use command line `poetry run bash
+./scripts/run_all_tests.sh 'all-test’`.
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+This is a Python project uses Poetry to mange project settings. It has some broken integration tests. Could you help me fix it?
+And the test framework the project uses is Poetry. For run all tests, please use command line `poetry run bash
+./scripts/run_all_tests.sh 'all-test’`.
+------------------ one prompt end ------------------
+
+------------------ one prompt start ------------------
+This is a Python project uses Poetry to mange project settings. About the implementation for the test specially. I think
+bind the logic which only for test in source code is not a good idea and not a great design to implement. Is it possible
+that extract the test logic out to test code like using mock way to mock the specific functions or properties for test?
+If it has, could you help me adjust the code to fix it?
+And the test framework the project uses is Poetry. For run all tests, please use command line `poetry run bash
+./scripts/run_all_tests.sh 'all-test’`
+------------------ one prompt end ------------------
