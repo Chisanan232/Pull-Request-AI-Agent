@@ -7,7 +7,6 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-
 from pull_request_ai_agent.ai_bot._base.client import BaseAIClient
 from pull_request_ai_agent.ai_bot.gemini.model import (
     GeminiCandidate,
