@@ -5,7 +5,6 @@ This module provides functionality for common git operations.
 
 import logging
 import re
-import sys
 from typing import Any, Dict, Optional
 
 import git

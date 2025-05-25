@@ -233,34 +233,37 @@ class TestGitHandler:
 
     def test_is_branch_outdated_not_outdated(self, git_handler, mock_repo):
         """Test is_branch_outdated when branch is not outdated."""
+
         # Create a custom is_branch_outdated implementation to patch with
         def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
             return False
-        
+
         # Patch the method to return our fixed value
-        with patch.object(GitHandler, 'is_branch_outdated', mock_is_branch_outdated):
+        with patch.object(GitHandler, "is_branch_outdated", mock_is_branch_outdated):
             # Should not be outdated based on our mock
             assert not git_handler.is_branch_outdated("feature-branch", "main")
 
     def test_is_branch_outdated_is_outdated(self, git_handler, mock_repo):
         """Test is_branch_outdated when branch is outdated."""
+
         # Create a custom is_branch_outdated implementation to patch with
         def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
             return True
-            
+
         # Patch the method to return our fixed value
-        with patch.object(GitHandler, 'is_branch_outdated', mock_is_branch_outdated):
+        with patch.object(GitHandler, "is_branch_outdated", mock_is_branch_outdated):
             # Should be outdated based on our mock
             assert git_handler.is_branch_outdated("feature-branch", "main")
 
     def test_is_branch_outdated_no_common_ancestor(self, git_handler, mock_repo):
         """Test is_branch_outdated when there's no common ancestor."""
+
         # Create a custom is_branch_outdated implementation to patch with
         def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
             return True
-            
+
         # Patch the method to return our fixed value
-        with patch.object(GitHandler, 'is_branch_outdated', mock_is_branch_outdated):
+        with patch.object(GitHandler, "is_branch_outdated", mock_is_branch_outdated):
             # Should be outdated when there's no common ancestor
             assert git_handler.is_branch_outdated("feature-branch", "main")
 
@@ -269,19 +272,19 @@ class TestGitHandler:
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
         mock_branch.name = "feature-branch"
-        
+
         # Set current branch
         mock_repo.active_branch = mock_branch
-        
+
         # Mock git merge
         mock_repo.git.merge.return_value = "Fast-forward"
-        
+
         # Use the handler with our mocked repo
         result = git_handler.fetch_and_merge_remote_branch("feature-branch")
-        
+
         # Verify merge was called with correct parameters
         mock_repo.git.merge.assert_called_once_with("origin/feature-branch", ff_only=True)
-        
+
         # Should return True for successful merge
         assert result is True
 
@@ -290,22 +293,22 @@ class TestGitHandler:
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
         mock_branch.name = "feature-branch"
-        
+
         # Set current branch to something else to test checkout
         mock_other_branch = mock_repo.heads[1]
         mock_other_branch.name = "main"
         mock_repo.active_branch = mock_other_branch
-        
+
         # Mock git merge
         mock_repo.git.merge.return_value = "Fast-forward"
-        
+
         # Use the handler with our mocked repo
         result = git_handler.fetch_and_merge_remote_branch("feature-branch")
-        
+
         # Verify checkout and merge were called
         mock_repo.git.checkout.assert_called_once_with("feature-branch")
         mock_repo.git.merge.assert_called_once_with("origin/feature-branch", ff_only=True)
-        
+
         # Should return True for successful merge
         assert result is True
 
@@ -314,31 +317,31 @@ class TestGitHandler:
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
         mock_branch.name = "feature-branch"
-        
+
         # Set current branch
         mock_repo.active_branch = mock_branch
-        
+
         # Set up the merge_base to simulate a different commit
         # This will cause the code to try a regular merge (not ff_only)
         mock_local_commit = Mock()
         mock_local_commit.hexsha = "1234567890abcdef1234567890abcdef12345678"
-        
+
         mock_remote_commit = Mock()
         mock_remote_commit.hexsha = "0000000000000000000000000000000000000000"  # Different hash
-        
+
         mock_repo.merge_base.return_value = [mock_remote_commit]
         mock_branch.commit = mock_local_commit
-        
+
         # Mock git merge to raise a GitCommandError with conflict message
         mock_conflict_error = git.GitCommandError(
             "git merge origin/feature-branch", 1, stderr="CONFLICT (content): Merge conflict in test.py"
         )
         mock_repo.git.merge.side_effect = mock_conflict_error
-        
+
         # Should raise GitCodeConflictError
         with pytest.raises(GitCodeConflictError):
             git_handler.fetch_and_merge_remote_branch("feature-branch")
-        
+
         # The test will try both merge types potentially, so we don't assert on called_once
         # but just check that merge was called with the right parameters at some point
         merge_calls = mock_repo.git.merge.call_args_list
@@ -349,31 +352,29 @@ class TestGitHandler:
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
         mock_branch.name = "feature-branch"
-        
+
         # Set current branch
         mock_repo.active_branch = mock_branch
-        
+
         # Set up the merge_base to simulate a different commit
         # This will cause the code to try a regular merge (not ff_only)
         mock_local_commit = Mock()
         mock_local_commit.hexsha = "1234567890abcdef1234567890abcdef12345678"
-        
+
         mock_remote_commit = Mock()
         mock_remote_commit.hexsha = "0000000000000000000000000000000000000000"  # Different hash
-        
+
         mock_repo.merge_base.return_value = [mock_remote_commit]
         mock_branch.commit = mock_local_commit
-        
+
         # Mock git merge to raise a GitCommandError with non-conflict message
-        mock_other_error = git.GitCommandError(
-            "git merge origin/feature-branch", 1, stderr="Some other git error"
-        )
+        mock_other_error = git.GitCommandError("git merge origin/feature-branch", 1, stderr="Some other git error")
         mock_repo.git.merge.side_effect = mock_other_error
-        
+
         # Should re-raise the original error
         with pytest.raises(git.GitCommandError):
             git_handler.fetch_and_merge_remote_branch("feature-branch")
-        
+
         # The test will try both merge types potentially, so we don't assert on called_once
         # but just check that merge was called with the right parameters at some point
         merge_calls = mock_repo.git.merge.call_args_list
@@ -383,12 +384,14 @@ class TestGitHandler:
         """Test fetch_and_merge_remote_branch with nonexistent branch."""
         # Set up a KeyError to be raised when trying to access branches
         mock_repo.heads = [Mock()]  # At least one branch to avoid index errors
-        
+
         # Modify the mock_repo.heads so that when filtered in the code, it returns an empty list
         # Patch filter to return an empty list when called with any lambda that checks branch names
-        with patch('builtins.filter', return_value=[]):
+        with patch("builtins.filter", return_value=[]):
             # Should raise ValueError with proper message
-            with pytest.raises(ValueError, match="Branch 'nonexistent-branch' or remote branch 'origin/nonexistent-branch' not found"):
+            with pytest.raises(
+                ValueError, match="Branch 'nonexistent-branch' or remote branch 'origin/nonexistent-branch' not found"
+            ):
                 git_handler.fetch_and_merge_remote_branch("nonexistent-branch")
 
     def test_push_branch_to_remote_success(self, git_handler, mock_repo):
