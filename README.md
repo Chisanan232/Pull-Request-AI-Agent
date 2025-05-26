@@ -31,7 +31,7 @@
 
 ## Configuration
 
-Create PR Bot can be configured in multiple ways:
+Pull request AI agent can be configured in multiple ways:
 
 1. **Command Line Arguments**: Pass options directly when running the bot
 2. **Environment Variables**: Set options using environment variables

@@ -1,7 +1,7 @@
 """
-Entry point for the Create PR Bot.
+Entry point for the pull request AI agent.
 
-This module provides the command line interface for the Create PR Bot,
+This module provides the command line interface for the pull request AI agent,
 which automates the creation of pull requests with AI-generated content.
 """
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Create PR Bot - Automate pull request creation with AI-generated content"
+        description="Pull request AI agent - Automate pull request operations by AI agent"
     )
 
     # Configuration file
@@ -64,9 +64,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_bot(settings: BotSettings) -> None:
-    """Run the Create PR Bot with the provided settings."""
+    """Run the pull request AI agent with the provided settings."""
     try:
-        logger.info("Initializing Create PR Bot...")
+        logger.info("Initializing pull request AI agent ...")
 
         # Create project management tool config
         pm_tool_config = settings.pm_tool if settings.pm_tool.tool_type else None
@@ -84,7 +84,7 @@ def run_bot(settings: BotSettings) -> None:
         )
 
         # Run the bot
-        logger.info("Running Create PR Bot...")
+        logger.info("Running pull request AI agent ...")
         result = bot.run(branch_name=settings.git.branch_name)
 
         if result:
@@ -93,12 +93,12 @@ def run_bot(settings: BotSettings) -> None:
             logger.info("No PR was created. See logs for details.")
 
     except Exception as e:
-        logger.error(f"Error running Create PR Bot: {str(e)}", exc_info=True)
+        logger.error(f"Error running pull request AI agent: {str(e)}", exc_info=True)
         sys.exit(1)
 
 
 def main() -> None:
-    """Main entry point for the Create PR Bot."""
+    """Main entry point for the pull request AI agent."""
     # Parse command line arguments
     args = parse_args()
 

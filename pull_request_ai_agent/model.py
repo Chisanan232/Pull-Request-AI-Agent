@@ -292,7 +292,7 @@ class GitSettings:
 
 @dataclass
 class BotSettings:
-    """Settings for the Create PR Bot."""
+    """Settings for the pull request AI agent."""
 
     git: GitSettings
     github: GitHubSettings
