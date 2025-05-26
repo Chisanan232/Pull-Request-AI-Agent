@@ -663,7 +663,7 @@ class PullRequestAIAgent:
 
         return title, body
 
-    def parse_ai_response_title(self, response: str) -> str:
+    def _parse_ai_response_title(self, response: str) -> str:
         """
         Parse the AI-generated response into a PR title.
 
@@ -681,7 +681,7 @@ class PullRequestAIAgent:
         pure_response = response.replace("\"", "")
         return pure_response
 
-    def parse_ai_response_body(self, response: str) -> str:
+    def _parse_ai_response_body(self, response: str) -> str:
         """
         Parse the AI-generated response into a PR body.
 
@@ -846,8 +846,8 @@ class PullRequestAIAgent:
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
         # FIXME: Adjust the parsing logic to be reasonable
-        pr_title = self.parse_ai_response_title(ai_response_title)
-        pr_body = self.parse_ai_response_body(ai_response_body)
+        pr_title = self._parse_ai_response_title(ai_response_title)
+        pr_body = self._parse_ai_response_body(ai_response_body)
 
         # Step 10: Create PR
         logger.info("Creating pull request")
