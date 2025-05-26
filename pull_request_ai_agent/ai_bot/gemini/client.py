@@ -7,8 +7,6 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-from urllib3.response import HTTPResponse
-
 from pull_request_ai_agent.ai_bot._base.client import BaseAIClient
 from pull_request_ai_agent.ai_bot.gemini.model import (
     GeminiCandidate,
@@ -50,9 +48,20 @@ class GeminiClient(BaseAIClient):
         Raises:
             ValueError: If no API key is provided or found in environment variables
         """
-        super().__init__(
-            api_key=api_key, model=model, temperature=temperature, max_tokens=max_tokens, env_var_name="GOOGLE_API_KEY"
-        )
+        logger.debug(f"Initializing Gemini client with model: {model or self.DEFAULT_MODEL}")
+        try:
+            super().__init__(
+                api_key=api_key,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                env_var_name="GOOGLE_API_KEY",
+            )
+            logger.info(f"Successfully initialized Gemini client with model: {self.model}")
+            logger.debug(f"Gemini client settings: temperature={temperature}, max_tokens={max_tokens}")
+        except ValueError as e:
+            logger.error(f"Failed to initialize Gemini client: {str(e)}")
+            raise
 
     def _prepare_headers(self) -> Dict[str, str]:
         """
@@ -61,6 +70,7 @@ class GeminiClient(BaseAIClient):
         Returns:
             Dictionary of HTTP headers.
         """
+        logger.debug("Preparing headers for Gemini API request")
         return {"Content-Type": "application/json"}
 
     def _prepare_payload(self, prompt: str, system_message: Optional[str] = None) -> Dict[str, Any]:
@@ -74,16 +84,25 @@ class GeminiClient(BaseAIClient):
         Returns:
             Dictionary payload for the API request.
         """
+        logger.debug(f"Preparing payload for Gemini API request to model: {self.model}")
+
+        # Log prompt length for debugging token usage
+        prompt_length = len(prompt)
+        logger.debug(f"Prompt length: {prompt_length} characters")
+
         contents = []
 
         # Add system message if provided
         if system_message:
+            logger.debug(f"Including system message (length: {len(system_message)} characters)")
             contents.append({"role": "system", "parts": [{"text": system_message}]})
+        else:
+            logger.debug("No system message provided")
 
         # Add user prompt
         contents.append({"role": "user", "parts": [{"text": prompt}]})
 
-        return {
+        payload = {
             "contents": contents,
             "generationConfig": {
                 "temperature": self.temperature,
@@ -94,12 +113,15 @@ class GeminiClient(BaseAIClient):
             "safetySettings": [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"}],
         }
 
-    def _parse_response(self, response: HTTPResponse) -> GeminiResponse:
+        logger.debug(f"Payload prepared with {len(contents)} content items and maxOutputTokens={self.max_tokens}")
+        return payload
+
+    def _parse_response(self, response) -> GeminiResponse:
         """
-        Parse the HTTP response from the Gemini API.
+        Parse the HTTP response from the Google AI API.
 
         Args:
-            response: HTTP response from the API
+            response: HTTP response from the API or a GeminiResponse object
 
         Returns:
             Parsed GeminiResponse object
@@ -107,46 +129,78 @@ class GeminiClient(BaseAIClient):
         Raises:
             ValueError: If the response is invalid or contains an error
         """
-        if response.status != 200:
-            raise ValueError(self._handle_error_response(response))
+        logger.debug("Parsing response from Gemini API")
 
-        try:
-            data = json.loads(response.data.decode("utf-8"))
+        # If we already have a GeminiResponse object, return it directly
+        if isinstance(response, GeminiResponse):
+            logger.debug("Response is already a GeminiResponse object")
+            return response
 
-            # Create candidates
-            candidates = []
-            for candidate_data in data.get("candidates", []):
-                content_data = candidate_data.get("content", {})
-                parts = content_data.get("parts", [{}])[0]
+        # Handle HTTP response
+        if hasattr(response, "status"):
+            if response.status != 200:
+                error_message = self._handle_error_response(response)
+                logger.error(f"Gemini API request failed: {error_message}")
+                raise ValueError(error_message)
 
-                content = GeminiContent(text=parts.get("text", ""), role=content_data.get("role", "model"))
+            try:
+                data = json.loads(response.data.decode("utf-8"))
+                logger.debug("Successfully parsed JSON response from Gemini API")
 
-                candidates.append(
-                    GeminiCandidate(
+                # Process candidates
+                api_candidates = data.get("candidates", [])
+                candidates = []
+
+                for idx, api_candidate in enumerate(api_candidates):
+                    # Extract content from candidate
+                    api_content = api_candidate.get("content", {})
+                    text_content = ""
+
+                    # Extract text from parts
+                    for part in api_content.get("parts", []):
+                        if "text" in part:
+                            text_content += part.get("text", "")
+
+                    # Create GeminiContent with correct parameters (no part_type)
+                    content = GeminiContent(text=text_content, role=api_content.get("role", "model"))
+
+                    # Create candidate
+                    candidate = GeminiCandidate(
                         content=content,
-                        finish_reason=candidate_data.get("finishReason", ""),
-                        index=candidate_data.get("index", 0),
-                        safety_ratings=candidate_data.get("safetyRatings", []),
+                        finish_reason=api_candidate.get("finishReason", ""),
+                        index=idx,
+                        safety_ratings=api_candidate.get("safetyRatings", []),
                     )
+                    candidates.append(candidate)
+
+                # Extract prompt feedback
+                prompt_feedback = GeminiPromptFeedback(
+                    safety_ratings=data.get("promptFeedback", {}).get("safetyRatings", [])
                 )
 
-            # Create prompt feedback
-            prompt_feedback = GeminiPromptFeedback(
-                safety_ratings=data.get("promptFeedback", {}).get("safetyRatings", [])
-            )
+                # Extract usage data
+                prompt_token_count = data.get("usageMetadata", {}).get("promptTokenCount", 0)
+                total_token_count = data.get("usageMetadata", {}).get("totalTokenCount", 0)
+                candidates_token_count = data.get("usageMetadata", {}).get("candidatesTokenCount", 0)
 
-            # Create usage data
-            usage_data = data.get("usageMetadata", {})
-            usage = GeminiUsage(
-                prompt_token_count=usage_data.get("promptTokenCount", 0),
-                candidates_token_count=usage_data.get("candidatesTokenCount", 0),
-                total_token_count=usage_data.get("totalTokenCount", 0),
-            )
+                usage = GeminiUsage(
+                    prompt_token_count=prompt_token_count,
+                    total_token_count=total_token_count,
+                    candidates_token_count=candidates_token_count,
+                )
 
-            # Create and return the full response object
-            return GeminiResponse(candidates=candidates, prompt_feedback=prompt_feedback, usage=usage)
-        except Exception as e:
-            raise ValueError(f"Failed to parse API response: {str(e)}")
+                logger.debug(f"Gemini API token usage: prompt={prompt_token_count}, total={total_token_count}")
+
+                return GeminiResponse(candidates=candidates, prompt_feedback=prompt_feedback, usage=usage)
+            except Exception as e:
+                error_msg = f"Failed to parse API response: {str(e)}"
+                logger.error(f"Failed to parse Gemini API response: {str(e)}", exc_info=True)
+                raise ValueError(error_msg)
+        else:
+            # Not a valid response type
+            error_msg = f"Invalid response type: {type(response)}"
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
     def ask(self, prompt: str, system_message: Optional[str] = None) -> GeminiResponse:
         """
@@ -162,12 +216,30 @@ class GeminiClient(BaseAIClient):
         Raises:
             ValueError: If the API request fails or returns an error
         """
+        logger.info(f"Sending prompt to Gemini model: {self.model}")
+        logger.debug(f"Prompt begins with: {prompt[:50]}..." if len(prompt) > 50 else f"Prompt: {prompt}")
+
         endpoint = f"{self.BASE_URL}/models/{self.model}:generateContent"
         endpoint = f"{endpoint}?key={self.api_key}"
+        logger.debug(f"Using Gemini API endpoint: {endpoint}")
+
         headers = self._prepare_headers()
         payload = self._prepare_payload(prompt, system_message)
 
-        return self._make_request(method="POST", url=endpoint, headers=headers, payload=payload, service_name="Gemini")
+        try:
+            logger.debug("Making request to Gemini API")
+            response = self._make_request(
+                method="POST", url=endpoint, headers=headers, payload=payload, service_name="Gemini"
+            )
+            logger.info("Successfully received response from Gemini API")
+            return self._parse_response(response)
+        except ValueError as e:
+            logger.error(f"Error in Gemini API request: {str(e)}")
+            raise
+        except Exception as e:
+            error_msg = f"Unexpected error in Gemini API request: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise ValueError(error_msg)
 
     def get_content(self, prompt: str, system_message: Optional[str] = None) -> str:
         """
@@ -184,7 +256,25 @@ class GeminiClient(BaseAIClient):
             ValueError: If the API request fails or returns an error
             IndexError: If the response contains no candidates
         """
-        response = self.ask(prompt, system_message)
-        if not response.candidates:
-            raise IndexError("Gemini response contains no candidates")
-        return response.candidates[0].content.text
+        logger.info("Requesting content from Gemini model")
+        try:
+            response = self.ask(prompt, system_message)
+
+            if not response.candidates:
+                error_msg = "Gemini response contains no candidates"
+                logger.error(error_msg)
+                raise IndexError(error_msg)
+
+            content = response.candidates[0].content.text
+            content_preview = content[:50] + "..." if len(content) > 50 else content
+            logger.info(f"Successfully received content from Gemini, begins with: {content_preview}")
+            logger.debug(f"Content length: {len(content)} characters")
+
+            return content
+        except (ValueError, IndexError) as e:
+            logger.error(f"Failed to get content from Gemini: {str(e)}")
+            raise
+        except Exception as e:
+            error_msg = f"Unexpected error getting content from Gemini: {str(e)}"
+            logger.error(error_msg, exc_info=True)
+            raise ValueError(error_msg)
