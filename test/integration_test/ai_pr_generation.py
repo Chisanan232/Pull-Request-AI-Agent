@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from pull_request_ai_agent.ai_bot import AiModuleClient
-from pull_request_ai_agent.bot import CreatePrAIBot
+from pull_request_ai_agent.bot import PullRequestAIAgent
 from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
 
 
@@ -244,10 +244,10 @@ BODY:
             MockGitHandler.return_value = mock_git_handler
             MockGPTClient.return_value = mock_ai_client
 
-            bot = CreatePrAIBot(
+            bot = PullRequestAIAgent(
                 repo_path=".",
                 base_branch="main",
-                project_management_tool_type=CreatePrAIBot.PM_TOOL_CLICKUP,
+                project_management_tool_type=PullRequestAIAgent.PM_TOOL_CLICKUP,
                 project_management_tool_config=MagicMock(api_key="fake_api_key"),
                 ai_client_type=AiModuleClient.GPT,
                 ai_client_api_key="fake_api_key",

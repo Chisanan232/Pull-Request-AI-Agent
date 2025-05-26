@@ -1,5 +1,5 @@
 """
-Unit tests for the CreatePrAIBot class.
+Unit tests for the PullRequestAIAgent class.
 """
 
 from typing import Any, Dict, Optional
@@ -10,7 +10,7 @@ from github.PullRequest import PullRequest
 
 from pull_request_ai_agent.ai_bot import AiModuleClient
 from pull_request_ai_agent.ai_bot.gpt.client import GPTClient
-from pull_request_ai_agent.bot import CreatePrAIBot
+from pull_request_ai_agent.bot import PullRequestAIAgent
 from pull_request_ai_agent.git_hdlr import GitCodeConflictError, GitHandler
 from pull_request_ai_agent.github_opt import GitHubOperations
 from pull_request_ai_agent.model import ProjectManagementToolSettings
@@ -21,7 +21,7 @@ from pull_request_ai_agent.project_management_tool.clickup.client import (
 )
 
 
-class SpyBot(CreatePrAIBot):
+class SpyAgent(PullRequestAIAgent):
     def __init__(
         self,
         repo_path: str = ".",
@@ -50,8 +50,8 @@ class SpyBot(CreatePrAIBot):
         self.ai_client = None  # type: ignore[assignment]
 
 
-class TestCreatePrAIBot:
-    """Test cases for CreatePrAIBot class."""
+class TestPullRequestAIAgent:
+    """Test cases for PullRequestAIAgent class."""
 
     @pytest.fixture
     def mock_git_handler(self):
@@ -138,17 +138,17 @@ class TestCreatePrAIBot:
 
     @pytest.fixture
     def bot(self, mock_git_handler, mock_github_operations, mock_ai_client, mock_project_management_client):
-        """Create a CreatePrAIBot instance with mocked dependencies."""
+        """Create a PullRequestAIAgent instance with mocked dependencies."""
         with (
             patch("pull_request_ai_agent.bot.GitHandler", return_value=mock_git_handler),
             patch("pull_request_ai_agent.bot.GitHubOperations", return_value=mock_github_operations),
-            patch.object(CreatePrAIBot, "_initialize_ai_client", return_value=mock_ai_client),
+            patch.object(PullRequestAIAgent, "_initialize_ai_client", return_value=mock_ai_client),
             patch.object(
-                CreatePrAIBot, "_initialize_project_management_client", return_value=mock_project_management_client
+                PullRequestAIAgent, "_initialize_project_management_client", return_value=mock_project_management_client
             ),
         ):
 
-            bot = CreatePrAIBot(
+            bot = PullRequestAIAgent(
                 repo_path="/mock/repo",
                 base_branch="main",
                 github_token="mock-token",
@@ -164,25 +164,25 @@ class TestCreatePrAIBot:
     def test_initialize_ai_client_gpt(self):
         """Test initialization of GPT AI client."""
         with patch("pull_request_ai_agent.bot.GPTClient") as mock_gpt_client:
-            SpyBot()._initialize_ai_client(AiModuleClient.GPT, "mock-api-key")
+            SpyAgent()._initialize_ai_client(AiModuleClient.GPT, "mock-api-key")
             mock_gpt_client.assert_called_once_with(api_key="mock-api-key")
 
     def test_initialize_ai_client_claude(self):
         """Test initialization of Claude AI client."""
         with patch("pull_request_ai_agent.bot.ClaudeClient") as mock_claude_client:
-            SpyBot()._initialize_ai_client(AiModuleClient.CLAUDE, "mock-api-key")
+            SpyAgent()._initialize_ai_client(AiModuleClient.CLAUDE, "mock-api-key")
             mock_claude_client.assert_called_once_with(api_key="mock-api-key")
 
     def test_initialize_ai_client_gemini(self):
         """Test initialization of Gemini AI client."""
         with patch("pull_request_ai_agent.bot.GeminiClient") as mock_gemini_client:
-            SpyBot()._initialize_ai_client(AiModuleClient.GEMINI, "mock-api-key")
+            SpyAgent()._initialize_ai_client(AiModuleClient.GEMINI, "mock-api-key")
             mock_gemini_client.assert_called_once_with(api_key="mock-api-key")
 
     def test_initialize_ai_client_unsupported(self):
         """Test initialization with unsupported AI client type."""
         with pytest.raises(ValueError, match="Unsupported AI client type"):
-            SpyBot()._initialize_ai_client("unsupported", "mock-api-key")
+            SpyAgent()._initialize_ai_client("unsupported", "mock-api-key")
 
     def test_get_current_branch(self, bot, mock_git_handler):
         """Test _get_current_branch method."""
@@ -703,7 +703,7 @@ class TestCreatePrAIBot:
         """Test initialization of ClickUp project management client."""
         with patch("pull_request_ai_agent.bot.ClickUpAPIClient") as mock_clickup_client:
             config = ProjectManagementToolSettings(api_key="mock-api-token")
-            client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.CLICKUP, config)
+            client = SpyAgent()._initialize_project_management_client(ProjectManagementToolType.CLICKUP, config)
             mock_clickup_client.assert_called_once_with(api_token="mock-api-token")
 
     def test_initialize_project_management_client_jira(self):
@@ -712,7 +712,7 @@ class TestCreatePrAIBot:
             config = ProjectManagementToolSettings(
                 base_url="https://example.atlassian.net", username="test@example.com", api_key="mock-api-token"
             )
-            client = SpyBot()._initialize_project_management_client(ProjectManagementToolType.JIRA, config)
+            client = SpyAgent()._initialize_project_management_client(ProjectManagementToolType.JIRA, config)
             mock_jira_client.assert_called_once_with(
                 base_url="https://example.atlassian.net", email="test@example.com", api_token="mock-api-token"
             )
@@ -740,12 +740,12 @@ class TestCreatePrAIBot:
     ):
         # Test Jira with missing base_url
         with pytest.raises(ValueError, match="is required"):
-            SpyBot()._initialize_project_management_client(service_type, config)
+            SpyAgent()._initialize_project_management_client(service_type, config)
 
     def test_initialize_project_management_client_unsupported(self):
         """Test initialization with unsupported project management tool type."""
         with pytest.raises(ValueError, match="Unsupported project management tool type"):
-            SpyBot()._initialize_project_management_client("unsupported", {})
+            SpyAgent()._initialize_project_management_client("unsupported", {})
 
     def test_format_ticket_id_clickup(self, bot):
         """Test _format_ticket_id method for ClickUp tickets."""

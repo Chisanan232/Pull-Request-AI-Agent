@@ -1,5 +1,5 @@
 """
-CreatePrAIBot - A bot that helps developers create pull requests with AI-generated content.
+PullRequestAIAgent - A bot that helps developers create pull requests with AI-generated content.
 """
 
 import logging
@@ -27,7 +27,7 @@ from .project_management_tool.jira.client import JiraAPIClient
 logger = logging.getLogger(__name__)
 
 
-class CreatePrAIBot:
+class PullRequestAIAgent:
     """
     A bot that automates creation of pull requests with AI-generated content
     based on git commits and task tickets information.
@@ -54,7 +54,7 @@ class CreatePrAIBot:
         ai_client_api_key: Optional[str] = None,
     ):
         """
-        Initialize the CreatePrAIBot.
+        Initialize the PullRequestAIAgent.
 
         Args:
             repo_path: Path to the git repository. Defaults to current directory.
@@ -66,7 +66,7 @@ class CreatePrAIBot:
             ai_client_type: Type of AI client to use (gpt, claude, gemini).
             ai_client_api_key: API key for the AI service.
         """
-        logger.debug("Initializing CreatePrAIBot")
+        logger.debug("Initializing PullRequestAIAgent")
         self.repo_path = repo_path
         self.base_branch = base_branch
         logger.debug(f"Using repository path: {repo_path}, base branch: {base_branch}")
@@ -101,7 +101,7 @@ class CreatePrAIBot:
             f"Initializing AI client of type: {ai_client_type.name if hasattr(ai_client_type, 'name') else ai_client_type}"
         )
         self.ai_client = self._initialize_ai_client(ai_client_type, ai_client_api_key)
-        logger.info("CreatePrAIBot initialization complete")
+        logger.info("PullRequestAIAgent initialization complete")
 
     def _initialize_project_management_client(
         self, tool_type: ProjectManagementToolType, config: ProjectManagementToolSettings
@@ -712,7 +712,7 @@ class CreatePrAIBot:
         if not branch_name:
             branch_name = self._get_current_branch()
 
-        logger.info(f"Running CreatePrAIBot for branch: {branch_name}")
+        logger.info(f"Running PullRequestAIAgent for branch: {branch_name}")
         logger.debug("Starting PR creation workflow")
 
         # Step 1: Check if branch is outdated
