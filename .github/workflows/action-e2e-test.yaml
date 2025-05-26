@@ -22,7 +22,7 @@ env:
 
 jobs:
   test-action:
-    name: Test Create PR Bot Action
+    name: Test pull request AI agent Action
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -59,7 +59,7 @@ jobs:
           EOF
 
       # Run the action
-      - name: Run Create PR Bot Action
+      - name: Run pull request AI agent Action
         uses: ./
         with:
           branch-name: ${{ env.TEST_BRANCH }}

@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 LABEL maintainer="Chisanan232 <chi10211201@cycu.org.tw>"
 LABEL org.opencontainers.image.source="https://github.com/Chisanan232/Pull-Request-AI-Agent"
-LABEL org.opencontainers.image.description="Create PR Bot - Automate pull request creation with AI-generated content"
+LABEL org.opencontainers.image.description="Pull request AI agent - Automate pull request operations by AI agent"
 LABEL org.opencontainers.image.licenses="MIT"
 
 # Set environment variables
