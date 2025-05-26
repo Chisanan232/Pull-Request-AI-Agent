@@ -663,6 +663,24 @@ class PullRequestAIAgent:
 
         return title, body
 
+    def parse_ai_response_title(self, response: str) -> str:
+        """
+        Parse the AI-generated response into a PR title.
+
+        Args:
+            response: Raw response about PR title from the AI
+
+        Returns:
+            Pure value of PR title
+        """
+        logger.info("Parsing AI-generated response for title")
+        logger.debug(f"Raw AI response length: {len(response)} characters")
+
+        # Remove unnecessary quotes
+        # example value: "Implement Test Change for PR Bot"
+        pure_response = response.replace("\"", "")
+        return pure_response
+
     def create_pull_request(self, title: str, body: str, branch_name: Optional[str] = None) -> Optional[PullRequest]:
         """
         Create a pull request from the branch to the base branch.
@@ -790,12 +808,12 @@ class PullRequestAIAgent:
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
         # FIXME: Adjust the parsing logic to be reasonable
-        title_title, title_body = self.parse_ai_response(ai_response_title)
+        pr_title = self.parse_ai_response_title(ai_response_title)
         body_title, body_body = self.parse_ai_response(ai_response_body)
 
         # Step 10: Create PR
         logger.info("Creating pull request")
-        pr = self.create_pull_request(ai_response_title, ai_response_body, branch_name)
+        pr = self.create_pull_request(pr_title, ai_response_body, branch_name)
 
         if pr:
             logger.info(f"PR creation workflow completed successfully: {pr.html_url}")
