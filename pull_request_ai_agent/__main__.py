@@ -10,7 +10,7 @@ import logging
 import sys
 
 from pull_request_ai_agent.ai_bot import AiModuleClient
-from pull_request_ai_agent.bot import CreatePrAIBot
+from pull_request_ai_agent.bot import PullRequestAIAgent
 from pull_request_ai_agent.log import init_logger_config
 from pull_request_ai_agent.model import BotSettings, find_default_config_path
 from pull_request_ai_agent.project_management_tool import ProjectManagementToolType
@@ -72,7 +72,7 @@ def run_bot(settings: BotSettings) -> None:
         pm_tool_config = settings.pm_tool if settings.pm_tool.tool_type else None
 
         # Initialize the bot
-        bot = CreatePrAIBot(
+        bot = PullRequestAIAgent(
             repo_path=settings.git.repo_path,
             base_branch=settings.git.base_branch,
             github_token=settings.github.token,

@@ -86,7 +86,7 @@ class TestRunBot:
         mock_pr.html_url = "https://github.com/owner/repo/pull/1"
         mock_bot.run.return_value = mock_pr
 
-        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot) as mock_create_bot:
+        with patch("pull_request_ai_agent.__main__.PullRequestAIAgent", return_value=mock_bot) as mock_create_bot:
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
 
@@ -117,7 +117,7 @@ class TestRunBot:
         mock_bot = MagicMock()
         mock_bot.run.return_value = None
 
-        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot):
+        with patch("pull_request_ai_agent.__main__.PullRequestAIAgent", return_value=mock_bot):
             with patch("logging.Logger.info") as mock_info:
                 run_bot(mock_settings)
 
@@ -133,7 +133,7 @@ class TestRunBot:
         mock_bot = MagicMock()
         mock_bot.run.side_effect = Exception("Test error")
 
-        with patch("pull_request_ai_agent.__main__.CreatePrAIBot", return_value=mock_bot):
+        with patch("pull_request_ai_agent.__main__.PullRequestAIAgent", return_value=mock_bot):
             with patch("logging.Logger.error") as mock_error:
                 with patch("sys.exit") as mock_exit:
                     run_bot(mock_settings)
