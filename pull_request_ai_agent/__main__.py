@@ -22,9 +22,7 @@ logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Pull request AI agent - Automate pull request operations by AI agent"
-    )
+    parser = argparse.ArgumentParser(description="Pull request AI agent - Automate pull request operations by AI agent")
 
     # Configuration file
     parser.add_argument(
