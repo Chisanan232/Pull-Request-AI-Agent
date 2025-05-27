@@ -397,29 +397,32 @@ class PullRequestAIAgent:
         Returns:
             The unique ticket ID
         """
+
+        def match_ticket_id(_value: str) -> str:
+            # Common patterns for ticket IDs in commit messages
+            # Adjust patterns based on your project's conventions
+            patterns = [
+                r"#(\d+)",  # GitHub issue format: #123
+                r"([A-Z]+-\d+)",  # Jira format: PROJ-123
+                r"CU-([a-z0-9]+)",  # ClickUp format: CU-abc123
+                r"Task-(\d+)",  # Generic task format: Task-123
+            ]
+
+            for pattern in patterns:
+                matches = re.search(pattern, branch_name)
+                if matches:
+                    ticket_id = matches.group(0)
+                    logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
+                    return ticket_id
+            logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
+            return ""
+
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
 
         # FIXME: Has bug about it may get the task ticket ID at the second pattern, but it exactly should be got by the
         #  third one.
         # Maybe it should add data processing: separate the string value by underline *_* to check the task ticket ID.
-        # Common patterns for ticket IDs in commit messages
-        # Adjust patterns based on your project's conventions
-        patterns = [
-            r"#(\d+)",  # GitHub issue format: #123
-            r"([A-Z]+-\d+)",  # Jira format: PROJ-123
-            r"CU-([a-z0-9]+)",  # ClickUp format: CU-abc123
-            r"Task-(\d+)",  # Generic task format: Task-123
-        ]
-
-        for pattern in patterns:
-            matches = re.search(pattern, branch_name)
-            if matches:
-                ticket_id = matches.group(0)
-                logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
-                return ticket_id
-
-        logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
-        return ""
+        return match_ticket_id(branch_name)
 
     def get_ticket_details(self, ticket_ids: List[str]) -> List[BaseImmutableModel]:
         """
