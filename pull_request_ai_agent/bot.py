@@ -812,7 +812,6 @@ class PullRequestAIAgent:
 
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
-        # FIXME: Adjust the parsing logic to be reasonable
         pr_title = self._parse_ai_response_title(ai_response_title)
         pr_body = self._parse_ai_response_body(ai_response_body)
 
