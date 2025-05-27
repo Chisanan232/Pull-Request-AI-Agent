@@ -630,39 +630,6 @@ class PullRequestAIAgent:
             logger.debug(f"Created fallback PRPromptData with title: {fallback_title}")
             return PRPromptData(title=fallback_title, description=prompt)
 
-    def parse_ai_response(self, response: str) -> Tuple[str, str]:
-        """
-        Parse the AI-generated response into a PR title and body.
-
-        Args:
-            response: Raw response from the AI
-
-        Returns:
-            Tuple of (title, body)
-        """
-        logger.info("Parsing AI-generated response")
-        logger.debug(f"Raw AI response length: {len(response)} characters")
-
-        # Extract title and body from the response
-        title_match = re.search(r"TITLE:\s*(.*?)(?:\n|$)", response)
-        if title_match:
-            title = title_match.group(1).strip()
-            logger.info(f"Extracted PR title: {title}")
-        else:
-            title = "Automated Pull Request"
-            logger.warning(f"Failed to extract title from AI response, using default: {title}")
-
-        body_match = re.search(r"BODY:\s*(.*)", response, re.DOTALL)
-        if body_match:
-            body = body_match.group(1).strip()
-            logger.info(f"Extracted PR body, length: {len(body)} characters")
-            logger.debug(f"Body preview: {body[:100]}...")
-        else:
-            body = response
-            logger.warning("Failed to extract body section, using entire response as body")
-
-        return title, body
-
     def _parse_ai_response_title(self, response: str) -> str:
         """
         Parse the AI-generated response into a PR title.
