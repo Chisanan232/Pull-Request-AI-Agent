@@ -421,8 +421,6 @@ class PullRequestAIAgent:
 
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
 
-        # FIXME: Has bug about it may get the task ticket ID at the second pattern, but it exactly should be got by the
-        #  third one.
         # Maybe it should add data processing: separate the string value by underline *_* to check the task ticket ID.
         separator: List[str] = ["/", "_"]
         for sep in separator:
