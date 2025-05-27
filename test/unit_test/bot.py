@@ -360,11 +360,18 @@ class TestPullRequestAIAgent:
     @pytest.mark.parametrize(
         "git_branch",
         [
+            # separate by slash */*
             "#123/fix_bug",
             "PROJ-456/implement_feature",
             "CU-abc123/update-docs",
             "Task-789/refactor-code",
             "no-ticket/just-test",
+            # separate by underline *_*
+            "#123_fix_bug",
+            "PROJ-456_implement_feature",
+            "CU-abc123_update-docs",
+            "Task-789_refactor-code",
+            "no-ticket_just-test",
         ],
     )
     def test_extract_ticket_id(self, bot, git_branch: str):
