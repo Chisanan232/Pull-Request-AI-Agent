@@ -205,6 +205,7 @@ Here's a suggested PR description:
 * This is a placeholder PR
 ```
 """
+
     ai_client.get_content.side_effect = get_content
     return ai_client
 
