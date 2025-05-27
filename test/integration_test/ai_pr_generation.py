@@ -71,7 +71,9 @@ class TestAIPRGeneration:
         feature_response = """
 TITLE: Add AI-powered PR generation
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
@@ -100,12 +102,15 @@ BODY:
 * Implemented structured prompt creation from commit messages
 * Added parsing logic to format AI responses according to PR template
 * Created robust error handling for API failures
+```
 """
 
         bug_response = """
 TITLE: Fix parsing bug in ticket extraction
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
@@ -134,13 +139,16 @@ BODY:
 * Added support for branch names with multiple format styles
 * Improved error handling for cases when no ticket ID is found
 * Added validation to prevent false positive ticket ID matches
+```
 """
 
         # Default response that follows the template format
         default_response = """
 TITLE: Default Test PR
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
@@ -165,6 +173,7 @@ BODY:
 
 * Implemented test feature with proper validation
 * Added test coverage
+```
 """
 
         def get_content(prompt):
@@ -299,7 +308,8 @@ BODY:
 
             # Generate PR content
             ai_response = pr_bot.ai_client.get_content(prompt)
-            title, body = pr_bot.parse_ai_response(ai_response)
+            title = pr_bot._parse_ai_response_title(ai_response)
+            body = pr_bot._parse_ai_response_body(ai_response)
 
             # Verify the title
             assert "Add AI-powered PR generation" in title
@@ -349,7 +359,8 @@ BODY:
 
             # Generate PR content
             ai_response = pr_bot.ai_client.get_content(prompt)
-            title, body = pr_bot.parse_ai_response(ai_response)
+            title = pr_bot._parse_ai_response_title(ai_response)
+            body = pr_bot._parse_ai_response_body(ai_response)
 
             # Verify the title
             assert "Fix parsing bug" in title
@@ -424,7 +435,8 @@ BODY:
                 # Generate PR content
                 prompt = pr_bot.prepare_ai_prompt(mock_get_commits.return_value, [ticket])
                 ai_response = pr_bot.ai_client.get_content(prompt)
-                _, body = pr_bot.parse_ai_response(ai_response)
+                title = pr_bot._parse_ai_response_title(ai_response)
+                body = pr_bot._parse_ai_response_body(ai_response)
 
                 # Check for required sections from the template
                 required_sections = [

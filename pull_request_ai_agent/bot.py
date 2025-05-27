@@ -5,7 +5,7 @@ PullRequestAIAgent - A bot that helps developers create pull requests with AI-ge
 import logging
 import re
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from github.PullRequest import PullRequest
 
@@ -630,38 +630,62 @@ class PullRequestAIAgent:
             logger.debug(f"Created fallback PRPromptData with title: {fallback_title}")
             return PRPromptData(title=fallback_title, description=prompt)
 
-    def parse_ai_response(self, response: str) -> Tuple[str, str]:
+    def _parse_ai_response_title(self, response: str) -> str:
         """
-        Parse the AI-generated response into a PR title and body.
+        Parse the AI-generated response into a PR title.
 
         Args:
-            response: Raw response from the AI
+            response: Raw response about PR title from the AI
 
         Returns:
-            Tuple of (title, body)
+            Pure value of PR title
         """
-        logger.info("Parsing AI-generated response")
+        logger.info("Parsing AI-generated response for title")
         logger.debug(f"Raw AI response length: {len(response)} characters")
 
-        # Extract title and body from the response
-        title_match = re.search(r"TITLE:\s*(.*?)(?:\n|$)", response)
-        if title_match:
-            title = title_match.group(1).strip()
-            logger.info(f"Extracted PR title: {title}")
-        else:
-            title = "Automated Pull Request"
-            logger.warning(f"Failed to extract title from AI response, using default: {title}")
+        # Remove unnecessary quotes
+        # example value: "Implement Test Change for PR Bot"
+        pure_response = response.replace('"', "")
+        return pure_response
 
-        body_match = re.search(r"BODY:\s*(.*)", response, re.DOTALL)
-        if body_match:
-            body = body_match.group(1).strip()
-            logger.info(f"Extracted PR body, length: {len(body)} characters")
-            logger.debug(f"Body preview: {body[:100]}...")
-        else:
-            body = response
-            logger.warning("Failed to extract body section, using entire response as body")
+    def _parse_ai_response_body(self, response: str) -> str:
+        """
+        Parse the AI-generated response into a PR body.
 
-        return title, body
+        Args:
+            response: Raw response about PR body from the AI
+
+        Returns:
+            Pure value of PR body
+        """
+        logger.info("Parsing AI-generated response for body")
+        logger.debug(f"Raw AI response length: {len(response)} characters")
+
+        # Remove unnecessary quotes
+        # example value:
+        # Here's how you can fill up the PR description based on the provided information:
+        #
+        # ```markdown
+        # [//]: # (The target why you modify something.)
+        # ## _Target_
+        #
+        # [//]: # (The summary what you did or your target.)
+        #
+        # ...... some content
+        #
+        # ```
+        #
+        # Please note, since no task ticket was provided, the "Task ID" and "Relative task IDs" fields are marked as N/A.
+        markdown_match = re.search(r"```(markdown)?\n((.|\s)*)```", response, re.DOTALL)
+        if markdown_match:
+            logger.info("Found Markdown content in AI response")
+            markdown_content = markdown_match.group(0)
+            logger.debug(f"Markdown content: {markdown_content}")
+            pure_markdown_content = markdown_content.replace("```", "")
+        else:
+            logger.warning("Failed to find Markdown content in AI response")
+            pure_markdown_content = ""
+        return pure_markdown_content
 
     def create_pull_request(self, title: str, body: str, branch_name: Optional[str] = None) -> Optional[PullRequest]:
         """
@@ -789,13 +813,12 @@ class PullRequestAIAgent:
 
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
-        # FIXME: Adjust the parsing logic to be reasonable
-        title_title, title_body = self.parse_ai_response(ai_response_title)
-        body_title, body_body = self.parse_ai_response(ai_response_body)
+        pr_title = self._parse_ai_response_title(ai_response_title)
+        pr_body = self._parse_ai_response_body(ai_response_body)
 
         # Step 10: Create PR
         logger.info("Creating pull request")
-        pr = self.create_pull_request(ai_response_title, ai_response_body, branch_name)
+        pr = self.create_pull_request(pr_title, pr_body, branch_name)
 
         if pr:
             logger.info(f"PR creation workflow completed successfully: {pr.html_url}")
