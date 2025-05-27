@@ -676,7 +676,7 @@ class PullRequestAIAgent:
         # ```
         #
         # Please note, since no task ticket was provided, the "Task ID" and "Relative task IDs" fields are marked as N/A.
-        markdown_match = re.search(r"```markdown\n((.|\n)*)```", response, re.DOTALL)
+        markdown_match = re.search(r"```(markdown)?\n((.|\n)*)```", response, re.DOTALL)
         if markdown_match:
             logger.info("Found Markdown content in AI response")
             markdown_content = markdown_match.group(1)
