@@ -814,9 +814,10 @@ class PullRequestAIAgent:
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
         pr_title = self._parse_ai_response_title(ai_response_title)
+        pr_body = self._parse_ai_response_body(ai_response_body)
         if ticket_id:
             pr_title = f"[{ticket_id}] {pr_title}"
-        pr_body = self._parse_ai_response_body(ai_response_body)
+            pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
 
         # Step 10: Create PR
         logger.info("Creating pull request")
