@@ -125,7 +125,9 @@ def mock_ai_client():
             return """
 TITLE: Add API endpoint for user data retrieval
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
@@ -136,26 +138,30 @@ BODY:
     * Relative task IDs: N/A
 
 * ### Key point change:
-    - Added new API endpoint at /api/v1/users/{id}
-    - Implemented authentication middleware
+    - Implemented new API route
+    - Added data validation
+    - Created documentation
 
 ## _Effecting Scope_
-* API layer
+* API module
 * Authentication module
 
 ## _Description_
 * Created new endpoint for retrieving user profile data
 * Added JWT validation to ensure proper authentication
+```
 """
         elif "JIRA-456" in prompt or "Fix JWT" in prompt:
             return """
 TITLE: Fix JWT token validation expiration issue
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
-    Fix the JWT token validation logic to correct the premature expiration.
+    Fix the JWT token validation logic to correct premature token expiration.
 
 * ### Task tickets:
     * Task ID: JIRA-456
@@ -173,34 +179,32 @@ BODY:
 * Corrected the token validation logic to properly handle expiration timestamps
 * Added unit tests to verify correct expiration behavior
 * Updated documentation
+```
 """
         else:
             # Default response for unknown tickets
             return """
-TITLE: Update implementation for unknown task
+TITLE: Default PR for unknown ticket
 
-BODY:
+Here's a suggested PR description:
+
+```markdown
 ## _Target_
 
 * ### Task summary:
-    Implementation changes for an unspecified task.
+    This is a default PR for an unknown ticket.
 
 * ### Task tickets:
-    * Task ID: Unknown
+    * Task ID: UNKNOWN
     * Relative task IDs: N/A
 
-* ### Key point change:
-    - Code modifications
-    - Test updates
-
 ## _Effecting Scope_
-* Multiple components
+* Unknown
 
 ## _Description_
-* Various changes to the codebase
-* Added tests for verification
+* This is a placeholder PR
+```
 """
-
     ai_client.get_content.side_effect = get_content
     return ai_client
 
@@ -330,7 +334,8 @@ Please create a GitHub pull request title and body based on the following inform
                 ai_response = pr_bot.ai_client.get_content(prompt)
                 assert "Add API endpoint" in ai_response
 
-                title, body = pr_bot.parse_ai_response(ai_response)
+                title = pr_bot._parse_ai_response_title(ai_response)
+                body = pr_bot._parse_ai_response_body(ai_response)
                 assert "Add API endpoint" in title
                 assert "## _Target_" in body
                 assert "JIRA-123" in body
@@ -444,7 +449,8 @@ Please create a GitHub pull request title and body based on the following inform
                 ai_response = pr_bot.ai_client.get_content(prompt)
                 assert "Fix JWT token validation" in ai_response
 
-                title, body = pr_bot.parse_ai_response(ai_response)
+                title = pr_bot._parse_ai_response_title(ai_response)
+                body = pr_bot._parse_ai_response_body(ai_response)
                 assert "Fix JWT token validation" in title
                 assert "## _Target_" in body
                 assert "JIRA-456" in body
@@ -561,7 +567,8 @@ Please create a GitHub pull request title and body based on the following inform
             assert "Add API endpoint" in ai_response
 
             # 5. Parse AI response
-            title, body = pr_bot.parse_ai_response(ai_response)
+            title = pr_bot._parse_ai_response_title(ai_response)
+            body = pr_bot._parse_ai_response_body(ai_response)
             assert "Add API endpoint" in title
             assert "## _Target_" in body
             assert "JIRA-123" in body

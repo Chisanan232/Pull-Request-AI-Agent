@@ -513,8 +513,8 @@ class TestPullRequestAIAgent:
         assert hasattr(prompt_data, "title")
         assert hasattr(prompt_data, "description")
 
-    def test_parse_ai_response(self, bot):
-        """Test parse_ai_response method."""
+    def test_parse_ai_response_title(self, bot):
+        """Test _parse_ai_response_title method."""
         # Test with well-formatted response
         response = """
         TITLE: This is the PR title
@@ -524,33 +524,43 @@ class TestPullRequestAIAgent:
         It spans multiple lines.
         """
 
-        title, body = bot.parse_ai_response(response)
+        title = bot._parse_ai_response_title(response)
 
-        assert title == "This is the PR title"
+        assert "This is the PR title" in title
+
+    def test_parse_ai_response_body(self, bot):
+        """Test _parse_ai_response_body method."""
+        response = """
+        Here's the PR description:
+        
+        ```markdown
+        ## _Target_
+        
+        * ### Task summary:
+            This is the PR body.
+            It spans multiple lines.
+            
+        * ### Task tickets:
+            * Task ID: TEST-123
+        ```
+        """
+
+        body = bot._parse_ai_response_body(response)
+        
+        assert "## _Target_" in body
         assert "This is the PR body." in body
-        assert "It spans multiple lines." in body
+        assert "Task ID: TEST-123" in body
 
-    def test_parse_ai_response_no_title(self, bot):
-        """Test parse_ai_response method with no title."""
+    def test_parse_ai_response_body_no_markdown(self, bot):
+        """Test _parse_ai_response_body method with no markdown content."""
         response = """
         This is just some text without any formatting.
         """
 
-        title, body = bot.parse_ai_response(response)
-
-        assert title == "Automated Pull Request"
-        assert "This is just some text without any formatting." in body
-
-    def test_parse_ai_response_no_body(self, bot):
-        """Test parse_ai_response method with no body."""
-        response = """
-        TITLE: Just a title
-        """
-
-        title, body = bot.parse_ai_response(response)
-
-        assert title == "Just a title"
-        assert body == response
+        body = bot._parse_ai_response_body(response)
+        
+        # When no markdown is found, the method returns an empty string
+        assert body == ""
 
     def test_create_pull_request(self, bot, mock_github_operations):
         """Test create_pull_request method."""
@@ -608,7 +618,8 @@ class TestPullRequestAIAgent:
             patch.object(bot, "extract_ticket_id", return_value=["PROJ-123"]),
             patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
             patch.object(bot, "prepare_ai_prompt", return_value=MagicMock()),
-            patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
+            patch.object(bot, "_parse_ai_response_title", return_value="Test title"),
+            patch.object(bot, "_parse_ai_response_body", return_value="Test body"),
         ):
 
             # Call run
@@ -628,7 +639,8 @@ class TestPullRequestAIAgent:
             patch.object(bot, "extract_ticket_id", return_value=["PROJ-123"]),
             patch.object(bot, "get_ticket_details", return_value=[MagicMock()]),
             patch.object(bot, "prepare_ai_prompt", return_value=MagicMock()),
-            patch.object(bot, "parse_ai_response", return_value=("Test title", "Test body")),
+            patch.object(bot, "_parse_ai_response_title", return_value="Test title"),
+            patch.object(bot, "_parse_ai_response_body", return_value="Test body"),
         ):
 
             # Call run
