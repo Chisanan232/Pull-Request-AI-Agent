@@ -679,7 +679,7 @@ class PullRequestAIAgent:
         markdown_match = re.search(r"```(markdown)?\n((.|\n)*)```", response, re.DOTALL)
         if markdown_match:
             logger.info("Found Markdown content in AI response")
-            markdown_content = markdown_match.group(1)
+            markdown_content = markdown_match.group(0)
             logger.debug(f"Markdown content: {markdown_content}")
             pure_markdown_content = markdown_content.replace("```", "")
         else:
