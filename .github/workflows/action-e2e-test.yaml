@@ -18,7 +18,7 @@ permissions:
   pull-requests: write
 
 env:
-  TEST_BRANCH: test-pr-bot-action
+  TEST_BRANCH: CU-86etm17em/test-pr-bot-action
 
 jobs:
   test-action:

@@ -681,7 +681,7 @@ class PullRequestAIAgent:
             logger.info("Found Markdown content in AI response")
             markdown_content = markdown_match.group(0)
             logger.debug(f"Markdown content: {markdown_content}")
-            pure_markdown_content = markdown_content.replace("```", "")
+            pure_markdown_content = markdown_content.replace(r"```markdown", "").replace("```", "")
         else:
             logger.warning("Failed to find Markdown content in AI response")
             pure_markdown_content = ""
@@ -815,6 +815,9 @@ class PullRequestAIAgent:
         logger.info("Parsing AI response")
         pr_title = self._parse_ai_response_title(ai_response_title)
         pr_body = self._parse_ai_response_body(ai_response_body)
+        if ticket_id:
+            pr_title = f"[{ticket_id}] {pr_title}"
+            pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
 
         # Step 10: Create PR
         logger.info("Creating pull request")
