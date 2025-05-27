@@ -814,6 +814,8 @@ class PullRequestAIAgent:
         # Step 9: Parse AI response
         logger.info("Parsing AI response")
         pr_title = self._parse_ai_response_title(ai_response_title)
+        if ticket_id:
+            pr_title = f"[{ticket_id}] {pr_title}"
         pr_body = self._parse_ai_response_body(ai_response_body)
 
         # Step 10: Create PR
