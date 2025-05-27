@@ -397,24 +397,38 @@ class PullRequestAIAgent:
         Returns:
             The unique ticket ID
         """
+
+        def match_ticket_id(_value: str) -> str:
+            # Common patterns for ticket IDs in commit messages
+            # Adjust patterns based on your project's conventions
+            patterns = [
+                r"#(\d+)",  # GitHub issue format: #123
+                r"([A-Z]+-\d+)",  # Jira format: PROJ-123
+                r"CU-([a-z0-9]+)",  # ClickUp format: CU-abc123
+                r"Task-(\d+)",  # Generic task format: Task-123
+            ]
+
+            for pattern in patterns:
+                matches = re.search(pattern, _value)
+                if matches:
+                    ticket_id = matches.group(0)
+                    if ticket_id == _value:
+                        logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
+                        return ticket_id
+                    else:
+                        logger.warning(f"Ticket ID '{ticket_id}' does not totally match branch name '{branch_name}'")
+            return ""
+
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
 
-        # Common patterns for ticket IDs in commit messages
-        # Adjust patterns based on your project's conventions
-        patterns = [
-            r"#(\d+)",  # GitHub issue format: #123
-            r"([A-Z]+-\d+)",  # Jira format: PROJ-123
-            r"CU-([a-z0-9]+)",  # ClickUp format: CU-abc123
-            r"Task-(\d+)",  # Generic task format: Task-123
-        ]
-
-        for pattern in patterns:
-            matches = re.search(pattern, branch_name)
-            if matches:
-                ticket_id = matches.group(0)
-                logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
-                return ticket_id
-
+        # Maybe it should add data processing: separate the string value by underline *_* to check the task ticket ID.
+        separator: List[str] = ["/", "_"]
+        for sep in separator:
+            branch_name_str = branch_name.split(sep)
+            for se in branch_name_str:
+                task_id = match_ticket_id(se)
+                if task_id:
+                    return task_id
         logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
         return ""
 
@@ -817,7 +831,7 @@ class PullRequestAIAgent:
         pr_body = self._parse_ai_response_body(ai_response_body)
         if ticket_id:
             pr_title = f"[{ticket_id}] {pr_title}"
-            pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
+            pr_body = pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
 
         # Step 10: Create PR
         logger.info("Creating pull request")

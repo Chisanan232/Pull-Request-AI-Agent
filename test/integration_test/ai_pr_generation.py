@@ -235,7 +235,7 @@ Here's a suggested PR description:
             return []
 
         # Mock the necessary methods
-        handler._get_current_branch.return_value = "feature/CU-abc123-ai-pr-generation"
+        handler._get_current_branch.return_value = "feature/CU-abc123"
         handler.repo.refs = []
         handler.repo.iter_commits.side_effect = iter_commits
         handler.repo.merge_base.return_value = [MagicMock(hexsha="base_commit_hash")]
@@ -270,7 +270,7 @@ Here's a suggested PR description:
     def test_feature_pr_generation(self, pr_bot, mock_git_handler):
         """Test generating a PR for a feature branch."""
         # Mock the branch and commits
-        branch_name = "feature/CU-abc123-ai-pr-generation"
+        branch_name = "feature/CU-abc123"
         mock_git_handler._get_current_branch.return_value = branch_name
 
         # Mock the get_branch_commits method to return feature commits
@@ -329,7 +329,7 @@ Here's a suggested PR description:
     def test_bugfix_pr_generation(self, pr_bot, mock_git_handler):
         """Test generating a PR for a bugfix branch."""
         # Mock the branch and commits
-        branch_name = "bugfix/CU-def456-fix-ticket-extraction"
+        branch_name = "bugfix/CU-def456"
         mock_git_handler._get_current_branch.return_value = branch_name
 
         # Mock the get_branch_commits method to return bug fix commits

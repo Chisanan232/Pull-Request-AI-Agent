@@ -13,6 +13,10 @@ on:
 #     End-to-End test
       - ".github/workflows/action-e2e-test.yaml"
 
+concurrency:
+  group: end-to-end-test
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write

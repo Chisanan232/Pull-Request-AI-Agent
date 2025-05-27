@@ -358,22 +358,29 @@ class TestPullRequestAIAgent:
         assert "Base branch 'main' not found" in str(excinfo.value)
 
     @pytest.mark.parametrize(
-        "git_branch",
+        ("git_branch", "expected_ticket_id"),
         [
-            "#123/fix_bug",
-            "PROJ-456/implement_feature",
-            "CU-abc123/update-docs",
-            "Task-789/refactor-code",
-            "no-ticket/just-test",
+            # separate by slash */*
+            ("#123/fix_bug", "#123"),
+            ("PROJ-456/implement_feature", "PROJ-456"),
+            ("CU-abc123/update-docs", "CU-abc123"),
+            ("Task-789/refactor-code", "Task-789"),
+            ("no-ticket/just-test", ""),
+            # separate by underline *_*
+            ("#123_fix_bug", "#123"),
+            ("PROJ-456_implement_feature", "PROJ-456"),
+            ("CU-abc123_update-docs", "CU-abc123"),
+            ("Task-789_refactor-code", "Task-789"),
+            ("no-ticket_just-test", ""),
         ],
     )
-    def test_extract_ticket_id(self, bot, git_branch: str):
+    def test_extract_ticket_id(self, bot, git_branch: str, expected_ticket_id: str):
         """Test extract_ticket_id method."""
         # Create test commits with various ticket patterns
         ticket_id = bot.extract_ticket_id(git_branch)
 
         # Verify extracted ticket IDs
-        assert ticket_id in sorted(["#123", "PROJ-456", "CU-abc123", "Task-789", ""])
+        assert ticket_id == expected_ticket_id
 
     def test_get_ticket_details(self, bot, mock_project_management_client):
         """Test get_ticket_details method."""
