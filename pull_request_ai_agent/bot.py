@@ -681,7 +681,7 @@ class PullRequestAIAgent:
             logger.info("Found Markdown content in AI response")
             markdown_content = markdown_match.group(0)
             logger.debug(f"Markdown content: {markdown_content}")
-            pure_markdown_content = markdown_content.replace("```", "")
+            pure_markdown_content = markdown_content.replace(r"```markdown", "").replace("```", "")
         else:
             logger.warning("Failed to find Markdown content in AI response")
             pure_markdown_content = ""
