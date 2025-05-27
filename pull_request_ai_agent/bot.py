@@ -5,7 +5,7 @@ PullRequestAIAgent - A bot that helps developers create pull requests with AI-ge
 import logging
 import re
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from github.PullRequest import PullRequest
 
@@ -645,7 +645,7 @@ class PullRequestAIAgent:
 
         # Remove unnecessary quotes
         # example value: "Implement Test Change for PR Bot"
-        pure_response = response.replace("\"", "")
+        pure_response = response.replace('"', "")
         return pure_response
 
     def _parse_ai_response_body(self, response: str) -> str:

@@ -532,21 +532,21 @@ class TestPullRequestAIAgent:
         """Test _parse_ai_response_body method."""
         response = """
         Here's the PR description:
-        
+
         ```markdown
         ## _Target_
-        
+
         * ### Task summary:
             This is the PR body.
             It spans multiple lines.
-            
+
         * ### Task tickets:
             * Task ID: TEST-123
         ```
         """
 
         body = bot._parse_ai_response_body(response)
-        
+
         assert "## _Target_" in body
         assert "This is the PR body." in body
         assert "Task ID: TEST-123" in body
@@ -558,7 +558,7 @@ class TestPullRequestAIAgent:
         """
 
         body = bot._parse_ai_response_body(response)
-        
+
         # When no markdown is found, the method returns an empty string
         assert body == ""
 
