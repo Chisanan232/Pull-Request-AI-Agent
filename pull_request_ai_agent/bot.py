@@ -399,6 +399,9 @@ class PullRequestAIAgent:
         """
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
 
+        # FIXME: Has bug about it may get the task ticket ID at the second pattern, but it exactly should be got by the
+        #  third one.
+        # Maybe it should add data processing: separate the string value by underline *_* to check the task ticket ID.
         # Common patterns for ticket IDs in commit messages
         # Adjust patterns based on your project's conventions
         patterns = [
@@ -817,7 +820,7 @@ class PullRequestAIAgent:
         pr_body = self._parse_ai_response_body(ai_response_body)
         if ticket_id:
             pr_title = f"[{ticket_id}] {pr_title}"
-            pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
+            pr_body = pr_body.replace("Task ID: N/A", f"Task ID: {ticket_id}")
 
         # Step 10: Create PR
         logger.info("Creating pull request")
