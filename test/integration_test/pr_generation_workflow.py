@@ -64,7 +64,7 @@ def mock_git_handler():
     ]
 
     # Setup branch detection and commit retrieval
-    handler._get_current_branch.return_value = "feature/JIRA-123-add-user-endpoint"
+    handler._get_current_branch.return_value = "feature/JIRA-123"
     handler.repo.refs = []
 
     def iter_commits(ref):
@@ -241,7 +241,7 @@ class TestPRGenerationWorkflow:
     def test_feature_branch_workflow(self, pr_bot, mock_git_handler):
         """Test the PR generation workflow for a feature branch."""
         # Set up the feature branch
-        branch_name = "feature/JIRA-123-add-user-endpoint"
+        branch_name = "feature/JIRA-123"
         mock_git_handler._get_current_branch.return_value = branch_name
 
         # Mock PR template
@@ -356,7 +356,7 @@ Please create a GitHub pull request title and body based on the following inform
     def test_bugfix_branch_workflow(self, pr_bot, mock_git_handler):
         """Test the PR generation workflow for a bugfix branch."""
         # Set up the bugfix branch
-        branch_name = "bugfix/JIRA-456-fix-jwt-validation"
+        branch_name = "bugfix/JIRA-456"
         mock_git_handler._get_current_branch.return_value = branch_name
 
         # Mock PR template
@@ -463,7 +463,7 @@ Please create a GitHub pull request title and body based on the following inform
     def test_end_to_end_workflow(self, pr_bot, mock_git_handler):
         """Test the end-to-end PR generation workflow."""
         # Set up a feature branch
-        branch_name = "feature/JIRA-123-add-user-endpoint"
+        branch_name = "feature/JIRA-123"
         mock_git_handler._get_current_branch.return_value = branch_name
 
         # Mock GitHub operations

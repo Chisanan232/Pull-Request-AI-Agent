@@ -409,12 +409,14 @@ class PullRequestAIAgent:
             ]
 
             for pattern in patterns:
-                matches = re.search(pattern, branch_name)
+                matches = re.search(pattern, _value)
                 if matches:
                     ticket_id = matches.group(0)
-                    logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
-                    return ticket_id
-            logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
+                    if ticket_id == _value:
+                        logger.info(f"Found ticket ID '{ticket_id}' in branch '{branch_name}'")
+                        return ticket_id
+                    else:
+                        logger.warning(f"Ticket ID '{ticket_id}' does not totally match branch name '{branch_name}'")
             return ""
 
         logger.debug(f"Extracting ticket ID from branch name: {branch_name}")
@@ -422,7 +424,15 @@ class PullRequestAIAgent:
         # FIXME: Has bug about it may get the task ticket ID at the second pattern, but it exactly should be got by the
         #  third one.
         # Maybe it should add data processing: separate the string value by underline *_* to check the task ticket ID.
-        return match_ticket_id(branch_name)
+        separator: List[str] = ["/", "_"]
+        for sep in separator:
+            branch_name_str = branch_name.split(sep)
+            for se in branch_name_str:
+                task_id = match_ticket_id(se)
+                if task_id:
+                    return task_id
+        logger.warning(f"No ticket ID pattern found in branch name: {branch_name}")
+        return ""
 
     def get_ticket_details(self, ticket_ids: List[str]) -> List[BaseImmutableModel]:
         """
