@@ -7,6 +7,7 @@ based on task tickets and git commits according to the PR template.
 
 import re
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,43 +20,54 @@ from pull_request_ai_agent.project_management_tool._base.model import BaseImmuta
 class MockTicket(BaseImmutableModel):
     """Mock ticket for testing purposes."""
 
-    def __init__(self, ticket_id, name, description, status="In Progress"):
-        self.id = ticket_id
-        self.name = name
-        self.description = description
-        self.status = status
+    def __init__(self, **kwargs: Any) -> None:
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
-    def serialize(self):
-        """Implement required abstract method."""
-        return {"id": self.id, "name": self.name, "description": self.description, "status": self.status}
+    # Instance method for serializing this instance
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert instance to dictionary."""
+        return {k: v for k, v in self.__dict__.items()}
+
+    @classmethod
+    def serialize(cls, data: Dict[str, Any]) -> Optional[BaseImmutableModel]:
+        """Implement required abstract method with correct signature."""
+        if not data:
+            return None
+        return cls(**data)
 
 
 class TestAIPRGeneration:
     """Integration tests for AI PR generation."""
 
     @pytest.fixture
-    def mock_project_management_client(self):
+    def mock_project_management_client(self) -> MagicMock:
         """Create a mock project management client."""
         client = MagicMock()
 
         # Define test tickets
         feature_ticket = MockTicket(
-            "CU-abc123",
-            "Add AI-powered PR generation",
-            "Implement a feature that uses AI to generate PR descriptions based on commit messages and task details.",
+            id="CU-abc123",
+            name="Add AI-powered PR generation",
+            description="Implement a feature that uses AI to generate PR descriptions based on commit messages and task details.",
+            status="In Progress",
+            type="feature",
         )
 
         bug_ticket = MockTicket(
-            "CU-def456",
-            "Fix parsing bug in ticket extraction",
-            "The ticket ID extraction from branch names fails when using certain formats.",
+            id="CU-def456",
+            name="Fix parsing bug in ticket extraction",
+            description="The ticket ID extraction from branch names fails when using certain formats.",
+            status="In Progress",
+            type="bug",
         )
 
         # Configure the mock client to return different tickets based on the ID
-        def get_ticket(ticket_id):
-            if ticket_id == "abc123":
+        def get_ticket(ticket_id: str) -> Optional[MockTicket]:
+            # Handle both with and without the prefix
+            if ticket_id == "CU-abc123" or ticket_id == "abc123":
                 return feature_ticket
-            elif ticket_id == "def456":
+            elif ticket_id == "CU-def456" or ticket_id == "def456":
                 return bug_ticket
             return None
 
@@ -63,12 +75,17 @@ class TestAIPRGeneration:
         return client
 
     @pytest.fixture
-    def mock_ai_client(self):
+    def mock_ai_client(self) -> MagicMock:
         """Create a mock AI client."""
         client = MagicMock()
 
         # Configure the mock to return a predefined response
-        feature_response = """
+        def get_content(prompt: Any) -> str:
+            # Convert prompt to string if it's an object
+            prompt_str = prompt.description if hasattr(prompt, "description") else str(prompt)
+
+            if "Add AI-powered PR generation" in prompt_str or "CU-abc123" in prompt_str:
+                return """
 TITLE: Add AI-powered PR generation
 
 Here's a suggested PR description:
@@ -104,8 +121,8 @@ Here's a suggested PR description:
 * Created robust error handling for API failures
 ```
 """
-
-        bug_response = """
+            elif "Fix parsing bug" in prompt_str or "CU-def456" in prompt_str:
+                return """
 TITLE: Fix parsing bug in ticket extraction
 
 Here's a suggested PR description:
@@ -141,9 +158,8 @@ Here's a suggested PR description:
 * Added validation to prevent false positive ticket ID matches
 ```
 """
-
-        # Default response that follows the template format
-        default_response = """
+            else:
+                return """
 TITLE: Default Test PR
 
 Here's a suggested PR description:
@@ -176,23 +192,11 @@ Here's a suggested PR description:
 ```
 """
 
-        def get_content(prompt):
-            # Handle PRPromptData object instead of string
-            prompt_text = prompt.description if hasattr(prompt, "description") else str(prompt)
-
-            if "Add AI-powered PR generation" in prompt_text or "CU-abc123" in prompt_text:
-                return feature_response
-            elif "Fix parsing bug" in prompt_text or "CU-def456" in prompt_text:
-                return bug_response
-            elif "Test Feature" in prompt_text or "CU-test123" in prompt_text:
-                return default_response
-            return default_response
-
         client.get_content.side_effect = get_content
         return client
 
     @pytest.fixture
-    def mock_git_handler(self):
+    def mock_git_handler(self) -> MagicMock:
         """Create a mock git handler."""
         handler = MagicMock()
 
@@ -227,7 +231,7 @@ Here's a suggested PR description:
             }
         ]
 
-        def iter_commits(ref):
+        def iter_commits(ref: str) -> List[Dict[str, Any]]:
             if "feature" in ref:
                 return feature_commits
             elif "bugfix" in ref:
@@ -243,15 +247,14 @@ Here's a suggested PR description:
         return handler
 
     @pytest.fixture
-    def pr_bot(self, mock_project_management_client, mock_ai_client, mock_git_handler):
+    def pr_bot(
+        self, mock_project_management_client: MagicMock, mock_ai_client: MagicMock, mock_git_handler: MagicMock
+    ) -> PullRequestAIAgent:
         """Create a PR bot with mock dependencies."""
         with (
-            patch("pull_request_ai_agent.bot.GitHandler") as MockGitHandler,
-            patch("pull_request_ai_agent.bot.GPTClient") as MockGPTClient,
+            patch("pull_request_ai_agent.bot.GitHandler", return_value=mock_git_handler),
+            patch("pull_request_ai_agent.bot.GPTClient", return_value=mock_ai_client),
         ):
-
-            MockGitHandler.return_value = mock_git_handler
-            MockGPTClient.return_value = mock_ai_client
 
             bot = PullRequestAIAgent(
                 repo_path=".",
@@ -267,7 +270,7 @@ Here's a suggested PR description:
 
             return bot
 
-    def test_feature_pr_generation(self, pr_bot, mock_git_handler):
+    def test_feature_pr_generation(self, pr_bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test generating a PR for a feature branch."""
         # Mock the branch and commits
         branch_name = "feature/CU-abc123"
@@ -307,7 +310,7 @@ Here's a suggested PR description:
             prompt = pr_bot.prepare_ai_prompt(commits, ticket_details)
 
             # Generate PR content
-            ai_response = pr_bot.ai_client.get_content(prompt)
+            ai_response = pr_bot.ai_client.get_content(str(prompt))
             title = pr_bot._parse_ai_response_title(ai_response)
             body = pr_bot._parse_ai_response_body(ai_response)
 
@@ -326,7 +329,7 @@ Here's a suggested PR description:
             assert "AI-powered PR generation" in body
             assert "AI integration" in body or "AI module" in body
 
-    def test_bugfix_pr_generation(self, pr_bot, mock_git_handler):
+    def test_bugfix_pr_generation(self, pr_bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test generating a PR for a bugfix branch."""
         # Mock the branch and commits
         branch_name = "bugfix/CU-def456"
@@ -358,7 +361,7 @@ Here's a suggested PR description:
             prompt = pr_bot.prepare_ai_prompt(commits, ticket_details)
 
             # Generate PR content
-            ai_response = pr_bot.ai_client.get_content(prompt)
+            ai_response = pr_bot.ai_client.get_content(str(prompt))
             title = pr_bot._parse_ai_response_title(ai_response)
             body = pr_bot._parse_ai_response_body(ai_response)
 
@@ -377,7 +380,7 @@ Here's a suggested PR description:
             assert "ticket extraction" in body.lower() or "parsing bug" in body.lower()
             assert "regex pattern" in body.lower()
 
-    def test_pr_template_compliance(self, pr_bot):
+    def test_pr_template_compliance(self, pr_bot: PullRequestAIAgent) -> None:
         """Test that generated PR bodies comply with the PR template format."""
         # Get the actual PR template from the repository
         pr_template_path = Path(pr_bot.repo_path) / ".github" / "PULL_REQUEST_TEMPLATE.md"
@@ -430,11 +433,17 @@ Here's a suggested PR description:
                 ]
 
                 # Mock ticket
-                ticket = MockTicket("CU-test123", "Test Feature", "This is a test feature")
+                ticket = MockTicket(
+                    id="CU-test123",
+                    name="Test Feature",
+                    description="This is a test feature",
+                    status="In Progress",
+                    type="feature",
+                )
 
                 # Generate PR content
                 prompt = pr_bot.prepare_ai_prompt(mock_get_commits.return_value, [ticket])
-                ai_response = pr_bot.ai_client.get_content(prompt)
+                ai_response = pr_bot.ai_client.get_content(str(prompt))
                 title = pr_bot._parse_ai_response_title(ai_response)
                 body = pr_bot._parse_ai_response_body(ai_response)
 

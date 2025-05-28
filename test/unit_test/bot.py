@@ -2,7 +2,7 @@
 Unit tests for the PullRequestAIAgent class.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 from unittest.mock import MagicMock, PropertyMock, call, mock_open, patch
 
 import pytest
@@ -54,7 +54,7 @@ class TestPullRequestAIAgent:
     """Test cases for PullRequestAIAgent class."""
 
     @pytest.fixture
-    def mock_git_handler(self):
+    def mock_git_handler(self) -> MagicMock:
         """Create a mock GitHandler for testing."""
         mock = MagicMock(spec=GitHandler)
 
@@ -83,7 +83,7 @@ class TestPullRequestAIAgent:
         return mock
 
     @pytest.fixture
-    def mock_github_operations(self):
+    def mock_github_operations(self) -> MagicMock:
         """Create a mock GitHubOperations for testing."""
         mock = MagicMock(spec=GitHubOperations)
 
@@ -99,7 +99,7 @@ class TestPullRequestAIAgent:
         return mock
 
     @pytest.fixture
-    def mock_project_management_client(self):
+    def mock_project_management_client(self) -> MagicMock:
         """Create a mock project management client for testing."""
         mock = MagicMock(spec=ClickUpAPIClient)
 
@@ -121,7 +121,7 @@ class TestPullRequestAIAgent:
         return mock
 
     @pytest.fixture
-    def mock_ai_client(self):
+    def mock_ai_client(self) -> MagicMock:
         """Create a mock AI client for testing."""
         mock = MagicMock(spec=GPTClient)
 
@@ -137,7 +137,13 @@ class TestPullRequestAIAgent:
         return mock
 
     @pytest.fixture
-    def bot(self, mock_git_handler, mock_github_operations, mock_ai_client, mock_project_management_client):
+    def bot(
+        self,
+        mock_git_handler: MagicMock,
+        mock_github_operations: MagicMock,
+        mock_ai_client: MagicMock,
+        mock_project_management_client: MagicMock,
+    ) -> PullRequestAIAgent:
         """Create a PullRequestAIAgent instance with mocked dependencies."""
         with (
             patch("pull_request_ai_agent.bot.GitHandler", return_value=mock_git_handler),
@@ -154,61 +160,61 @@ class TestPullRequestAIAgent:
                 github_token="mock-token",
                 github_repo="owner/repo",
                 project_management_tool_type=ProjectManagementToolType.CLICKUP,
-                project_management_tool_config={"api_token": "mock-api-key"},
-                ai_client_type="gpt",
+                project_management_tool_config=ProjectManagementToolSettings(api_key="mock-api-key"),
+                ai_client_type=AiModuleClient.GPT,
                 ai_client_api_key="mock-api-key",
             )
 
             return bot
 
-    def test_initialize_ai_client_gpt(self):
+    def test_initialize_ai_client_gpt(self) -> None:
         """Test initialization of GPT AI client."""
         with patch("pull_request_ai_agent.bot.GPTClient") as mock_gpt_client:
             SpyAgent()._initialize_ai_client(AiModuleClient.GPT, "mock-api-key")
             mock_gpt_client.assert_called_once_with(api_key="mock-api-key")
 
-    def test_initialize_ai_client_claude(self):
+    def test_initialize_ai_client_claude(self) -> None:
         """Test initialization of Claude AI client."""
         with patch("pull_request_ai_agent.bot.ClaudeClient") as mock_claude_client:
             SpyAgent()._initialize_ai_client(AiModuleClient.CLAUDE, "mock-api-key")
             mock_claude_client.assert_called_once_with(api_key="mock-api-key")
 
-    def test_initialize_ai_client_gemini(self):
+    def test_initialize_ai_client_gemini(self) -> None:
         """Test initialization of Gemini AI client."""
         with patch("pull_request_ai_agent.bot.GeminiClient") as mock_gemini_client:
             SpyAgent()._initialize_ai_client(AiModuleClient.GEMINI, "mock-api-key")
             mock_gemini_client.assert_called_once_with(api_key="mock-api-key")
 
-    def test_initialize_ai_client_unsupported(self):
+    def test_initialize_ai_client_unsupported(self) -> None:
         """Test initialization with unsupported AI client type."""
         with pytest.raises(ValueError, match="Unsupported AI client type"):
-            SpyAgent()._initialize_ai_client("unsupported", "mock-api-key")
+            SpyAgent()._initialize_ai_client(cast(AiModuleClient, "unsupported"), "mock-api-key")
 
-    def test_get_current_branch(self, bot, mock_git_handler):
+    def test_get_current_branch(self, bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test _get_current_branch method."""
         branch = bot._get_current_branch()
         mock_git_handler._get_current_branch.assert_called_once()
         assert branch == "feature-branch"
 
-    def test_is_branch_outdated(self, bot, mock_git_handler):
+    def test_is_branch_outdated(self, bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test is_branch_outdated method."""
         result = bot.is_branch_outdated("test-branch")
         mock_git_handler.is_branch_outdated.assert_called_once_with("test-branch", "main")
         assert not result
 
-    def test_is_branch_outdated_current_branch(self, bot, mock_git_handler):
+    def test_is_branch_outdated_current_branch(self, bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test is_branch_outdated method with current branch."""
         result = bot.is_branch_outdated()
         mock_git_handler.is_branch_outdated.assert_called_once_with("feature-branch", "main")
         assert not result
 
-    def test_is_pr_already_opened(self, bot, mock_github_operations):
+    def test_is_pr_already_opened(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test is_pr_already_opened method."""
         result = bot.is_pr_already_opened("test-branch")
         mock_github_operations.get_pull_request_by_branch.assert_called_once_with("test-branch")
         assert not result
 
-    def test_is_pr_already_opened_exists(self, bot, mock_github_operations):
+    def test_is_pr_already_opened_exists(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test is_pr_already_opened method when PR exists."""
         mock_pr = MagicMock(spec=PullRequest)
         mock_github_operations.get_pull_request_by_branch.return_value = mock_pr
@@ -216,20 +222,22 @@ class TestPullRequestAIAgent:
         result = bot.is_pr_already_opened("test-branch")
         assert result
 
-    def test_is_pr_already_opened_no_github_ops(self, bot):
+    def test_is_pr_already_opened_no_github_ops(self, bot: PullRequestAIAgent) -> None:
         """Test is_pr_already_opened method with no GitHub operations."""
         bot.github_operations = None
         result = bot.is_pr_already_opened("test-branch")
         assert not result
 
-    def test_is_pr_already_opened_exception(self, bot, mock_github_operations):
+    def test_is_pr_already_opened_exception(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test is_pr_already_opened method with exception."""
         mock_github_operations.get_pull_request_by_branch.side_effect = Exception("Test error")
 
         result = bot.is_pr_already_opened("test-branch")
         assert not result
 
-    def test_fetch_and_merge_latest_from_base_branch(self, bot, mock_git_handler):
+    def test_fetch_and_merge_latest_from_base_branch(
+        self, bot: PullRequestAIAgent, mock_git_handler: MagicMock
+    ) -> None:
         """Test fetch_and_merge_latest_from_base_branch method."""
         mock_git_handler.fetch_and_merge_remote_branch.return_value = True
 
@@ -237,14 +245,16 @@ class TestPullRequestAIAgent:
         mock_git_handler.fetch_and_merge_remote_branch.assert_called_once_with("test-branch")
         assert result
 
-    def test_fetch_and_merge_latest_from_base_branch_conflict(self, bot, mock_git_handler):
+    def test_fetch_and_merge_latest_from_base_branch_conflict(
+        self, bot: PullRequestAIAgent, mock_git_handler: MagicMock
+    ) -> None:
         """Test fetch_and_merge_latest_from_base_branch method with conflict."""
         mock_git_handler.fetch_and_merge_remote_branch.side_effect = GitCodeConflictError("Test conflict")
 
         with pytest.raises(GitCodeConflictError):
             bot.fetch_and_merge_latest_from_base_branch("test-branch")
 
-    def test_get_branch_commits(self, bot, mock_git_handler):
+    def test_get_branch_commits(self, bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test get_branch_commits method."""
         # Setup mock repo and commits
         mock_repo = mock_git_handler.repo
@@ -302,7 +312,7 @@ class TestPullRequestAIAgent:
         assert commits[0]["hash"] == "abcdef1"
         assert commits[1]["hash"] == "abcdef2"
 
-    def test_get_branch_commits_no_commits(self, bot, mock_git_handler):
+    def test_get_branch_commits_no_commits(self, bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test get_branch_commits method with no commits."""
         mock_repo = mock_git_handler.repo
 
@@ -325,7 +335,9 @@ class TestPullRequestAIAgent:
 
         assert commits == []
 
-    def test_get_branch_commits_feature_branch_not_found(self, bot, mock_git_handler):
+    def test_get_branch_commits_feature_branch_not_found(
+        self, bot: PullRequestAIAgent, mock_git_handler: MagicMock
+    ) -> None:
         """Test get_branch_commits method when feature branch doesn't exist."""
         mock_repo = mock_git_handler.repo
 
@@ -341,7 +353,9 @@ class TestPullRequestAIAgent:
         # Verify error message contains branch name
         assert "Feature branch 'test-branch' not found" in str(excinfo.value)
 
-    def test_get_branch_commits_base_branch_not_found(self, bot, mock_git_handler):
+    def test_get_branch_commits_base_branch_not_found(
+        self, bot: PullRequestAIAgent, mock_git_handler: MagicMock
+    ) -> None:
         """Test get_branch_commits method when base branch doesn't exist."""
         mock_repo = mock_git_handler.repo
 
@@ -374,7 +388,7 @@ class TestPullRequestAIAgent:
             ("no-ticket_just-test", ""),
         ],
     )
-    def test_extract_ticket_id(self, bot, git_branch: str, expected_ticket_id: str):
+    def test_extract_ticket_id(self, bot: PullRequestAIAgent, git_branch: str, expected_ticket_id: str) -> None:
         """Test extract_ticket_id method."""
         # Create test commits with various ticket patterns
         ticket_id = bot.extract_ticket_id(git_branch)
@@ -382,7 +396,7 @@ class TestPullRequestAIAgent:
         # Verify extracted ticket IDs
         assert ticket_id == expected_ticket_id
 
-    def test_get_ticket_details(self, bot, mock_project_management_client):
+    def test_get_ticket_details(self, bot: PullRequestAIAgent, mock_project_management_client: MagicMock) -> None:
         """Test get_ticket_details method."""
         # Set up the project management tool client and type
         bot.project_management_client = mock_project_management_client
@@ -404,7 +418,7 @@ class TestPullRequestAIAgent:
         assert tickets[0] is mock_project_management_client.get_ticket.return_value
         assert tickets[1] is mock_project_management_client.get_ticket.return_value
 
-    def test_get_ticket_details_no_client(self, bot):
+    def test_get_ticket_details_no_client(self, bot: PullRequestAIAgent) -> None:
         """Test get_ticket_details method with no project management client."""
         # Set project management client to None
         bot.project_management_client = None
@@ -415,7 +429,9 @@ class TestPullRequestAIAgent:
         # Should return empty list
         assert tickets == []
 
-    def test_get_ticket_details_client_exception(self, bot, mock_project_management_client):
+    def test_get_ticket_details_client_exception(
+        self, bot: PullRequestAIAgent, mock_project_management_client: MagicMock
+    ) -> None:
         """Test get_ticket_details method with client exception."""
         # Set up the project management tool client and type
         bot.project_management_client = mock_project_management_client
@@ -430,7 +446,9 @@ class TestPullRequestAIAgent:
         # Should return empty list
         assert tickets == []
 
-    def test_get_ticket_details_missing_ticket(self, bot, mock_project_management_client):
+    def test_get_ticket_details_missing_ticket(
+        self, bot: PullRequestAIAgent, mock_project_management_client: MagicMock
+    ) -> None:
         """Test get_ticket_details method with missing ticket."""
         # Set up the project management tool client and type
         bot.project_management_client = mock_project_management_client
@@ -445,7 +463,7 @@ class TestPullRequestAIAgent:
         # Should only include the non-None ticket
         assert len(tickets) == 1
 
-    def test_prepare_ai_prompt(self, bot):
+    def test_prepare_ai_prompt(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method."""
         # Mock commits and tickets
         commits = [
@@ -485,7 +503,7 @@ class TestPullRequestAIAgent:
         assert hasattr(prompt_data, "title")
         assert hasattr(prompt_data, "description")
 
-    def test_prepare_ai_prompt_no_tickets(self, bot):
+    def test_prepare_ai_prompt_no_tickets(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method with no tickets."""
         # Mock commits
         commits = [
@@ -499,7 +517,7 @@ class TestPullRequestAIAgent:
         assert hasattr(prompt_data, "title")
         assert hasattr(prompt_data, "description")
 
-    def test_prepare_ai_prompt_no_commits(self, bot):
+    def test_prepare_ai_prompt_no_commits(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method with no commits."""
         # Create mock ticket
         mock_ticket = MagicMock()
@@ -520,7 +538,7 @@ class TestPullRequestAIAgent:
         assert hasattr(prompt_data, "title")
         assert hasattr(prompt_data, "description")
 
-    def test_parse_ai_response_title(self, bot):
+    def test_parse_ai_response_title(self, bot: PullRequestAIAgent) -> None:
         """Test _parse_ai_response_title method."""
         # Test with well-formatted response
         response = """
@@ -535,7 +553,7 @@ class TestPullRequestAIAgent:
 
         assert "This is the PR title" in title
 
-    def test_parse_ai_response_body(self, bot):
+    def test_parse_ai_response_body(self, bot: PullRequestAIAgent) -> None:
         """Test _parse_ai_response_body method."""
         response = """
         Here's the PR description:
@@ -558,7 +576,7 @@ class TestPullRequestAIAgent:
         assert "This is the PR body." in body
         assert "Task ID: TEST-123" in body
 
-    def test_parse_ai_response_body_no_markdown(self, bot):
+    def test_parse_ai_response_body_no_markdown(self, bot: PullRequestAIAgent) -> None:
         """Test _parse_ai_response_body method with no markdown content."""
         response = """
         This is just some text without any formatting.
@@ -569,7 +587,7 @@ class TestPullRequestAIAgent:
         # When no markdown is found, the method returns an empty string
         assert body == ""
 
-    def test_create_pull_request(self, bot, mock_github_operations):
+    def test_create_pull_request(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test create_pull_request method."""
         pr = bot.create_pull_request(title="Test PR", body="Test PR description", branch_name="feature-branch")
 
@@ -579,10 +597,11 @@ class TestPullRequestAIAgent:
         )
 
         # Verify returned PR
-        assert pr.number == 123
-        assert pr.html_url == "https://github.com/owner/repo/pull/123"
+        assert pr is not None
+        assert getattr(pr, "number", None) == 123
+        assert getattr(pr, "html_url", None) == "https://github.com/owner/repo/pull/123"
 
-    def test_create_pull_request_no_github_ops(self, bot):
+    def test_create_pull_request_no_github_ops(self, bot: PullRequestAIAgent) -> None:
         """Test create_pull_request method with no GitHub operations."""
         bot.github_operations = None
 
@@ -591,7 +610,7 @@ class TestPullRequestAIAgent:
         # Should return None
         assert pr is None
 
-    def test_create_pull_request_exception(self, bot, mock_github_operations):
+    def test_create_pull_request_exception(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test create_pull_request method with exception."""
         mock_github_operations.create_pull_request.side_effect = Exception("Test error")
 
@@ -600,7 +619,7 @@ class TestPullRequestAIAgent:
         # Should return None
         assert pr is None
 
-    def test_run_outdated_pr_exists(self, bot):
+    def test_run_outdated_pr_exists(self, bot: PullRequestAIAgent) -> None:
         """Test run method when branch is outdated and PR exists."""
         # Mock is_branch_outdated and is_pr_already_opened
         with (
@@ -614,7 +633,13 @@ class TestPullRequestAIAgent:
             # Verify no PR was created
             assert result is None
 
-    def test_run_outdated_no_pr(self, bot, mock_git_handler, mock_ai_client, mock_github_operations):
+    def test_run_outdated_no_pr(
+        self,
+        bot: PullRequestAIAgent,
+        mock_git_handler: MagicMock,
+        mock_ai_client: MagicMock,
+        mock_github_operations: MagicMock,
+    ) -> None:
         """Test run method when branch is outdated and no PR exists."""
         # Mock methods
         with (
@@ -636,7 +661,7 @@ class TestPullRequestAIAgent:
             assert result is not None
             mock_github_operations.create_pull_request.assert_called_once()
 
-    def test_run_up_to_date_no_pr(self, bot, mock_github_operations):
+    def test_run_up_to_date_no_pr(self, bot: PullRequestAIAgent, mock_github_operations: MagicMock) -> None:
         """Test run method when branch is up to date and no PR exists."""
         # Mock methods
         with (
@@ -657,7 +682,7 @@ class TestPullRequestAIAgent:
             assert result is not None
             mock_github_operations.create_pull_request.assert_called_once()
 
-    def test_run_merge_conflict(self, bot):
+    def test_run_merge_conflict(self, bot: PullRequestAIAgent) -> None:
         """Test run method with merge conflict."""
         # Mock methods
         with (
@@ -674,7 +699,7 @@ class TestPullRequestAIAgent:
             # Verify no PR was created
             assert result is None
 
-    def test_run_no_commits(self, bot):
+    def test_run_no_commits(self, bot: PullRequestAIAgent) -> None:
         """Test run method with no commits."""
         # Mock methods
         with (
@@ -689,7 +714,9 @@ class TestPullRequestAIAgent:
             # Verify no PR was created
             assert result is None
 
-    def test_run_ai_failure(self, bot, mock_ai_client, mock_github_operations):
+    def test_run_ai_failure(
+        self, bot: PullRequestAIAgent, mock_ai_client: MagicMock, mock_github_operations: MagicMock
+    ) -> None:
         """Test run method with AI failure."""
         # Mock AI client to raise exception
         mock_ai_client.get_content.side_effect = Exception("AI error")
@@ -718,14 +745,14 @@ class TestPullRequestAIAgent:
             assert title == f"Update {branch}"
             assert body == "Automated pull request."
 
-    def test_initialize_project_management_client_clickup(self):
+    def test_initialize_project_management_client_clickup(self) -> None:
         """Test initialization of ClickUp project management client."""
         with patch("pull_request_ai_agent.bot.ClickUpAPIClient") as mock_clickup_client:
             config = ProjectManagementToolSettings(api_key="mock-api-token")
             client = SpyAgent()._initialize_project_management_client(ProjectManagementToolType.CLICKUP, config)
             mock_clickup_client.assert_called_once_with(api_token="mock-api-token")
 
-    def test_initialize_project_management_client_jira(self):
+    def test_initialize_project_management_client_jira(self) -> None:
         """Test initialization of Jira project management client."""
         with patch("pull_request_ai_agent.bot.JiraAPIClient") as mock_jira_client:
             config = ProjectManagementToolSettings(
@@ -756,17 +783,19 @@ class TestPullRequestAIAgent:
     )
     def test_initialize_project_management_client_missing_config(
         self, service_type: ProjectManagementToolType, config: ProjectManagementToolSettings
-    ):
+    ) -> None:
         # Test Jira with missing base_url
         with pytest.raises(ValueError, match="is required"):
             SpyAgent()._initialize_project_management_client(service_type, config)
 
-    def test_initialize_project_management_client_unsupported(self):
+    def test_initialize_project_management_client_unsupported(self) -> None:
         """Test initialization with unsupported project management tool type."""
         with pytest.raises(ValueError, match="Unsupported project management tool type"):
-            SpyAgent()._initialize_project_management_client("unsupported", {})
+            SpyAgent()._initialize_project_management_client(
+                cast(ProjectManagementToolType, "unsupported"), ProjectManagementToolSettings()
+            )
 
-    def test_format_ticket_id_clickup(self, bot):
+    def test_format_ticket_id_clickup(self, bot: PullRequestAIAgent) -> None:
         """Test _format_ticket_id method for ClickUp tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
@@ -783,7 +812,7 @@ class TestPullRequestAIAgent:
         ticket_id = bot._format_ticket_id(" CU-ghi789 ")
         assert ticket_id == "ghi789"
 
-    def test_format_ticket_id_jira(self, bot):
+    def test_format_ticket_id_jira(self, bot: PullRequestAIAgent) -> None:
         """Test _format_ticket_id method for Jira tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.JIRA
@@ -796,12 +825,12 @@ class TestPullRequestAIAgent:
         ticket_id = bot._format_ticket_id(" TEST-456 ")
         assert ticket_id == "TEST-456"
 
-    def test_format_ticket_id_none(self, bot):
+    def test_format_ticket_id_none(self, bot: PullRequestAIAgent) -> None:
         """Test _format_ticket_id method with None input."""
-        ticket_id = bot._format_ticket_id(None)
+        ticket_id = bot._format_ticket_id(cast(str, None))
         assert ticket_id is None
 
-    def test_format_ticket_id_unknown_tool(self, bot):
+    def test_format_ticket_id_unknown_tool(self, bot: PullRequestAIAgent) -> None:
         """Test _format_ticket_id method with unknown tool type."""
         # Set project management tool type to None
         bot.project_management_tool_type = None
@@ -809,7 +838,7 @@ class TestPullRequestAIAgent:
         ticket_id = bot._format_ticket_id("TICKET-123")
         assert ticket_id == "TICKET-123"
 
-    def test_extract_ticket_info_clickup(self, bot):
+    def test_extract_ticket_info_clickup(self, bot: PullRequestAIAgent) -> None:
         """Test _extract_ticket_info method for ClickUp tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
@@ -836,7 +865,7 @@ class TestPullRequestAIAgent:
         assert ticket_info["description"] == "Test ticket text content"
         assert ticket_info["status"] == "In Progress"
 
-    def test_extract_ticket_info_clickup_with_description(self, bot):
+    def test_extract_ticket_info_clickup_with_description(self, bot: PullRequestAIAgent) -> None:
         """Test _extract_ticket_info method for ClickUp tickets with description instead of text_content."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.CLICKUP
@@ -854,7 +883,7 @@ class TestPullRequestAIAgent:
         # Verify extracted info
         assert ticket_info["description"] == "Test ticket description"
 
-    def test_extract_ticket_info_jira(self, bot):
+    def test_extract_ticket_info_jira(self, bot: PullRequestAIAgent) -> None:
         """Test _extract_ticket_info method for Jira tickets."""
         # Mock the project management tool type
         bot.project_management_tool_type = ProjectManagementToolType.JIRA
@@ -875,7 +904,7 @@ class TestPullRequestAIAgent:
         assert ticket_info["description"] == "Test Jira description"
         assert ticket_info["status"] == "In Review"
 
-    def test_extract_ticket_info_unknown_tool(self, bot):
+    def test_extract_ticket_info_unknown_tool(self, bot: PullRequestAIAgent) -> None:
         """Test _extract_ticket_info method with unknown tool type."""
         # Set project management tool type to None
         bot.project_management_tool_type = None
@@ -897,7 +926,7 @@ class TestPullRequestAIAgent:
         assert ticket_info["description"] == "Test description"
         assert ticket_info["status"] == "Open"
 
-    def test_prepare_ai_prompt_with_prompt_templates(self, bot):
+    def test_prepare_ai_prompt_with_prompt_templates(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method using prompt templates."""
         # Mock commits and tickets
         commits = [
@@ -950,7 +979,7 @@ class TestPullRequestAIAgent:
                 # Verify the returned prompt_data is the same as mock_prompt_data
                 assert prompt_data is mock_prompt_data
 
-    def test_prepare_ai_prompt_template_not_found(self, bot):
+    def test_prepare_ai_prompt_template_not_found(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method when prompt template is not found."""
         # Mock commits and tickets
         commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
@@ -973,7 +1002,7 @@ class TestPullRequestAIAgent:
                 with pytest.raises(FileNotFoundError):
                     bot.prepare_ai_prompt(commits, [mock_ticket])
 
-    def test_prepare_ai_prompt_fallback(self, bot):
+    def test_prepare_ai_prompt_fallback(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method falling back to default prompt on error."""
         # Mock commits and tickets
         commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
@@ -1004,7 +1033,7 @@ class TestPullRequestAIAgent:
                 assert "Description: The login form has a bug that needs to be fixed" in prompt_data.description
                 assert "Status: In Progress" in prompt_data.description
 
-    def test_prepare_ai_prompt_invalid_commits(self, bot):
+    def test_prepare_ai_prompt_invalid_commits(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method with invalid commits."""
         # Mock commits without required fields
         commits = [
@@ -1039,7 +1068,7 @@ class TestPullRequestAIAgent:
                 # Verify the returned prompt_data is the same as mock_prompt_data
                 assert prompt_data is mock_prompt_data
 
-    def test_prepare_ai_prompt_with_pr_template(self, bot):
+    def test_prepare_ai_prompt_with_pr_template(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt method with PR template."""
         # Mock commits and tickets
         commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
@@ -1073,7 +1102,7 @@ class TestPullRequestAIAgent:
                 # Verify the returned prompt_data is the same as mock_prompt_data
                 assert prompt_data is mock_prompt_data
 
-    def test_prepare_ai_prompt_fallback_with_pr_template(self, bot):
+    def test_prepare_ai_prompt_fallback_with_pr_template(self, bot: PullRequestAIAgent) -> None:
         """Test prepare_ai_prompt fallback with PR template."""
         # Mock commits and tickets
         commits = [{"short_hash": "abc123", "message": "Fix bug in login form"}]
