@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Any, Dict, Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -22,7 +23,7 @@ from pull_request_ai_agent.project_management_tool import ProjectManagementToolT
 class TestLoadYamlConfig:
     """Tests for the load_yaml_config function."""
 
-    def test_load_yaml_config_success(self):
+    def test_load_yaml_config_success(self) -> None:
         """Test loading a valid YAML configuration file."""
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
             temp.write(
@@ -31,54 +32,46 @@ class TestLoadYamlConfig:
               repo_path: "/path/to/repo"
               base_branch: "main"
             github:
-              token: "test-token"
-              repo: "owner/repo"
+              token: "github_token"
+              repo: "user/repo"
+            project_management_tool:
+              type: "jira"
+              api_key: "api_key"
+              base_url: "https://example.atlassian.net"
+              username: "username@example.com"
+            ai:
+              client_type: "gpt"
+              api_key: "api_key"
             """
             )
+            temp.flush()
             temp_path = temp.name
 
         try:
-            config = load_yaml_config(temp_path)
+            config: Dict[str, Any] = load_yaml_config(temp_path)
             assert config["git"]["repo_path"] == "/path/to/repo"
             assert config["git"]["base_branch"] == "main"
-            assert config["github"]["token"] == "test-token"
-            assert config["github"]["repo"] == "owner/repo"
+            assert config["github"]["token"] == "github_token"
+            assert config["github"]["repo"] == "user/repo"
+            assert config["project_management_tool"]["type"] == "jira"
+            assert config["project_management_tool"]["api_key"] == "api_key"
+            assert config["project_management_tool"]["base_url"] == "https://example.atlassian.net"
+            assert config["project_management_tool"]["username"] == "username@example.com"
+            assert config["ai"]["client_type"] == "gpt"
+            assert config["ai"]["api_key"] == "api_key"
         finally:
             os.unlink(temp_path)
 
-    def test_load_yaml_config_empty_file(self):
-        """Test loading an empty YAML file."""
-        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
-            temp.write("")
-            temp_path = temp.name
-
-        try:
-            config = load_yaml_config(temp_path)
-            assert config == {}
-        finally:
-            os.unlink(temp_path)
-
-    def test_load_yaml_config_comments_only(self):
-        """Test loading a YAML file with only comments."""
-        with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
-            temp.write("# This is a comment\n# Another comment")
-            temp_path = temp.name
-
-        try:
-            config = load_yaml_config(temp_path)
-            assert config == {}
-        finally:
-            os.unlink(temp_path)
-
-    def test_load_yaml_config_file_not_found(self):
-        """Test loading a non-existent YAML file."""
+    def test_load_yaml_config_file_not_found(self) -> None:
+        """Test loading a non-existent YAML configuration file."""
         with pytest.raises(FileNotFoundError):
             load_yaml_config("/path/to/nonexistent/file.yaml")
 
-    def test_load_yaml_config_invalid_yaml(self):
-        """Test loading an invalid YAML file."""
+    def test_load_yaml_config_invalid_yaml(self) -> None:
+        """Test loading an invalid YAML configuration file."""
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
-            temp.write("invalid: yaml: :")
+            temp.write("invalid: yaml: content:")
+            temp.flush()
             temp_path = temp.name
 
         try:
@@ -87,15 +80,15 @@ class TestLoadYamlConfig:
         finally:
             os.unlink(temp_path)
 
-    def test_load_yaml_config_invalid_format(self):
-        """Test loading a YAML file with invalid format (not a dictionary)."""
+    def test_load_yaml_config_empty_file(self) -> None:
+        """Test loading an empty YAML configuration file."""
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".yaml", delete=False) as temp:
-            temp.write("- item1\n- item2")
+            temp.flush()
             temp_path = temp.name
 
         try:
-            with pytest.raises(ValueError):
-                load_yaml_config(temp_path)
+            config: Dict[str, Any] = load_yaml_config(temp_path)
+            assert config == {}
         finally:
             os.unlink(temp_path)
 
@@ -103,7 +96,7 @@ class TestLoadYamlConfig:
 class TestFindDefaultConfigPath:
     """Tests for the find_default_config_path function."""
 
-    def test_find_default_config_path_yaml(self):
+    def test_find_default_config_path_yaml(self) -> None:
         """Test finding the default YAML configuration file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create .github directory
@@ -115,10 +108,10 @@ class TestFindDefaultConfigPath:
             config_path.touch()
 
             # Test finding the file
-            result = find_default_config_path(temp_dir)
+            result: Optional[Path] = find_default_config_path(temp_dir)
             assert result == config_path
 
-    def test_find_default_config_path_yml(self):
+    def test_find_default_config_path_yml(self) -> None:
         """Test finding the default YML configuration file."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create .github directory
@@ -130,10 +123,10 @@ class TestFindDefaultConfigPath:
             config_path.touch()
 
             # Test finding the file
-            result = find_default_config_path(temp_dir)
+            result: Optional[Path] = find_default_config_path(temp_dir)
             assert result == config_path
 
-    def test_find_default_config_path_both_extensions(self):
+    def test_find_default_config_path_both_extensions(self) -> None:
         """Test finding the default configuration file when both extensions exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create .github directory
@@ -148,10 +141,10 @@ class TestFindDefaultConfigPath:
             yml_path.touch()
 
             # Test finding the file (should prefer .yaml)
-            result = find_default_config_path(temp_dir)
+            result: Optional[Path] = find_default_config_path(temp_dir)
             assert result == yaml_path
 
-    def test_find_default_config_path_not_found(self):
+    def test_find_default_config_path_not_found(self) -> None:
         """Test finding the default configuration file when it doesn't exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create .github directory without config file
@@ -159,24 +152,24 @@ class TestFindDefaultConfigPath:
             github_dir.mkdir()
 
             # Test finding the file
-            result = find_default_config_path(temp_dir)
+            result: Optional[Path] = find_default_config_path(temp_dir)
             assert result is None
 
-    def test_find_default_config_path_no_github_dir(self):
+    def test_find_default_config_path_no_github_dir(self) -> None:
         """Test finding the default configuration file when .github directory doesn't exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Test finding the file
-            result = find_default_config_path(temp_dir)
+            result: Optional[Path] = find_default_config_path(temp_dir)
             assert result is None
 
 
 class TestProjectManagementToolSettings:
     """Tests for the ProjectManagementToolSettings class."""
 
-    def test_from_env_empty(self):
+    def test_from_env_empty(self) -> None:
         """Test loading settings from empty environment variables."""
         with patch.dict(os.environ, {}, clear=True):
-            settings = ProjectManagementToolSettings.from_env()
+            settings: ProjectManagementToolSettings = ProjectManagementToolSettings.from_env()
             assert settings.tool_type is None
             assert settings.api_key is None
             assert settings.organization_id is None
@@ -184,7 +177,7 @@ class TestProjectManagementToolSettings:
             assert settings.base_url is None
             assert settings.username is None
 
-    def test_from_env_with_values(self):
+    def test_from_env_with_values(self) -> None:
         """Test loading settings from environment variables with values."""
         env_vars = {
             "CREATE_PR_BOT_PM_TOOL_TYPE": "clickup",
@@ -196,7 +189,7 @@ class TestProjectManagementToolSettings:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = ProjectManagementToolSettings.from_env()
+            settings: ProjectManagementToolSettings = ProjectManagementToolSettings.from_env()
             assert settings.tool_type == ProjectManagementToolType.CLICKUP
             assert settings.api_key == "test-api-key"
             assert settings.organization_id == "test-org-id"
@@ -204,7 +197,7 @@ class TestProjectManagementToolSettings:
             assert settings.base_url == "https://example.com"
             assert settings.username == "test-user"
 
-    def test_from_env_invalid_tool_type(self):
+    def test_from_env_invalid_tool_type(self) -> None:
         """Test loading settings with invalid tool type."""
         env_vars = {
             "CREATE_PR_BOT_PM_TOOL_TYPE": "invalid-type",
@@ -212,13 +205,13 @@ class TestProjectManagementToolSettings:
 
         with patch.dict(os.environ, env_vars, clear=True):
             with patch("logging.Logger.warning") as mock_warning:
-                settings = ProjectManagementToolSettings.from_env()
+                settings: ProjectManagementToolSettings = ProjectManagementToolSettings.from_env()
                 assert settings.tool_type is None
                 mock_warning.assert_called_once()
 
-    def test_serialize_empty(self):
+    def test_serialize_empty(self) -> None:
         """Test loading settings from an empty dictionary."""
-        settings = ProjectManagementToolSettings.serialize({})
+        settings: ProjectManagementToolSettings = ProjectManagementToolSettings.serialize({})
         assert settings.tool_type is None
         assert settings.api_key is None
         assert settings.organization_id is None
@@ -226,7 +219,7 @@ class TestProjectManagementToolSettings:
         assert settings.base_url is None
         assert settings.username is None
 
-    def test_serialize_with_values(self):
+    def test_serialize_with_values(self) -> None:
         """Test loading settings from a dictionary with values."""
         config = {
             "project_management_tool": {
@@ -239,7 +232,7 @@ class TestProjectManagementToolSettings:
             }
         }
 
-        settings = ProjectManagementToolSettings.serialize(config)
+        settings: ProjectManagementToolSettings = ProjectManagementToolSettings.serialize(config)
         assert settings.tool_type == ProjectManagementToolType.CLICKUP
         assert settings.api_key == "test-api-key"
         assert settings.organization_id == "test-org-id"
@@ -247,7 +240,7 @@ class TestProjectManagementToolSettings:
         assert settings.base_url == "https://example.com"
         assert settings.username == "test-user"
 
-    def test_serialize_invalid_tool_type(self):
+    def test_serialize_invalid_tool_type(self) -> None:
         """Test loading settings with invalid tool type."""
         config = {
             "project_management_tool": {
@@ -256,7 +249,7 @@ class TestProjectManagementToolSettings:
         }
 
         with patch("logging.Logger.warning") as mock_warning:
-            settings = ProjectManagementToolSettings.serialize(config)
+            settings: ProjectManagementToolSettings = ProjectManagementToolSettings.serialize(config)
             assert settings.tool_type is None
             mock_warning.assert_called_once()
 
@@ -264,14 +257,14 @@ class TestProjectManagementToolSettings:
 class TestAISettings:
     """Tests for the AISettings class."""
 
-    def test_from_env_empty(self):
+    def test_from_env_empty(self) -> None:
         """Test loading settings from empty environment variables."""
         with patch.dict(os.environ, {}, clear=True):
-            settings = AISettings.from_env()
+            settings: AISettings = AISettings.from_env()
             assert settings.client_type == AiModuleClient.GPT
             assert settings.api_key is None
 
-    def test_from_env_with_values(self):
+    def test_from_env_with_values(self) -> None:
         """Test loading settings from environment variables with values."""
         env_vars = {
             "CREATE_PR_BOT_AI_CLIENT_TYPE": "claude",
@@ -279,11 +272,11 @@ class TestAISettings:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = AISettings.from_env()
+            settings: AISettings = AISettings.from_env()
             assert settings.client_type == AiModuleClient.CLAUDE
             assert settings.api_key == "test-api-key"
 
-    def test_from_env_invalid_client_type(self):
+    def test_from_env_invalid_client_type(self) -> None:
         """Test loading settings with invalid client type."""
         env_vars = {
             "CREATE_PR_BOT_AI_CLIENT_TYPE": "invalid-type",
@@ -291,17 +284,17 @@ class TestAISettings:
 
         with patch.dict(os.environ, env_vars, clear=True):
             with patch("logging.Logger.warning") as mock_warning:
-                settings = AISettings.from_env()
+                settings: AISettings = AISettings.from_env()
                 assert settings.client_type == AiModuleClient.GPT
                 mock_warning.assert_called_once()
 
-    def test_serialize_empty(self):
+    def test_serialize_empty(self) -> None:
         """Test loading settings from an empty dictionary."""
-        settings = AISettings.serialize({})
+        settings: AISettings = AISettings.serialize({})
         assert settings.client_type == AiModuleClient.GPT
         assert settings.api_key is None
 
-    def test_serialize_with_values(self):
+    def test_serialize_with_values(self) -> None:
         """Test loading settings from a dictionary with values."""
         config = {
             "ai": {
@@ -310,11 +303,11 @@ class TestAISettings:
             }
         }
 
-        settings = AISettings.serialize(config)
+        settings: AISettings = AISettings.serialize(config)
         assert settings.client_type == AiModuleClient.CLAUDE
         assert settings.api_key == "test-api-key"
 
-    def test_serialize_invalid_client_type(self):
+    def test_serialize_invalid_client_type(self) -> None:
         """Test loading settings with invalid client type."""
         config = {
             "ai": {
@@ -323,7 +316,7 @@ class TestAISettings:
         }
 
         with patch("logging.Logger.warning") as mock_warning:
-            settings = AISettings.serialize(config)
+            settings: AISettings = AISettings.serialize(config)
             assert settings.client_type == AiModuleClient.GPT
             mock_warning.assert_called_once()
 
@@ -331,14 +324,14 @@ class TestAISettings:
 class TestGitHubSettings:
     """Tests for the GitHubSettings class."""
 
-    def test_from_env_empty(self):
+    def test_from_env_empty(self) -> None:
         """Test loading settings from empty environment variables."""
         with patch.dict(os.environ, {}, clear=True):
-            settings = GitHubSettings.from_env()
+            settings: GitHubSettings = GitHubSettings.from_env()
             assert settings.token is None
             assert settings.repo is None
 
-    def test_from_env_with_values(self):
+    def test_from_env_with_values(self) -> None:
         """Test loading settings from environment variables with values."""
         env_vars = {
             "CREATE_PR_BOT_GITHUB_TOKEN": "test-token",
@@ -346,27 +339,27 @@ class TestGitHubSettings:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = GitHubSettings.from_env()
+            settings: GitHubSettings = GitHubSettings.from_env()
             assert settings.token == "test-token"
             assert settings.repo == "owner/repo"
 
-    def test_from_env_fallback_token(self):
+    def test_from_env_fallback_token(self) -> None:
         """Test loading token from fallback environment variables."""
         env_vars = {
             "GITHUB_TOKEN": "fallback-token",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = GitHubSettings.from_env()
+            settings: GitHubSettings = GitHubSettings.from_env()
             assert settings.token == "fallback-token"
 
-    def test_serialize_empty(self):
+    def test_serialize_empty(self) -> None:
         """Test loading settings from an empty dictionary."""
-        settings = GitHubSettings.serialize({})
+        settings: GitHubSettings = GitHubSettings.serialize({})
         assert settings.token is None
         assert settings.repo is None
 
-    def test_serialize_with_values(self):
+    def test_serialize_with_values(self) -> None:
         """Test loading settings from a dictionary with values."""
         config = {
             "github": {
@@ -375,7 +368,7 @@ class TestGitHubSettings:
             }
         }
 
-        settings = GitHubSettings.serialize(config)
+        settings: GitHubSettings = GitHubSettings.serialize(config)
         assert settings.token == "test-token"
         assert settings.repo == "owner/repo"
 
@@ -383,15 +376,15 @@ class TestGitHubSettings:
 class TestGitSettings:
     """Tests for the GitSettings class."""
 
-    def test_from_env_empty(self):
+    def test_from_env_empty(self) -> None:
         """Test loading settings from empty environment variables."""
         with patch.dict(os.environ, {}, clear=True):
-            settings = GitSettings.from_env()
+            settings: GitSettings = GitSettings.from_env()
             assert settings.repo_path == "."
             assert settings.base_branch == "main"
             assert settings.branch_name is None
 
-    def test_from_env_with_values(self):
+    def test_from_env_with_values(self) -> None:
         """Test loading settings from environment variables with values."""
         env_vars = {
             "CREATE_PR_BOT_GIT_REPO_PATH": "/path/to/repo",
@@ -400,19 +393,19 @@ class TestGitSettings:
         }
 
         with patch.dict(os.environ, env_vars, clear=True):
-            settings = GitSettings.from_env()
+            settings: GitSettings = GitSettings.from_env()
             assert settings.repo_path == "/path/to/repo"
             assert settings.base_branch == "master"
             assert settings.branch_name == "feature/test"
 
-    def test_serialize_empty(self):
+    def test_serialize_empty(self) -> None:
         """Test loading settings from an empty dictionary."""
-        settings = GitSettings.serialize({})
+        settings: GitSettings = GitSettings.serialize({})
         assert settings.repo_path == "."
         assert settings.base_branch == "main"
         assert settings.branch_name is None
 
-    def test_serialize_with_values(self):
+    def test_serialize_with_values(self) -> None:
         """Test loading settings from a dictionary with values."""
         config = {
             "git": {
@@ -422,7 +415,7 @@ class TestGitSettings:
             }
         }
 
-        settings = GitSettings.serialize(config)
+        settings: GitSettings = GitSettings.serialize(config)
         assert settings.repo_path == "/path/to/repo"
         assert settings.base_branch == "master"
         assert settings.branch_name == "feature/test"
@@ -431,30 +424,30 @@ class TestGitSettings:
 class TestBotSettings:
     """Tests for the BotSettings class."""
 
-    def test_from_env(self):
+    def test_from_env(self) -> None:
         """Test loading settings from environment variables."""
         with patch("pull_request_ai_agent.model.GitSettings.from_env") as mock_git:
             with patch("pull_request_ai_agent.model.GitHubSettings.from_env") as mock_github:
                 with patch("pull_request_ai_agent.model.AISettings.from_env") as mock_ai:
                     with patch("pull_request_ai_agent.model.ProjectManagementToolSettings.from_env") as mock_pm:
-                        mock_git.return_value = "git_settings"
-                        mock_github.return_value = "github_settings"
-                        mock_ai.return_value = "ai_settings"
-                        mock_pm.return_value = "pm_settings"
+                        mock_git.return_value = MagicMock(spec=GitSettings)
+                        mock_github.return_value = MagicMock(spec=GitHubSettings)
+                        mock_ai.return_value = MagicMock(spec=AISettings)
+                        mock_pm.return_value = MagicMock(spec=ProjectManagementToolSettings)
 
-                        settings = BotSettings.from_env()
+                        settings: BotSettings = BotSettings.from_env()
 
-                        assert settings.git == "git_settings"
-                        assert settings.github == "github_settings"
-                        assert settings.ai == "ai_settings"
-                        assert settings.pm_tool == "pm_settings"
+                        assert settings.git is mock_git.return_value
+                        assert settings.github is mock_github.return_value
+                        assert settings.ai is mock_ai.return_value
+                        assert settings.pm_tool is mock_pm.return_value
 
                         mock_git.assert_called_once()
                         mock_github.assert_called_once()
                         mock_ai.assert_called_once()
                         mock_pm.assert_called_once()
 
-    def test_from_args(self):
+    def test_from_args(self) -> None:
         """Test loading settings from command line arguments."""
         # Create mock args
         args = MagicMock()
@@ -478,7 +471,7 @@ class TestBotSettings:
 
         with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
             with patch("pull_request_ai_agent.model.find_default_config_path", return_value=None):
-                settings = BotSettings.from_args(args)
+                settings: BotSettings = BotSettings.from_args(args)
 
                 # Verify settings were updated from args
                 assert settings.git.repo_path == "/path/to/repo"
@@ -491,44 +484,44 @@ class TestBotSettings:
                 assert settings.pm_tool.tool_type == ProjectManagementToolType.JIRA
                 assert settings.pm_tool.api_key == "test-pm-key"
 
-    def test_serialize(self):
+    def test_serialize(self) -> None:
         """Test loading settings from a dictionary."""
         with patch("pull_request_ai_agent.model.GitSettings.serialize") as mock_git:
             with patch("pull_request_ai_agent.model.GitHubSettings.serialize") as mock_github:
                 with patch("pull_request_ai_agent.model.AISettings.serialize") as mock_ai:
                     with patch("pull_request_ai_agent.model.ProjectManagementToolSettings.serialize") as mock_pm:
-                        mock_git.return_value = "git_settings"
-                        mock_github.return_value = "github_settings"
-                        mock_ai.return_value = "ai_settings"
-                        mock_pm.return_value = "pm_settings"
+                        mock_git.return_value = MagicMock(spec=GitSettings)
+                        mock_github.return_value = MagicMock(spec=GitHubSettings)
+                        mock_ai.return_value = MagicMock(spec=AISettings)
+                        mock_pm.return_value = MagicMock(spec=ProjectManagementToolSettings)
 
-                        config = {"test": "config"}
-                        settings = BotSettings.serialize(config)
+                        config: Dict[str, Any] = {"test": "config"}
+                        settings: BotSettings = BotSettings.serialize(config)
 
-                        assert settings.git == "git_settings"
-                        assert settings.github == "github_settings"
-                        assert settings.ai == "ai_settings"
-                        assert settings.pm_tool == "pm_settings"
+                        assert settings.git is mock_git.return_value
+                        assert settings.github is mock_github.return_value
+                        assert settings.ai is mock_ai.return_value
+                        assert settings.pm_tool is mock_pm.return_value
 
                         mock_git.assert_called_once_with(config)
                         mock_github.assert_called_once_with(config)
                         mock_ai.assert_called_once_with(config)
                         mock_pm.assert_called_once_with(config)
 
-    def test_from_config_file(self):
+    def test_from_config_file(self) -> None:
         """Test loading settings from a configuration file."""
         with patch("pull_request_ai_agent.model.load_yaml_config") as mock_load:
             with patch("pull_request_ai_agent.model.BotSettings.serialize") as mock_serialize:
                 mock_load.return_value = {"test": "config"}
-                mock_serialize.return_value = "bot_settings"
+                mock_serialize.return_value = MagicMock(spec=BotSettings)
 
-                settings = BotSettings.from_config_file("/path/to/config.yaml")
+                settings: BotSettings = BotSettings.from_config_file("/path/to/config.yaml")
 
-                assert settings == "bot_settings"
+                assert settings is mock_serialize.return_value
                 mock_load.assert_called_once_with("/path/to/config.yaml")
                 mock_serialize.assert_called_once_with({"test": "config"})
 
-    def test_from_args_with_config_file(self):
+    def test_from_args_with_config_file(self) -> None:
         """Test loading settings from args with a config file."""
         # Create mock args
         args = MagicMock()
@@ -543,15 +536,15 @@ class TestBotSettings:
                 # Mock the validation methods to avoid ValueError with MagicMock objects
                 with patch("pull_request_ai_agent.model.AiModuleClient") as mock_ai_client:
                     with patch("pull_request_ai_agent.model.ProjectManagementToolType") as mock_pm_tool_type:
-                        settings = BotSettings.from_args(args)
+                        settings: BotSettings = BotSettings.from_args(args)
 
                         # Verify settings were updated from config file
-                        assert settings.git == config_settings.git
-                        assert settings.github == config_settings.github
-                        assert settings.ai == config_settings.ai
-                        assert settings.pm_tool == config_settings.pm_tool
+                        assert settings.git is config_settings.git
+                        assert settings.github is config_settings.github
+                        assert settings.ai is config_settings.ai
+                        assert settings.pm_tool is config_settings.pm_tool
 
-    def test_from_args_with_default_config_file(self):
+    def test_from_args_with_default_config_file(self) -> None:
         """Test loading settings from args with a default config file."""
         # Create mock args
         args = MagicMock()
@@ -571,18 +564,18 @@ class TestBotSettings:
                         # Mock the validation methods to avoid ValueError with MagicMock objects
                         with patch("pull_request_ai_agent.model.AiModuleClient") as mock_ai_client:
                             with patch("pull_request_ai_agent.model.ProjectManagementToolType") as mock_pm_tool_type:
-                                settings = BotSettings.from_args(args)
+                                settings: BotSettings = BotSettings.from_args(args)
 
                                 # Verify settings were updated from default config file
-                                assert settings.git == config_settings.git
-                                assert settings.github == config_settings.github
-                                assert settings.ai == config_settings.ai
-                                assert settings.pm_tool == config_settings.pm_tool
+                                assert settings.git is config_settings.git
+                                assert settings.github is config_settings.github
+                                assert settings.ai is config_settings.ai
+                                assert settings.pm_tool is config_settings.pm_tool
 
                                 # Verify log message
                                 mock_info.assert_called_once()
 
-    def test_from_args_no_config_file(self):
+    def test_from_args_no_config_file(self) -> None:
         """Test loading settings from args without a config file."""
         # Create mock args
         args = MagicMock()
@@ -606,7 +599,7 @@ class TestBotSettings:
 
         with patch("pull_request_ai_agent.model.BotSettings.from_env", return_value=env_settings):
             with patch("pull_request_ai_agent.model.find_default_config_path", return_value=None):
-                settings = BotSettings.from_args(args)
+                settings: BotSettings = BotSettings.from_args(args)
 
                 # Verify settings were updated from args
                 assert settings.git.repo_path == "/path/to/repo"

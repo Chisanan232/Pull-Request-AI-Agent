@@ -1,6 +1,7 @@
 """Unit tests for GitHubOperations class."""
 
 import unittest
+from typing import Dict, List
 from unittest.mock import MagicMock, patch
 
 from github import GithubException
@@ -12,7 +13,7 @@ from pull_request_ai_agent.github_opt import GitHubOperations
 class TestGitHubOperations(unittest.TestCase):
     """Test cases for GitHubOperations class."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Set up test fixtures."""
         self.patcher = patch("pull_request_ai_agent.github_opt.Github")
         self.mock_github = self.patcher.start()
@@ -21,18 +22,18 @@ class TestGitHubOperations(unittest.TestCase):
 
         self.github_ops = GitHubOperations("fake_token", "owner/repo")
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         """Tear down test fixtures."""
         self.patcher.stop()
 
-    def test_init(self):
+    def test_init(self) -> None:
         """Test initialization of GitHubOperations."""
         self.mock_github.assert_called_once_with("fake_token")
         self.mock_github.return_value.get_repo.assert_called_once_with("owner/repo")
         self.assertEqual(self.github_ops.repo_name, "owner/repo")
         self.assertEqual(self.github_ops.repo, self.mock_repo)
 
-    def test_get_pull_requests(self):
+    def test_get_pull_requests(self) -> None:
         """Test _get_pull_requests method."""
         # Mock the return value
         mock_pr1 = MagicMock(spec=PullRequest)
@@ -49,7 +50,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.mock_repo.get_pulls.assert_called_once_with(state="open")
         self.assertEqual(result, mock_prs)
 
-    def test_get_pull_requests_exception(self):
+    def test_get_pull_requests_exception(self) -> None:
         """Test _get_pull_requests method with exception."""
         # Set up the mock to raise an exception
         self.mock_repo.get_pulls.side_effect = GithubException(status=404, data={"message": "Not Found"})
@@ -61,7 +62,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.assertEqual(context.exception.status, 404)
         self.assertIn("Failed to get pull requests", str(context.exception))
 
-    def test_get_pull_request_by_branch(self):
+    def test_get_pull_request_by_branch(self) -> None:
         """Test get_pull_request_by_branch method."""
         # Mock PRs
         mock_pr1 = MagicMock(spec=PullRequest)
@@ -83,7 +84,7 @@ class TestGitHubOperations(unittest.TestCase):
             result = self.github_ops.get_pull_request_by_branch("non-existent")
             self.assertIsNone(result)
 
-    def test_get_pull_request_by_branch_exception(self):
+    def test_get_pull_request_by_branch_exception(self) -> None:
         """Test get_pull_request_by_branch method with exception."""
         # Set up the mock to raise an exception
         with patch.object(
@@ -98,7 +99,7 @@ class TestGitHubOperations(unittest.TestCase):
             self.assertEqual(context.exception.status, 401)
             self.assertIn("Failed to find PR for branch", str(context.exception))
 
-    def test_create_pull_request(self):
+    def test_create_pull_request(self) -> None:
         """Test create_pull_request method."""
         # Mock the return value
         mock_pr = MagicMock(spec=PullRequest)
@@ -115,7 +116,7 @@ class TestGitHubOperations(unittest.TestCase):
         )
         self.assertEqual(result, mock_pr)
 
-    def test_create_pull_request_exception(self):
+    def test_create_pull_request_exception(self) -> None:
         """Test create_pull_request method with exception."""
         # Set up the mock to raise an exception
         self.mock_repo.create_pull.side_effect = GithubException(status=422, data={"message": "Validation Failed"})
@@ -129,7 +130,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.assertEqual(context.exception.status, 422)
         self.assertIn("Failed to create PR", str(context.exception))
 
-    def test_add_labels_to_pull_request(self):
+    def test_add_labels_to_pull_request(self) -> None:
         """Test add_labels_to_pull_request method with PR object."""
         # Mock PR and files
         mock_pr = MagicMock(spec=PullRequest)
@@ -144,7 +145,7 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr.get_files.return_value = [mock_file1, mock_file2]
 
         # Labels config
-        labels_config = {"*.py": ["python", "code"], "docs/*": ["documentation"]}
+        labels_config: Dict[str, List[str]] = {"*.py": ["python", "code"], "docs/*": ["documentation"]}
 
         # Call the method
         result = self.github_ops.add_labels_to_pull_request(mock_pr, labels_config)
@@ -153,7 +154,7 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr.add_to_labels.assert_called_once()
         self.assertCountEqual(result, ["python", "code", "documentation"])
 
-    def test_add_labels_to_pull_request_with_pr_number(self):
+    def test_add_labels_to_pull_request_with_pr_number(self) -> None:
         """Test add_labels_to_pull_request method with PR number."""
         # Mock PR and files
         mock_pr = MagicMock(spec=PullRequest)
@@ -166,7 +167,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.mock_repo.get_pull.return_value = mock_pr
 
         # Labels config
-        labels_config = {"*.py": ["python"]}
+        labels_config: Dict[str, List[str]] = {"*.py": ["python"]}
 
         # Call the method
         result = self.github_ops.add_labels_to_pull_request(123, labels_config)
@@ -176,7 +177,7 @@ class TestGitHubOperations(unittest.TestCase):
         mock_pr.add_to_labels.assert_called_once_with("python")
         self.assertEqual(result, ["python"])
 
-    def test_add_labels_to_pull_request_exception(self):
+    def test_add_labels_to_pull_request_exception(self) -> None:
         """Test add_labels_to_pull_request method with exception."""
         # Mock PR
         mock_pr = MagicMock(spec=PullRequest)
@@ -185,7 +186,7 @@ class TestGitHubOperations(unittest.TestCase):
         self.mock_repo.get_pull.side_effect = GithubException(status=404, data={"message": "Not Found"})
 
         # Labels config
-        labels_config = {"*.py": ["python"]}
+        labels_config: Dict[str, List[str]] = {"*.py": ["python"]}
 
         # Call the method and verify exception
         with self.assertRaises(GithubException) as context:

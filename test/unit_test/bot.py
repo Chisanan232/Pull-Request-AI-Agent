@@ -34,20 +34,20 @@ class SpyAgent(PullRequestAIAgent):
         ai_client_api_key: Optional[str] = None,
     ):
         # Initialize attributes directly
-        self.repo_path = repo_path
-        self.base_branch = base_branch
-        self.github_token = github_token
-        self.github_repo = github_repo
-        self.project_management_tool_type = project_management_tool_type
-        self.project_management_tool_config = project_management_tool_config
-        self.ai_client_type = ai_client_type
-        self.ai_client_api_key = ai_client_api_key
+        self.repo_path: str = repo_path
+        self.base_branch: str = base_branch
+        self.github_token: Optional[str] = github_token
+        self.github_repo: Optional[str] = github_repo
+        self.project_management_tool_type: Optional[ProjectManagementToolType] = project_management_tool_type
+        self.project_management_tool_config: Optional[Dict[str, Any]] = project_management_tool_config
+        self.ai_client_type: AiModuleClient = ai_client_type
+        self.ai_client_api_key: Optional[str] = ai_client_api_key
 
         # Initialize components
-        self.git_handler = None  # type: ignore[assignment]
-        self.github_operations = None
-        self.project_management_client = None
-        self.ai_client = None  # type: ignore[assignment]
+        self.git_handler: Optional[GitHandler] = None  # type: ignore[assignment]
+        self.github_operations: Optional[GitHubOperations] = None
+        self.project_management_client: Optional[Any] = None
+        self.ai_client: Optional[Any] = None  # type: ignore[assignment]
 
 
 class TestPullRequestAIAgent:

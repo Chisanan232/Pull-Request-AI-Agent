@@ -1,7 +1,6 @@
-"""
-Unit tests for the GitHandler class.
-"""
+"""Unit tests for the GitHandler class."""
 
+from typing import Any, Dict
 from unittest.mock import Mock, PropertyMock, patch
 
 import git
@@ -15,7 +14,7 @@ class TestGitHandler:
     """Test cases for GitHandler class."""
 
     @pytest.fixture
-    def mock_repo(self):
+    def mock_repo(self) -> Mock:
         """Create a mock git repo for testing."""
         mock_repo = Mock(spec=git.Repo)
 
@@ -55,14 +54,14 @@ class TestGitHandler:
         mock_remote.name = "origin"
 
         class MockRemotesContainer(dict):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
                 super().__init__(*args, **kwargs)
                 self.origin = mock_remote
 
-            def __iter__(self):
+            def __iter__(self) -> Any:
                 return iter([mock_remote])
 
-        mock_remotes = MockRemotesContainer()
+        mock_remotes: Dict[str, Mock] = MockRemotesContainer()
         mock_remotes["origin"] = mock_remote
         type(mock_repo).remotes = PropertyMock(return_value=mock_remotes)
 
@@ -70,7 +69,7 @@ class TestGitHandler:
         mock_ref = Mock()
         mock_ref.commit = mock_commit
 
-        mock_refs = {}
+        mock_refs: Dict[str, Mock] = {}
         mock_refs["origin/main"] = mock_ref
         mock_refs["origin/feature-branch"] = mock_ref
         type(mock_repo).refs = PropertyMock(return_value=mock_refs)
@@ -85,25 +84,25 @@ class TestGitHandler:
         return mock_repo
 
     @pytest.fixture
-    def git_handler(self, mock_repo):
+    def git_handler(self, mock_repo: Mock) -> GitHandler:
         """Create a GitHandler instance with a mock repo."""
         with patch("pull_request_ai_agent.git_hdlr.git.Repo", return_value=mock_repo):
             handler = GitHandler("/mock/repo/path")
             return handler
 
-    def test_init(self, mock_repo):
+    def test_init(self, mock_repo: Mock) -> None:
         """Test GitHandler initialization."""
         with patch("git.Repo", return_value=mock_repo) as mock_git_repo:
             handler = GitHandler("/path/to/repo")
             mock_git_repo.assert_called_once_with("/path/to/repo")
             assert handler.repo == mock_repo
 
-    def test_get_current_branch(self, git_handler, mock_repo):
+    def test_get_current_branch(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test _get_current_branch method."""
         branch_name = git_handler._get_current_branch()
         assert branch_name == "feature-branch"
 
-    def test_get_branch_head_commit_details_current_branch(self, git_handler):
+    def test_get_branch_head_commit_details_current_branch(self, git_handler: GitHandler) -> None:
         """Test get_branch_head_commit_details with current branch."""
         commit_details = git_handler.get_branch_head_commit_details()
 
@@ -113,19 +112,19 @@ class TestGitHandler:
         assert commit_details["author"]["name"] == "Test Author"
         assert commit_details["author"]["email"] == "test@example.com"
 
-    def test_get_branch_head_commit_details_specific_branch(self, git_handler):
+    def test_get_branch_head_commit_details_specific_branch(self, git_handler: GitHandler) -> None:
         """Test get_branch_head_commit_details with a specific branch."""
         commit_details = git_handler.get_branch_head_commit_details("main")
 
         assert commit_details["hash"] == "1234567890abcdef1234567890abcdef12345678"
         assert commit_details["author"]["name"] == "Test Author"
 
-    def test_get_branch_head_commit_details_nonexistent_branch(self, git_handler):
+    def test_get_branch_head_commit_details_nonexistent_branch(self, git_handler: GitHandler) -> None:
         """Test get_branch_head_commit_details with a nonexistent branch."""
         with pytest.raises(ValueError, match="Branch 'nonexistent-branch' not found"):
             git_handler.get_branch_head_commit_details("nonexistent-branch")
 
-    def test_get_remote_branch_head_commit_details(self, git_handler):
+    def test_get_remote_branch_head_commit_details(self, git_handler: GitHandler) -> None:
         """Test get_remote_branch_head_commit_details."""
         # Create a fresh mock repo with proper setup for this test
         with patch("pull_request_ai_agent.git_hdlr.git.Repo") as mock_git_repo:
@@ -148,10 +147,10 @@ class TestGitHandler:
             mock_remote.name = "origin"
 
             # Create a list-like object for remotes
-            mock_remotes = [mock_remote]
+            mock_remotes: Dict[str, Mock] = {}
+            mock_remotes["origin"] = mock_remote
             mock_remotes_container = Mock()
-            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes)
-            mock_remotes_container.origin = mock_remote
+            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes.values())
             type(mock_repo).remotes = PropertyMock(return_value=mock_remotes_container)
 
             # Set up mock refs
@@ -159,6 +158,7 @@ class TestGitHandler:
             mock_ref.commit = mock_commit
             mock_refs = {}
             mock_refs["origin/main"] = mock_ref
+            mock_refs["origin/feature-branch"] = mock_ref
             type(mock_repo).refs = PropertyMock(return_value=mock_refs)
 
             # Return our mock repo
@@ -176,16 +176,16 @@ class TestGitHandler:
             assert commit_details["author"]["name"] == "Test Author"
             assert commit_details["message"] == "Test commit message"
 
-    def test_get_remote_branch_head_commit_details_nonexistent_remote(self, git_handler):
+    def test_get_remote_branch_head_commit_details_nonexistent_remote(self, git_handler: GitHandler) -> None:
         """Test get_remote_branch_head_commit_details with nonexistent remote."""
         # Create a fresh mock repo with no remotes
         with patch("pull_request_ai_agent.git_hdlr.git.Repo") as mock_git_repo:
             mock_repo = Mock()
 
             # Set up empty remotes (empty list)
-            mock_remotes = []
+            mock_remotes: Dict[str, Mock] = {}
             mock_remotes_container = Mock()
-            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes)
+            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes.values())
             type(mock_repo).remotes = PropertyMock(return_value=mock_remotes_container)
 
             # Return our mock repo
@@ -198,7 +198,7 @@ class TestGitHandler:
             with pytest.raises(ValueError, match="Remote 'origin' not found"):
                 handler.get_remote_branch_head_commit_details("main")
 
-    def test_get_remote_branch_head_commit_details_nonexistent_branch(self, git_handler):
+    def test_get_remote_branch_head_commit_details_nonexistent_branch(self, git_handler: GitHandler) -> None:
         """Test get_remote_branch_head_commit_details with nonexistent branch."""
         # Create a fresh mock repo with remotes but missing the branch
         with patch("pull_request_ai_agent.git_hdlr.git.Repo") as mock_git_repo:
@@ -210,10 +210,10 @@ class TestGitHandler:
             mock_remote.name = "origin"
 
             # Create a list-like object for remotes
-            mock_remotes = [mock_remote]
+            mock_remotes: Dict[str, Mock] = {}
+            mock_remotes["origin"] = mock_remote
             mock_remotes_container = Mock()
-            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes)
-            mock_remotes_container.origin = mock_remote
+            mock_remotes_container.__iter__ = lambda self: iter(mock_remotes.values())
             type(mock_repo).remotes = PropertyMock(return_value=mock_remotes_container)
 
             # Set up refs without the target branch
@@ -231,11 +231,11 @@ class TestGitHandler:
             with pytest.raises(ValueError, match="Remote branch 'origin/main' not found"):
                 handler.get_remote_branch_head_commit_details("main")
 
-    def test_is_branch_outdated_not_outdated(self, git_handler, mock_repo):
+    def test_is_branch_outdated_not_outdated(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test is_branch_outdated when branch is not outdated."""
 
         # Create a custom is_branch_outdated implementation to patch with
-        def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
+        def mock_is_branch_outdated(branch_name: str, base_branch: str, remote_name: str = "origin") -> bool:
             return False
 
         # Patch the method to return our fixed value
@@ -243,11 +243,11 @@ class TestGitHandler:
             # Should not be outdated based on our mock
             assert not git_handler.is_branch_outdated("feature-branch", "main")
 
-    def test_is_branch_outdated_is_outdated(self, git_handler, mock_repo):
+    def test_is_branch_outdated_is_outdated(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test is_branch_outdated when branch is outdated."""
 
         # Create a custom is_branch_outdated implementation to patch with
-        def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
+        def mock_is_branch_outdated(branch_name: str, base_branch: str, remote_name: str = "origin") -> bool:
             return True
 
         # Patch the method to return our fixed value
@@ -255,11 +255,11 @@ class TestGitHandler:
             # Should be outdated based on our mock
             assert git_handler.is_branch_outdated("feature-branch", "main")
 
-    def test_is_branch_outdated_no_common_ancestor(self, git_handler, mock_repo):
+    def test_is_branch_outdated_no_common_ancestor(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test is_branch_outdated when there's no common ancestor."""
 
         # Create a custom is_branch_outdated implementation to patch with
-        def mock_is_branch_outdated(branch_name, base_branch, remote_name="origin"):
+        def mock_is_branch_outdated(branch_name: str, base_branch: str, remote_name: str = "origin") -> bool:
             return True
 
         # Patch the method to return our fixed value
@@ -267,7 +267,7 @@ class TestGitHandler:
             # Should be outdated when there's no common ancestor
             assert git_handler.is_branch_outdated("feature-branch", "main")
 
-    def test_fetch_and_merge_remote_branch_success(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_success(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch successful merge."""
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
@@ -288,7 +288,7 @@ class TestGitHandler:
         # Should return True for successful merge
         assert result is True
 
-    def test_fetch_and_merge_remote_branch_needs_checkout(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_needs_checkout(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with branch checkout."""
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
@@ -312,7 +312,7 @@ class TestGitHandler:
         # Should return True for successful merge
         assert result is True
 
-    def test_fetch_and_merge_remote_branch_conflict(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_conflict(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with conflict."""
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
@@ -347,7 +347,7 @@ class TestGitHandler:
         merge_calls = mock_repo.git.merge.call_args_list
         assert any(call.args[0] == "origin/feature-branch" for call in merge_calls)
 
-    def test_fetch_and_merge_remote_branch_other_error(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_other_error(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with non-conflict error."""
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
@@ -380,7 +380,7 @@ class TestGitHandler:
         merge_calls = mock_repo.git.merge.call_args_list
         assert any(call.args[0] == "origin/feature-branch" for call in merge_calls)
 
-    def test_fetch_and_merge_remote_branch_nonexistent_branch(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_nonexistent_branch(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with nonexistent branch."""
         # Set up a KeyError to be raised when trying to access branches
         mock_repo.heads = [Mock()]  # At least one branch to avoid index errors
@@ -394,16 +394,15 @@ class TestGitHandler:
             ):
                 git_handler.fetch_and_merge_remote_branch("nonexistent-branch")
 
-    def test_push_branch_to_remote_success(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_success(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote success."""
         result = git_handler.push_branch_to_remote("feature-branch")
 
         # Verify push was called
         mock_repo.git.push.assert_called_once_with("origin", "feature-branch")
-
         assert result is True
 
-    def test_push_branch_to_remote_force(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_force(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote with force option."""
         result = git_handler.push_branch_to_remote("feature-branch", force=True)
 
@@ -412,7 +411,7 @@ class TestGitHandler:
 
         assert result is True
 
-    def test_push_branch_to_remote_nonexistent_branch(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_nonexistent_branch(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote with nonexistent branch."""
         # Setup mock_repo.heads to return a list without the requested branch
         mock_heads = []
@@ -424,7 +423,7 @@ class TestGitHandler:
         with pytest.raises(ValueError, match="Branch 'nonexistent-branch' not found in available branches"):
             git_handler.push_branch_to_remote("nonexistent-branch")
 
-    def test_push_branch_to_remote_permission_denied(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_permission_denied(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote with permission denied error."""
         # Mock git push to raise a GitCommandError with permission denied message
         mock_repo.git.push.side_effect = GitCommandError(
@@ -436,7 +435,7 @@ class TestGitHandler:
 
         mock_repo.git.push.assert_called_once_with("origin", "feature-branch")
 
-    def test_push_branch_to_remote_rejected(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_rejected(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote when remote rejects the push."""
         # Mock git push to raise a GitCommandError with rejected push message
         mock_repo.git.push.side_effect = GitCommandError(
@@ -450,7 +449,7 @@ class TestGitHandler:
 
         mock_repo.git.push.assert_called_once_with("origin", "feature-branch")
 
-    def test_init_detached_head(self):
+    def test_init_detached_head(self) -> None:
         """Test GitHandler initialization with a detached HEAD state."""
         mock_repo = Mock(spec=git.Repo)
 
@@ -459,14 +458,14 @@ class TestGitHandler:
         mock_remote.name = "origin"
 
         class MockRemotesContainer(dict):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
                 super().__init__(*args, **kwargs)
                 self.origin = mock_remote
 
-            def __iter__(self):
+            def __iter__(self) -> Any:
                 return iter([mock_remote])
 
-        mock_remotes = MockRemotesContainer()
+        mock_remotes: Dict[str, Mock] = MockRemotesContainer()
         mock_remotes["origin"] = mock_remote
         type(mock_repo).remotes = PropertyMock(return_value=mock_remotes)
 
@@ -480,7 +479,7 @@ class TestGitHandler:
             with pytest.raises(TypeError, match="HEAD is detached"):
                 handler._get_current_branch()
 
-    def test_init_no_remotes(self):
+    def test_init_no_remotes(self) -> None:
         """Test GitHandler initialization with a repository that has no remotes."""
         mock_repo = Mock(spec=git.Repo)
 
@@ -491,11 +490,11 @@ class TestGitHandler:
 
         # Create an empty dictionary-like object for remotes
         class EmptyRemotesContainer(dict):
-            def __iter__(self):
+            def __iter__(self) -> Any:
                 return iter([])  # Empty iterator
 
         # Setup empty remotes that supports iteration
-        mock_remotes = EmptyRemotesContainer()
+        mock_remotes: Dict[str, Mock] = EmptyRemotesContainer()
         type(mock_repo).remotes = PropertyMock(return_value=mock_remotes)
 
         with patch("pull_request_ai_agent.git_hdlr.git.Repo", return_value=mock_repo):
@@ -505,7 +504,9 @@ class TestGitHandler:
             with pytest.raises(ValueError, match="Remote 'origin' not found"):
                 handler.get_remote_branch_head_commit_details("main")
 
-    def test_get_branch_head_commit_details_with_unusual_characters(self, git_handler, mock_repo):
+    def test_get_branch_head_commit_details_with_unusual_characters(
+        self, git_handler: GitHandler, mock_repo: Mock
+    ) -> None:
         """Test get_branch_head_commit_details with branch names containing unusual characters."""
         # Create a mock branch with unusual name
         mock_branch = Mock()
@@ -532,7 +533,7 @@ class TestGitHandler:
         assert commit_details["hash"] == "abcdef1234567890abcdef1234567890abcdef12"
         assert commit_details["message"] == "Test commit message with unusual chars"
 
-    def test_fetch_and_merge_remote_branch_empty_repo(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_empty_repo(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch in an empty repository."""
         # Set up the mock to simulate an empty repository
         mock_repo.merge_base.side_effect = GitCommandError(
@@ -542,7 +543,7 @@ class TestGitHandler:
         with pytest.raises(GitCommandError, match="Not a valid commit name"):
             git_handler.fetch_and_merge_remote_branch("main")
 
-    def test_fetch_and_merge_remote_branch_network_error(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_network_error(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with a network error during fetch."""
         # Set up the mock to simulate a network error during fetch
         mock_remote = mock_repo.remotes["origin"]
@@ -555,7 +556,7 @@ class TestGitHandler:
         with pytest.raises(GitCommandError, match="Could not resolve host"):
             git_handler.fetch_and_merge_remote_branch("main")
 
-    def test_is_branch_outdated_identical_branches(self, git_handler, mock_repo):
+    def test_is_branch_outdated_identical_branches(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test is_branch_outdated when branches are identical."""
         # Mock commit with the same hash for both branches
         mock_commit = Mock()
@@ -576,7 +577,7 @@ class TestGitHandler:
         result = git_handler.is_branch_outdated("feature-branch", "main", "origin")
         assert result is False
 
-    def test_fetch_and_merge_remote_branch_unrelated_histories(self, git_handler, mock_repo):
+    def test_fetch_and_merge_remote_branch_unrelated_histories(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test fetch_and_merge_remote_branch with unrelated histories."""
         # Create branch and remote branch
         mock_branch = mock_repo.heads[0]
@@ -597,22 +598,22 @@ class TestGitHandler:
         with pytest.raises(GitCommandError, match="refusing to merge unrelated histories"):
             git_handler.fetch_and_merge_remote_branch("feature-branch")
 
-    def test_push_branch_to_remote_custom_remote(self, git_handler, mock_repo):
+    def test_push_branch_to_remote_custom_remote(self, git_handler: GitHandler, mock_repo: Mock) -> None:
         """Test push_branch_to_remote with a custom remote name."""
         # Setup a custom remote
         mock_custom_remote = Mock()
         mock_custom_remote.name = "upstream"
 
         class MockRemotesWithCustom(dict):
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
                 super().__init__(*args, **kwargs)
                 self.origin = mock_repo.remotes["origin"]
                 self.upstream = mock_custom_remote
 
-            def __iter__(self):
+            def __iter__(self) -> Any:
                 return iter([self.origin, self.upstream])
 
-        mock_remotes = MockRemotesWithCustom()
+        mock_remotes: Dict[str, Mock] = MockRemotesWithCustom()
         mock_remotes["origin"] = mock_repo.remotes["origin"]
         mock_remotes["upstream"] = mock_custom_remote
         type(mock_repo).remotes = PropertyMock(return_value=mock_remotes)
@@ -624,7 +625,9 @@ class TestGitHandler:
         mock_repo.git.push.assert_called_once_with("upstream", "feature-branch")
         assert result is True
 
-    def test_get_remote_branch_head_commit_details_unusual_remote(self, git_handler, mock_repo):
+    def test_get_remote_branch_head_commit_details_unusual_remote(
+        self, git_handler: GitHandler, mock_repo: Mock
+    ) -> None:
         """Test get_remote_branch_head_commit_details with an unusual remote name."""
         # Create a fresh mock repo with proper setup for this test
         with patch("pull_request_ai_agent.git_hdlr.git.Repo") as mock_git_repo:
@@ -648,14 +651,14 @@ class TestGitHandler:
 
             # Create a dictionary-like container for remotes
             class MockRemotesContainer(dict):
-                def __init__(self, *args, **kwargs):
+                def __init__(self, *args: Any, **kwargs: Any) -> None:
                     super().__init__(*args, **kwargs)
                     self["fork-origin"] = mock_remote
 
-                def __iter__(self):
+                def __iter__(self) -> Any:
                     return iter([mock_remote])
 
-            mock_remotes = MockRemotesContainer()
+            mock_remotes: Dict[str, Mock] = MockRemotesContainer()
             type(mock_repo).remotes = PropertyMock(return_value=mock_remotes)
 
             # Set up refs with the unusual remote name

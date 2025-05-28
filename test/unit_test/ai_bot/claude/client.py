@@ -53,7 +53,7 @@ def sample_claude_response_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_claude_response(sample_claude_response_data) -> ClaudeResponse:
+def sample_claude_response(sample_claude_response_data: Dict[str, Any]) -> ClaudeResponse:
     """Fixture for a sample ClaudeResponse object."""
     content_items = [
         ClaudeContent(type=item["type"], text=item["text"]) for item in sample_claude_response_data["content"]
@@ -75,12 +75,12 @@ def sample_claude_response(sample_claude_response_data) -> ClaudeResponse:
 
 
 @pytest.fixture
-def claude_client(mock_api_key) -> ClaudeClient:
+def claude_client(mock_api_key: str) -> ClaudeClient:
     """Fixture for a ClaudeClient instance with a mock API key."""
     return ClaudeClient(api_key=mock_api_key)
 
 
-def test_claude_content_dataclass():
+def test_claude_content_dataclass() -> None:
     """Test that ClaudeContent is a frozen dataclass with the expected attributes."""
     content = ClaudeContent(type="text", text="Test content")
     assert content.type == "text"
@@ -88,10 +88,10 @@ def test_claude_content_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        content.text = "New content"
+        content.text = "New content"  # type: ignore[misc]
 
 
-def test_claude_message_dataclass():
+def test_claude_message_dataclass() -> None:
     """Test that ClaudeMessage is a frozen dataclass with the expected attributes."""
     content = ClaudeContent(type="text", text="Test content")
     message = ClaudeMessage(
@@ -114,10 +114,10 @@ def test_claude_message_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        message.content = []
+        message.content = []  # type: ignore[misc]
 
 
-def test_claude_usage_dataclass():
+def test_claude_usage_dataclass() -> None:
     """Test that ClaudeUsage is a frozen dataclass with the expected attributes."""
     usage = ClaudeUsage(input_tokens=15, output_tokens=8)
 
@@ -126,10 +126,10 @@ def test_claude_usage_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        usage.input_tokens = 20
+        usage.input_tokens = 20  # type: ignore[misc]
 
 
-def test_claude_response_dataclass():
+def test_claude_response_dataclass() -> None:
     """Test that ClaudeResponse is a frozen dataclass with the expected attributes."""
     content = ClaudeContent(type="text", text="Test content")
     usage = ClaudeUsage(input_tokens=15, output_tokens=8)
@@ -156,10 +156,10 @@ def test_claude_response_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        response.content = []
+        response.content = []  # type: ignore[misc]
 
 
-def test_claude_client_init_with_api_key(mock_api_key):
+def test_claude_client_init_with_api_key(mock_api_key: str) -> None:
     """Test ClaudeClient initialization with an explicitly provided API key."""
     client = ClaudeClient(api_key=mock_api_key)
 
@@ -169,14 +169,14 @@ def test_claude_client_init_with_api_key(mock_api_key):
     assert client.max_tokens == ClaudeClient.DEFAULT_MAX_TOKENS
 
 
-def test_claude_client_init_with_env_api_key():
+def test_claude_client_init_with_env_api_key() -> None:
     """Test ClaudeClient initialization with an API key from environment variables."""
     with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "env-api-key"}):
         client = ClaudeClient()
         assert client.api_key == "env-api-key"
 
 
-def test_claude_client_init_missing_api_key():
+def test_claude_client_init_missing_api_key() -> None:
     """Test that ClaudeClient initialization raises ValueError when no API key is available."""
     with patch.dict(os.environ, {}, clear=True):
         with pytest.raises(ValueError) as excinfo:
@@ -184,7 +184,7 @@ def test_claude_client_init_missing_api_key():
         assert "API key is required" in str(excinfo.value)
 
 
-def test_claude_client_init_custom_parameters():
+def test_claude_client_init_custom_parameters() -> None:
     """Test ClaudeClient initialization with custom parameters."""
     client = ClaudeClient(api_key="custom-api-key", model="claude-3-sonnet-20240229", temperature=0.5, max_tokens=1000)
 
@@ -194,7 +194,7 @@ def test_claude_client_init_custom_parameters():
     assert client.max_tokens == 1000
 
 
-def test_prepare_headers(claude_client, mock_api_key):
+def test_prepare_headers(claude_client: ClaudeClient, mock_api_key: str) -> None:
     """Test that _prepare_headers returns the expected headers."""
     headers = claude_client._prepare_headers()
 
@@ -203,7 +203,7 @@ def test_prepare_headers(claude_client, mock_api_key):
     assert headers["anthropic-version"] == ClaudeClient.API_VERSION
 
 
-def test_prepare_payload_basic(claude_client, sample_prompt):
+def test_prepare_payload_basic(claude_client: ClaudeClient, sample_prompt: str) -> None:
     """Test that _prepare_payload returns the expected payload with a basic prompt."""
     payload = claude_client._prepare_payload(sample_prompt)
 
@@ -218,7 +218,9 @@ def test_prepare_payload_basic(claude_client, sample_prompt):
     assert "system" not in payload
 
 
-def test_prepare_payload_with_system_message(claude_client, sample_prompt, sample_system_message):
+def test_prepare_payload_with_system_message(
+    claude_client: ClaudeClient, sample_prompt: str, sample_system_message: str
+) -> None:
     """Test that _prepare_payload returns the expected payload with a system message."""
     payload = claude_client._prepare_payload(sample_prompt, sample_system_message)
 
@@ -226,7 +228,7 @@ def test_prepare_payload_with_system_message(claude_client, sample_prompt, sampl
     assert payload["system"] == sample_system_message
 
 
-def test_parse_response_success(claude_client, sample_claude_response_data):
+def test_parse_response_success(claude_client: ClaudeClient, sample_claude_response_data: Dict[str, Any]) -> None:
     """Test that _parse_response correctly parses a successful API response."""
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -257,7 +259,7 @@ def test_parse_response_success(claude_client, sample_claude_response_data):
     assert usage.output_tokens == usage_data["output_tokens"]
 
 
-def test_parse_response_error(claude_client):
+def test_parse_response_error(claude_client: ClaudeClient) -> None:
     """Test that _parse_response raises ValueError for error responses."""
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -272,7 +274,7 @@ def test_parse_response_error(claude_client):
     assert "API request failed" in str(excinfo.value)
 
 
-def test_parse_response_malformed(claude_client):
+def test_parse_response_malformed(claude_client: ClaudeClient) -> None:
     """Test that _parse_response raises ValueError for malformed responses."""
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -286,7 +288,9 @@ def test_parse_response_malformed(claude_client):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_success(mock_request, claude_client, sample_prompt, sample_claude_response_data):
+def test_ask_success(
+    mock_request: Any, claude_client: ClaudeClient, sample_prompt: str, sample_claude_response_data: Dict[str, Any]
+) -> None:
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -322,8 +326,12 @@ def test_ask_success(mock_request, claude_client, sample_prompt, sample_claude_r
 
 @patch("urllib3.PoolManager.request")
 def test_ask_with_system_message(
-    mock_request, claude_client, sample_prompt, sample_system_message, sample_claude_response_data
-):
+    mock_request: Any,
+    claude_client: ClaudeClient,
+    sample_prompt: str,
+    sample_system_message: str,
+    sample_claude_response_data: Dict[str, Any],
+) -> None:
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -341,7 +349,7 @@ def test_ask_with_system_message(
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_api_error(mock_request, claude_client, sample_prompt):
+def test_ask_api_error(mock_request: Any, claude_client: ClaudeClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -358,7 +366,7 @@ def test_ask_api_error(mock_request, claude_client, sample_prompt):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_connection_error(mock_request, claude_client, sample_prompt):
+def test_ask_connection_error(mock_request: Any, claude_client: ClaudeClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
     mock_request.side_effect = Exception("Connection error")
@@ -370,7 +378,9 @@ def test_ask_connection_error(mock_request, claude_client, sample_prompt):
 
 
 @patch("pull_request_ai_agent.ai_bot.claude.client.ClaudeClient.ask")
-def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_response):
+def test_get_content(
+    mock_ask: Any, claude_client: ClaudeClient, sample_prompt: str, sample_claude_response: ClaudeResponse
+) -> None:
     """Test that get_content returns just the content from the response."""
     # Set up the mock to return a sample response
     mock_ask.return_value = sample_claude_response
@@ -387,7 +397,7 @@ def test_get_content(mock_ask, claude_client, sample_prompt, sample_claude_respo
 
 
 @patch("pull_request_ai_agent.ai_bot.claude.client.ClaudeClient.ask")
-def test_get_content_no_content(mock_ask, claude_client, sample_prompt):
+def test_get_content_no_content(mock_ask: Any, claude_client: ClaudeClient, sample_prompt: str) -> None:
     """Test that get_content raises IndexError when there is no content in the response."""
     # Create a response with no content
     empty_response = ClaudeResponse(

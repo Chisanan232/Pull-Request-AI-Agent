@@ -2,7 +2,6 @@
 
 import json
 import os
-from enum import Enum
 from pathlib import Path
 from typing import List, Type
 from unittest.mock import Mock, mock_open, patch
@@ -131,7 +130,8 @@ def test_get_prompt_model(mock_prompt_content):
 def test_get_prompt_model_unknown_prompt():
     """Test that get_prompt_model raises KeyError for unknown prompt names."""
     with pytest.raises(KeyError):
-        get_prompt_model(PromptName["nonexistent-prompt-name"])
+        with patch.dict(PROMPT_MODEL_MAPPING, {}, clear=True):
+            get_prompt_model(PromptName.SUMMARIZE_AS_CLEAR_TITLE)
 
 
 def test_real_prompt_file_exists():
@@ -149,61 +149,69 @@ def test_real_prompt_file_exists():
 class TestPromptModel:
     """Tests for the prompt model module."""
 
-    def test_load_prompt_from_file(self):
+    def test_load_prompt_from_file(self, mock_prompt_content: str) -> None:
         """Test loading prompt content from a file."""
         # Mock the open function
-        mock_content = "This is a test prompt"
-        with patch("builtins.open", mock_open(read_data=mock_content)) as mock_file:
+        mock_path = "path/to/prompt.prompt"
+        with patch("builtins.open", mock_open(read_data=mock_prompt_content)) as mock_file:
             # Mock Path.exists to return True
             with patch("pathlib.Path.exists", return_value=True):
-                content = load_prompt_from_file("test_prompt.prompt")
-                assert content == mock_content
-                mock_file.assert_called_once_with(Path("test_prompt.prompt"), "r", encoding="utf-8")
+                content = load_prompt_from_file(mock_path)
 
-    def test_load_prompt_from_file_not_found(self):
+                # Verify the correct file was opened
+                mock_file.assert_called_once_with(Path(mock_path), "r", encoding="utf-8")
+
+                # Verify the content matches
+                assert content == mock_prompt_content
+
+    def test_load_prompt_from_file_not_found(self) -> None:
         """Test loading prompt content from a non-existent file."""
         # Mock Path.exists to return False
         with patch("pathlib.Path.exists", return_value=False):
             with pytest.raises(FileNotFoundError):
                 load_prompt_from_file("non_existent_prompt.prompt")
 
-    def test_create_prompt_model(self):
+    def test_create_prompt_model(self, mock_prompt_content: str) -> None:
         """Test creating a prompt model."""
         # Mock load_prompt_from_file
-        with patch("pull_request_ai_agent.ai_bot.prompts.model.load_prompt_from_file", return_value="Test content"):
+        prompt_name = Mock()
+        prompt_name.value = "test-prompt"
+        with patch(
+            "pull_request_ai_agent.ai_bot.prompts.model.load_prompt_from_file", return_value=mock_prompt_content
+        ):
             # Create a prompt model
-            model = create_prompt_model(SummarizeAsPullRequestTitle, PromptName.SUMMARIZE_AS_CLEAR_TITLE)
+            model = create_prompt_model(SummarizeAsPullRequestTitle, prompt_name)
 
             # Verify the model
             assert isinstance(model, SummarizeAsPullRequestTitle)
-            assert model.content == "Test content"
+            assert model.content == mock_prompt_content
 
-    def test_get_prompt_model(self):
+    def test_get_prompt_model(self, mock_prompt_content: str) -> None:
         """Test getting a prompt model by name."""
         # Mock create_prompt_model
         with patch("pull_request_ai_agent.ai_bot.prompts.model.create_prompt_model") as mock_create:
-            mock_create.return_value = SummarizeAsPullRequestTitle(content="Test content")
+            mock_create.return_value = SummarizeAsPullRequestTitle(content=mock_prompt_content)
 
             # Get a prompt model
             model = get_prompt_model(PromptName.SUMMARIZE_AS_CLEAR_TITLE)
 
             # Verify the model
             assert isinstance(model, SummarizeAsPullRequestTitle)
-            assert model.content == "Test content"
+            assert model.content == mock_prompt_content
             mock_create.assert_called_once_with(SummarizeAsPullRequestTitle, PromptName.SUMMARIZE_AS_CLEAR_TITLE)
 
-    def test_get_prompt_model_unknown(self):
+    def test_get_prompt_model_unknown(self) -> None:
         """Test getting a prompt model with an unknown name."""
 
         # Create a mock enum value that's not in the mapping
-        class MockPromptName(Enum):
-            UNKNOWN = "unknown"
+        unknown_prompt_name = PromptName.SUMMARIZE_AS_CLEAR_TITLE
 
         # Try to get a prompt model with an unknown name
-        with pytest.raises(KeyError):
-            get_prompt_model(MockPromptName.UNKNOWN)
+        with patch.dict(PROMPT_MODEL_MAPPING, {}, clear=True):
+            with pytest.raises(KeyError):
+                get_prompt_model(unknown_prompt_name)
 
-    def test_process_prompt_template(self):
+    def test_process_prompt_template(self, mock_prompt_content: str) -> None:
         """Test processing a prompt template."""
         # Create a test prompt template
         template = """
@@ -239,7 +247,7 @@ class TestPromptModel:
         assert "abc123: Fix login bug" in result
         assert "def456: Add new feature" in result
 
-    def test_process_prompt_template_empty_data(self):
+    def test_process_prompt_template_empty_data(self) -> None:
         """Test processing a prompt template with empty data."""
         # Create a test prompt template
         template = """
@@ -263,7 +271,7 @@ class TestPromptModel:
         assert "Commits:" in result
         assert "{{ all_commits }}" not in result
 
-    def test_process_prompt_template_with_pr_template(self):
+    def test_process_prompt_template_with_pr_template(self, mock_prompt_content: str) -> None:
         """Test processing a prompt template with PR template."""
         # Create a test prompt template
         template = """
@@ -301,7 +309,7 @@ class TestPromptModel:
                 assert "PR Template:" in result
                 assert mock_pr_template in result
 
-    def test_process_prompt_template_without_pr_template_file(self):
+    def test_process_prompt_template_without_pr_template_file(self) -> None:
         """Test processing a prompt template when PR template file doesn't exist."""
         # Create a test prompt template
         template = """
@@ -323,7 +331,7 @@ class TestPromptModel:
             empty_result = filtered_result.replace("\n", "").replace(" ", "").replace("```", "")
             assert empty_result == ""
 
-    def test_prepare_pr_prompt_data(self):
+    def test_prepare_pr_prompt_data(self, mock_prompt_content: str) -> PRPromptData:
         """Test preparing PR prompt data."""
         # Mock get_prompt_model
         with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
@@ -351,8 +359,9 @@ class TestPromptModel:
             assert json.dumps(task_tickets, indent=2) in result.description
             assert "abc123: Fix login bug" in result.title
             assert "abc123: Fix login bug" in result.description
+            return result
 
-    def test_prepare_pr_prompt_data_with_project_root(self):
+    def test_prepare_pr_prompt_data_with_project_root(self, mock_prompt_content: str) -> PRPromptData:
         """Test preparing PR prompt data with project root."""
         # Mock get_prompt_model
         with patch("pull_request_ai_agent.ai_bot.prompts.model.get_prompt_model") as mock_get_prompt:
@@ -375,8 +384,9 @@ class TestPromptModel:
                     assert "Description: " in result.description
                     assert mock_pr_template in result.title
                     assert mock_pr_template in result.description
+                    return result
 
-    def test_prepare_pr_prompt_data_file_not_found(self):
+    def test_prepare_pr_prompt_data_file_not_found(self) -> None:
         """Test preparing PR prompt data with a missing file."""
         # Mock get_prompt_model to raise FileNotFoundError
         with patch(
