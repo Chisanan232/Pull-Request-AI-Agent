@@ -8,9 +8,11 @@ involving multiple Git operations.
 
 import os
 import tempfile
+from typing import Generator, Tuple
 
 import git
 import pytest
+from git import Repo
 from git.exc import GitCommandError
 
 from pull_request_ai_agent.git_hdlr import GitCodeConflictError, GitHandler
@@ -20,7 +22,7 @@ class TestGitHandlerIntegration:
     """Integration tests for GitHandler class focusing on complex workflows."""
 
     @pytest.fixture(scope="function")
-    def temp_git_repo(self):
+    def temp_git_repo(self) -> Generator[Tuple[str, Repo], None, None]:
         """Create a temporary git repository for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Initialize a new git repository
@@ -56,7 +58,7 @@ class TestGitHandlerIntegration:
             yield temp_dir, repo
 
     @pytest.fixture(scope="function")
-    def temp_remote_repo(self, temp_git_repo):
+    def temp_remote_repo(self, temp_git_repo: Tuple[str, Repo]) -> Generator[Tuple[str, Repo, str, Repo], None, None]:
         """Create a temporary remote repository with the local repo as origin."""
         local_dir, local_repo = temp_git_repo
 
@@ -72,7 +74,7 @@ class TestGitHandlerIntegration:
 
             yield local_dir, local_repo, remote_dir, remote_repo
 
-    def test_real_branch_outdated_workflow(self, temp_remote_repo):
+    def test_real_branch_outdated_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test a real workflow where a branch becomes outdated and needs updating."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 
@@ -147,7 +149,7 @@ class TestGitHandlerIntegration:
         # Test is successful as long as the merge has correctly incorporated changes
         # The is_outdated check can still return True depending on remote state
 
-    def test_merge_conflict_resolution_workflow(self, temp_remote_repo):
+    def test_merge_conflict_resolution_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test a workflow with merge conflicts and their resolution."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 
@@ -200,7 +202,7 @@ class TestGitHandlerIntegration:
         # Verify the merge conflict state
         assert local_repo.git.status().find("both modified:") >= 0
 
-    def test_fetch_new_remote_branch_workflow(self, temp_remote_repo):
+    def test_fetch_new_remote_branch_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test fetching and checking out a new remote branch that doesn't exist locally."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 
@@ -247,7 +249,7 @@ class TestGitHandlerIntegration:
         # Verify the file exists
         assert os.path.exists(os.path.join(local_dir, "new_remote_feature.txt"))
 
-    def test_rebase_workflow(self, temp_remote_repo):
+    def test_rebase_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test a workflow involving rebasing a branch on top of updated main."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 
@@ -301,7 +303,7 @@ class TestGitHandlerIntegration:
 
         assert result is True
 
-    def test_deleted_remote_branch_workflow(self, temp_remote_repo):
+    def test_deleted_remote_branch_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test handling a branch that has been deleted on the remote."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 
@@ -336,7 +338,7 @@ class TestGitHandlerIntegration:
         with pytest.raises(ValueError, match="Remote branch 'origin/temp-branch' not found"):
             git_handler.get_remote_branch_head_commit_details("temp-branch")
 
-    def test_interrupted_merge_recovery_workflow(self, temp_remote_repo):
+    def test_interrupted_merge_recovery_workflow(self, temp_remote_repo: Tuple[str, Repo, str, Repo]) -> None:
         """Test recovery from an interrupted merge operation."""
         local_dir, local_repo, remote_dir, _ = temp_remote_repo
 

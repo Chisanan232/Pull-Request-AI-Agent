@@ -89,7 +89,7 @@ def gpt_client(mock_api_key) -> GPTClient:
     return GPTClient(api_key=mock_api_key)
 
 
-def test_gpt_message_dataclass():
+def test_gpt_message_dataclass() -> None:
     """Test that GPTMessage is a frozen dataclass with the expected attributes."""
     message = GPTMessage(role="user", content="Test content")
     assert message.role == "user"
@@ -97,10 +97,10 @@ def test_gpt_message_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        message.content = "New content"
+        message.content = "New content"  # type: ignore[misc]
 
 
-def test_gpt_choice_dataclass():
+def test_gpt_choice_dataclass() -> None:
     """Test that GPTChoice is a frozen dataclass with the expected attributes."""
     message = GPTMessage(role="assistant", content="Test response")
     choice = GPTChoice(index=0, message=message, finish_reason="stop")
@@ -111,10 +111,10 @@ def test_gpt_choice_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        choice.message = GPTMessage(role="user", content="Another message")
+        choice.message = GPTMessage(role="user", content="Another message")  # type: ignore[misc]
 
 
-def test_gpt_usage_dataclass():
+def test_gpt_usage_dataclass() -> None:
     """Test that GPTUsage is a frozen dataclass with the expected attributes."""
     usage = GPTUsage(prompt_tokens=10, completion_tokens=15, total_tokens=25)
 
@@ -124,10 +124,10 @@ def test_gpt_usage_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        usage.total_tokens = 30
+        usage.total_tokens = 30  # type: ignore[misc]
 
 
-def test_gpt_response_dataclass():
+def test_gpt_response_dataclass() -> None:
     """Test that GPTResponse is a frozen dataclass with the expected attributes."""
     message = GPTMessage(role="assistant", content="Test response")
     choice = GPTChoice(index=0, message=message, finish_reason="stop")
@@ -146,10 +146,10 @@ def test_gpt_response_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        response.choices = []
+        response.choices = []  # type: ignore[misc]
 
 
-def test_gpt_client_init_with_api_key(mock_api_key):
+def test_gpt_client_init_with_api_key(mock_api_key: str) -> None:
     """Test GPTClient initialization with an explicitly provided API key."""
     client = GPTClient(api_key=mock_api_key)
 
@@ -159,14 +159,14 @@ def test_gpt_client_init_with_api_key(mock_api_key):
     assert client.max_tokens == GPTClient.DEFAULT_MAX_TOKENS
 
 
-def test_gpt_client_init_with_env_api_key():
+def test_gpt_client_init_with_env_api_key() -> None:
     """Test GPTClient initialization with an API key from environment variables."""
     with patch.dict(os.environ, {"OPENAI_API_KEY": "env-api-key"}):
         client = GPTClient()
         assert client.api_key == "env-api-key"
 
 
-def test_gpt_client_init_missing_api_key():
+def test_gpt_client_init_missing_api_key() -> None:
     """Test that GPTClient initialization raises ValueError when no API key is available."""
     with patch.dict(os.environ, {}, clear=True):
         with pytest.raises(ValueError) as excinfo:
@@ -174,7 +174,7 @@ def test_gpt_client_init_missing_api_key():
         assert "API key is required" in str(excinfo.value)
 
 
-def test_gpt_client_init_custom_parameters():
+def test_gpt_client_init_custom_parameters() -> None:
     """Test GPTClient initialization with custom parameters."""
     client = GPTClient(api_key="custom-api-key", model="gpt-3.5-turbo", temperature=0.5, max_tokens=1000)
 
@@ -184,7 +184,7 @@ def test_gpt_client_init_custom_parameters():
     assert client.max_tokens == 1000
 
 
-def test_prepare_headers(gpt_client, mock_api_key):
+def test_prepare_headers(gpt_client: GPTClient, mock_api_key: str) -> None:
     """Test that _prepare_headers returns the expected headers."""
     headers = gpt_client._prepare_headers()
 
@@ -192,7 +192,7 @@ def test_prepare_headers(gpt_client, mock_api_key):
     assert headers["Authorization"] == f"Bearer {mock_api_key}"
 
 
-def test_prepare_payload_basic(gpt_client, sample_prompt):
+def test_prepare_payload_basic(gpt_client: GPTClient, sample_prompt: str) -> None:
     """Test that _prepare_payload returns the expected payload with a basic prompt."""
     payload = gpt_client._prepare_payload(sample_prompt)
 
@@ -204,7 +204,9 @@ def test_prepare_payload_basic(gpt_client, sample_prompt):
     assert payload["messages"][0]["content"] == sample_prompt
 
 
-def test_prepare_payload_with_system_message(gpt_client, sample_prompt, sample_system_message):
+def test_prepare_payload_with_system_message(
+    gpt_client: GPTClient, sample_prompt: str, sample_system_message: str
+) -> None:
     """Test that _prepare_payload returns the expected payload with a system message."""
     payload = gpt_client._prepare_payload(sample_prompt, sample_system_message)
 
@@ -215,7 +217,7 @@ def test_prepare_payload_with_system_message(gpt_client, sample_prompt, sample_s
     assert payload["messages"][1]["content"] == sample_prompt
 
 
-def test_parse_response_success(gpt_client, sample_gpt_response_data):
+def test_parse_response_success(gpt_client: GPTClient, sample_gpt_response_data: Dict[str, Any]) -> None:
     """Test that _parse_response correctly parses a successful API response."""
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -252,7 +254,7 @@ def test_parse_response_success(gpt_client, sample_gpt_response_data):
     assert usage.total_tokens == usage_data["total_tokens"]
 
 
-def test_parse_response_error(gpt_client):
+def test_parse_response_error(gpt_client: GPTClient) -> None:
     """Test that _parse_response raises ValueError for error responses."""
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -268,7 +270,7 @@ def test_parse_response_error(gpt_client):
     assert "Invalid request" in str(excinfo.value)
 
 
-def test_parse_response_malformed(gpt_client):
+def test_parse_response_malformed(gpt_client: GPTClient) -> None:
     """Test that _parse_response raises ValueError for malformed responses."""
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -282,7 +284,9 @@ def test_parse_response_malformed(gpt_client):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_success(mock_request, gpt_client, sample_prompt, sample_gpt_response_data):
+def test_ask_success(
+    mock_request: Any, gpt_client: GPTClient, sample_prompt: str, sample_gpt_response_data: Dict[str, Any]
+) -> None:
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -319,8 +323,12 @@ def test_ask_success(mock_request, gpt_client, sample_prompt, sample_gpt_respons
 
 @patch("urllib3.PoolManager.request")
 def test_ask_with_system_message(
-    mock_request, gpt_client, sample_prompt, sample_system_message, sample_gpt_response_data
-):
+    mock_request: Any,
+    gpt_client: GPTClient,
+    sample_prompt: str,
+    sample_system_message: str,
+    sample_gpt_response_data: Dict[str, Any],
+) -> None:
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -341,7 +349,7 @@ def test_ask_with_system_message(
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_api_error(mock_request, gpt_client, sample_prompt):
+def test_ask_api_error(mock_request: Any, gpt_client: GPTClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -358,7 +366,7 @@ def test_ask_api_error(mock_request, gpt_client, sample_prompt):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_connection_error(mock_request, gpt_client, sample_prompt):
+def test_ask_connection_error(mock_request: Any, gpt_client: GPTClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
     mock_request.side_effect = Exception("Connection error")
@@ -370,7 +378,9 @@ def test_ask_connection_error(mock_request, gpt_client, sample_prompt):
 
 
 @patch("pull_request_ai_agent.ai_bot.gpt.client.GPTClient.ask")
-def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
+def test_get_content(
+    mock_ask: Any, gpt_client: GPTClient, sample_prompt: str, sample_gpt_response: GPTResponse
+) -> None:
     """Test that get_content returns just the content from the first choice."""
     # Set up the mock to return a sample response
     mock_ask.return_value = sample_gpt_response
@@ -387,7 +397,7 @@ def test_get_content(mock_ask, gpt_client, sample_prompt, sample_gpt_response):
 
 
 @patch("pull_request_ai_agent.ai_bot.gpt.client.GPTClient.ask")
-def test_get_content_no_choices(mock_ask, gpt_client, sample_prompt):
+def test_get_content_no_choices(mock_ask: Any, gpt_client: GPTClient, sample_prompt: str) -> None:
     """Test that get_content raises IndexError when there are no choices in the response."""
     # Create a response with no choices
     empty_response = GPTResponse(

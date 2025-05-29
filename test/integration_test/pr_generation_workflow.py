@@ -6,11 +6,13 @@ the integration between git commits, task tickets, and AI-generated content.
 """
 
 import re
+from typing import Any, Dict, Optional, cast
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from pull_request_ai_agent.ai_bot import AiModuleClient
+from pull_request_ai_agent.ai_bot._base.client import BaseAIClient
 from pull_request_ai_agent.bot import PullRequestAIAgent
 from pull_request_ai_agent.project_management_tool._base.model import BaseImmutableModel
 
@@ -18,17 +20,29 @@ from pull_request_ai_agent.project_management_tool._base.model import BaseImmuta
 class MockTicketData(BaseImmutableModel):
     """Mock ticket data for testing."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
+        self.id: str = kwargs.get("id", "")
+        self.name: str = kwargs.get("name", "")
+        self.description: str = kwargs.get("description", "")
+        self.text_content: str = kwargs.get("text_content", "")
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def serialize(self):
-        """Implement required abstract method."""
+    # Instance method for serializing this instance
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert instance to dictionary."""
         return {k: v for k, v in self.__dict__.items()}
+
+    @classmethod
+    def serialize(cls, data: Dict[str, Any]) -> Optional[BaseImmutableModel]:
+        """Implement required abstract method with correct signature."""
+        if not data:
+            return None
+        return cls(**data)
 
 
 @pytest.fixture
-def mock_git_handler():
+def mock_git_handler() -> MagicMock:
     """Create a mock git handler for PR generation tests."""
     handler = MagicMock()
 
@@ -81,7 +95,7 @@ def mock_git_handler():
 
 
 @pytest.fixture
-def mock_project_management_client():
+def mock_project_management_client() -> MagicMock:
     """Create a mock project management client for PR generation tests."""
     client = MagicMock()
 
@@ -115,9 +129,9 @@ def mock_project_management_client():
 
 
 @pytest.fixture
-def mock_ai_client():
+def mock_ai_client() -> MagicMock:
     """Create a mock AI client for PR generation tests."""
-    ai_client = MagicMock()
+    ai_client = MagicMock(spec=BaseAIClient)
 
     # Configure the mock AI client to return appropriate responses
     def get_content(prompt):
@@ -214,7 +228,9 @@ class TestPRGenerationWorkflow:
     """Test the entire PR generation workflow."""
 
     @pytest.fixture
-    def pr_bot(self, mock_git_handler, mock_project_management_client, mock_ai_client):
+    def pr_bot(
+        self, mock_git_handler: MagicMock, mock_project_management_client: MagicMock, mock_ai_client: MagicMock
+    ) -> PullRequestAIAgent:
         """Create a PR bot with mock dependencies for testing."""
         with (
             patch("pull_request_ai_agent.bot.GitHandler") as MockGitHandler,
@@ -238,7 +254,7 @@ class TestPRGenerationWorkflow:
 
             return bot
 
-    def test_feature_branch_workflow(self, pr_bot, mock_git_handler):
+    def test_feature_branch_workflow(self, pr_bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test the PR generation workflow for a feature branch."""
         # Set up the feature branch
         branch_name = "feature/JIRA-123"
@@ -312,8 +328,9 @@ Please create a GitHub pull request title and body based on the following inform
             # Test ticket fetching
             ticket_details = pr_bot.get_ticket_details([ticket_id])
             assert len(ticket_details) == 1
-            assert ticket_details[0].id == "JIRA-123"
-            assert "Add API endpoint" in ticket_details[0].name
+            ticket = cast(MockTicketData, ticket_details[0])
+            assert ticket.id == "JIRA-123"
+            assert "Add API endpoint" in ticket.name
 
             # Mock get_branch_commits
             with patch.object(pr_bot, "get_branch_commits") as mock_get_commits:
@@ -328,11 +345,12 @@ Please create a GitHub pull request title and body based on the following inform
 
                 # Test AI prompt preparation
                 prompt = pr_bot.prepare_ai_prompt(mock_get_commits.return_value, ticket_details)
+                assert isinstance(prompt, str)
                 assert "JIRA-123" in prompt
                 assert "Add API endpoint" in prompt
 
                 # Test AI response and parsing
-                ai_response = pr_bot.ai_client.get_content(prompt)
+                ai_response = pr_bot.ai_client.get_content(cast(str, prompt))
                 assert "Add API endpoint" in ai_response
 
                 title = pr_bot._parse_ai_response_title(ai_response)
@@ -353,7 +371,7 @@ Please create a GitHub pull request title and body based on the following inform
                 for section in required_sections:
                     assert re.search(section, body), f"Missing required section: {section}"
 
-    def test_bugfix_branch_workflow(self, pr_bot, mock_git_handler):
+    def test_bugfix_branch_workflow(self, pr_bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test the PR generation workflow for a bugfix branch."""
         # Set up the bugfix branch
         branch_name = "bugfix/JIRA-456"
@@ -427,8 +445,9 @@ Please create a GitHub pull request title and body based on the following inform
             # Test ticket fetching
             ticket_details = pr_bot.get_ticket_details([ticket_id])
             assert len(ticket_details) == 1
-            assert ticket_details[0].id == "JIRA-456"
-            assert "Fix JWT token validation" in ticket_details[0].name
+            ticket = cast(MockTicketData, ticket_details[0])
+            assert ticket.id == "JIRA-456"
+            assert "Fix JWT token validation" in ticket.name
 
             # Mock get_branch_commits
             with patch.object(pr_bot, "get_branch_commits") as mock_get_commits:
@@ -443,11 +462,12 @@ Please create a GitHub pull request title and body based on the following inform
 
                 # Test AI prompt preparation
                 prompt = pr_bot.prepare_ai_prompt(mock_get_commits.return_value, ticket_details)
+                assert isinstance(prompt, str)
                 assert "JIRA-456" in prompt
                 assert "Fix JWT token validation" in prompt
 
                 # Test AI response and parsing
-                ai_response = pr_bot.ai_client.get_content(prompt)
+                ai_response = pr_bot.ai_client.get_content(cast(str, prompt))
                 assert "Fix JWT token validation" in ai_response
 
                 title = pr_bot._parse_ai_response_title(ai_response)
@@ -460,7 +480,7 @@ Please create a GitHub pull request title and body based on the following inform
                 assert "token validation" in body.lower()
                 assert "expiration" in body.lower()
 
-    def test_end_to_end_workflow(self, pr_bot, mock_git_handler):
+    def test_end_to_end_workflow(self, pr_bot: PullRequestAIAgent, mock_git_handler: MagicMock) -> None:
         """Test the end-to-end PR generation workflow."""
         # Set up a feature branch
         branch_name = "feature/JIRA-123"
@@ -556,15 +576,17 @@ Please create a GitHub pull request title and body based on the following inform
             # 2. Get ticket details
             ticket_details = pr_bot.get_ticket_details([ticket_id])
             assert len(ticket_details) == 1
-            assert ticket_details[0].id == "JIRA-123"
+            ticket = cast(MockTicketData, ticket_details[0])
+            assert ticket.id == "JIRA-123"
 
             # 3. Prepare AI prompt
             prompt = pr_bot.prepare_ai_prompt(commits, ticket_details)
+            assert isinstance(prompt, str)
             assert "JIRA-123" in prompt
             assert "Add API endpoint" in prompt
 
             # 4. Get AI response
-            ai_response = pr_bot.ai_client.get_content(prompt)
+            ai_response = pr_bot.ai_client.get_content(cast(str, prompt))
             assert "Add API endpoint" in ai_response
 
             # 5. Parse AI response

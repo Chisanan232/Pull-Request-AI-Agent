@@ -58,7 +58,7 @@ def sample_gemini_response_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_gemini_response(sample_gemini_response_data) -> GeminiResponse:
+def sample_gemini_response(sample_gemini_response_data: Dict[str, Any]) -> GeminiResponse:
     """Fixture for a sample GeminiResponse object."""
     candidate_data = sample_gemini_response_data["candidates"][0]
     content_data = candidate_data["content"]
@@ -87,12 +87,12 @@ def sample_gemini_response(sample_gemini_response_data) -> GeminiResponse:
 
 
 @pytest.fixture
-def gemini_client(mock_api_key) -> GeminiClient:
+def gemini_client(mock_api_key: str) -> GeminiClient:
     """Fixture for a GeminiClient instance with a mock API key."""
     return GeminiClient(api_key=mock_api_key)
 
 
-def test_gemini_content_dataclass():
+def test_gemini_content_dataclass() -> None:
     """Test that GeminiContent is a frozen dataclass with the expected attributes."""
     content = GeminiContent(text="Test content", role="model")
     assert content.text == "Test content"
@@ -100,10 +100,10 @@ def test_gemini_content_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        content.text = "New content"
+        content.text = "New content"  # type: ignore[misc]
 
 
-def test_gemini_candidate_dataclass():
+def test_gemini_candidate_dataclass() -> None:
     """Test that GeminiCandidate is a frozen dataclass with the expected attributes."""
     content = GeminiContent(text="Test content", role="model")
     safety_ratings = [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE"}]
@@ -117,10 +117,10 @@ def test_gemini_candidate_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        candidate.content = GeminiContent(text="New content", role="model")
+        candidate.content = GeminiContent(text="New content", role="model")  # type: ignore[misc]
 
 
-def test_gemini_prompt_feedback_dataclass():
+def test_gemini_prompt_feedback_dataclass() -> None:
     """Test that GeminiPromptFeedback is a frozen dataclass with the expected attributes."""
     safety_ratings = [{"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "probability": "NEGLIGIBLE"}]
 
@@ -130,10 +130,10 @@ def test_gemini_prompt_feedback_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        feedback.safety_ratings = []
+        feedback.safety_ratings = []  # type: ignore[misc]
 
 
-def test_gemini_usage_dataclass():
+def test_gemini_usage_dataclass() -> None:
     """Test that GeminiUsage is a frozen dataclass with the expected attributes."""
     usage = GeminiUsage(prompt_token_count=10, candidates_token_count=15, total_token_count=25)
 
@@ -143,10 +143,10 @@ def test_gemini_usage_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        usage.prompt_token_count = 20
+        usage.prompt_token_count = 20  # type: ignore[misc]
 
 
-def test_gemini_response_dataclass():
+def test_gemini_response_dataclass() -> None:
     """Test that GeminiResponse is a frozen dataclass with the expected attributes."""
     content = GeminiContent(text="Test content", role="model")
     candidate = GeminiCandidate(content=content, finish_reason="STOP", index=0, safety_ratings=[])
@@ -161,10 +161,10 @@ def test_gemini_response_dataclass():
 
     # Test immutability (frozen=True)
     with pytest.raises(AttributeError):
-        response.candidates = []
+        response.candidates = []  # type: ignore[misc]
 
 
-def test_gemini_client_init_with_api_key(mock_api_key):
+def test_gemini_client_init_with_api_key(mock_api_key: str) -> None:
     """Test GeminiClient initialization with an explicitly provided API key."""
     client = GeminiClient(api_key=mock_api_key)
 
@@ -174,14 +174,14 @@ def test_gemini_client_init_with_api_key(mock_api_key):
     assert client.max_tokens == GeminiClient.DEFAULT_MAX_TOKENS
 
 
-def test_gemini_client_init_with_env_api_key():
+def test_gemini_client_init_with_env_api_key() -> None:
     """Test GeminiClient initialization with an API key from environment variables."""
     with patch.dict(os.environ, {"GOOGLE_API_KEY": "env-api-key"}):
         client = GeminiClient()
         assert client.api_key == "env-api-key"
 
 
-def test_gemini_client_init_missing_api_key():
+def test_gemini_client_init_missing_api_key() -> None:
     """Test that GeminiClient initialization raises ValueError when no API key is available."""
     with patch.dict(os.environ, {}, clear=True):
         with pytest.raises(ValueError) as excinfo:
@@ -189,7 +189,7 @@ def test_gemini_client_init_missing_api_key():
         assert "API key is required" in str(excinfo.value)
 
 
-def test_gemini_client_init_custom_parameters():
+def test_gemini_client_init_custom_parameters() -> None:
     """Test GeminiClient initialization with custom parameters."""
     client = GeminiClient(api_key="custom-api-key", model="gemini-1.5-flash", temperature=0.5, max_tokens=1000)
 
@@ -199,14 +199,14 @@ def test_gemini_client_init_custom_parameters():
     assert client.max_tokens == 1000
 
 
-def test_prepare_headers(gemini_client):
+def test_prepare_headers(gemini_client: GeminiClient) -> None:
     """Test that _prepare_headers returns the expected headers."""
     headers = gemini_client._prepare_headers()
 
     assert headers["Content-Type"] == "application/json"
 
 
-def test_prepare_payload_basic(gemini_client, sample_prompt):
+def test_prepare_payload_basic(gemini_client: GeminiClient, sample_prompt: str) -> None:
     """Test that _prepare_payload returns the expected payload with a basic prompt."""
     payload = gemini_client._prepare_payload(sample_prompt)
 
@@ -220,7 +220,9 @@ def test_prepare_payload_basic(gemini_client, sample_prompt):
     assert payload["generationConfig"]["maxOutputTokens"] == gemini_client.max_tokens
 
 
-def test_prepare_payload_with_system_message(gemini_client, sample_prompt, sample_system_message):
+def test_prepare_payload_with_system_message(
+    gemini_client: GeminiClient, sample_prompt: str, sample_system_message: str
+) -> None:
     """Test that _prepare_payload returns the expected payload with a system message."""
     payload = gemini_client._prepare_payload(sample_prompt, sample_system_message)
 
@@ -231,7 +233,7 @@ def test_prepare_payload_with_system_message(gemini_client, sample_prompt, sampl
     assert payload["contents"][1]["parts"][0]["text"] == sample_prompt
 
 
-def test_parse_response_success(gemini_client, sample_gemini_response_data):
+def test_parse_response_success(gemini_client: GeminiClient, sample_gemini_response_data: Dict[str, Any]) -> None:
     """Test that _parse_response correctly parses a successful API response."""
     # Create a mock HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -264,7 +266,7 @@ def test_parse_response_success(gemini_client, sample_gemini_response_data):
     assert usage.total_token_count == usage_data["totalTokenCount"]
 
 
-def test_parse_response_error(gemini_client):
+def test_parse_response_error(gemini_client: GeminiClient) -> None:
     """Test that _parse_response raises ValueError for error responses."""
     # Create a mock error HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -277,7 +279,7 @@ def test_parse_response_error(gemini_client):
     assert "API request failed" in str(excinfo.value)
 
 
-def test_parse_response_malformed(gemini_client):
+def test_parse_response_malformed(gemini_client: GeminiClient) -> None:
     """Test that _parse_response raises ValueError for malformed responses."""
     # Create a mock malformed HTTPResponse
     mock_response = MagicMock(spec=HTTPResponse)
@@ -291,7 +293,9 @@ def test_parse_response_malformed(gemini_client):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_success(mock_request, gemini_client, sample_prompt, sample_gemini_response_data):
+def test_ask_success(
+    mock_request: Any, gemini_client: GeminiClient, sample_prompt: str, sample_gemini_response_data: Dict[str, Any]
+) -> None:
     """Test that ask successfully calls the API and returns a parsed response."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -329,8 +333,12 @@ def test_ask_success(mock_request, gemini_client, sample_prompt, sample_gemini_r
 
 @patch("urllib3.PoolManager.request")
 def test_ask_with_system_message(
-    mock_request, gemini_client, sample_prompt, sample_system_message, sample_gemini_response_data
-):
+    mock_request: Any,
+    gemini_client: GeminiClient,
+    sample_prompt: str,
+    sample_system_message: str,
+    sample_gemini_response_data: Dict[str, Any],
+) -> None:
     """Test that ask correctly includes a system message when provided."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -351,7 +359,7 @@ def test_ask_with_system_message(
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_api_error(mock_request, gemini_client, sample_prompt):
+def test_ask_api_error(mock_request: Any, gemini_client: GeminiClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when the API returns an error."""
     # Set up the mock error response
     mock_response = MagicMock(spec=HTTPResponse)
@@ -366,7 +374,7 @@ def test_ask_api_error(mock_request, gemini_client, sample_prompt):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_connection_error(mock_request, gemini_client, sample_prompt):
+def test_ask_connection_error(mock_request: Any, gemini_client: GeminiClient, sample_prompt: str) -> None:
     """Test that ask raises ValueError when a connection error occurs."""
     # Set up the mock to raise an exception
     mock_request.side_effect = Exception("Connection error")
@@ -378,7 +386,9 @@ def test_ask_connection_error(mock_request, gemini_client, sample_prompt):
 
 
 @patch("pull_request_ai_agent.ai_bot.gemini.client.GeminiClient.ask")
-def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_response):
+def test_get_content(
+    mock_ask: Any, gemini_client: GeminiClient, sample_prompt: str, sample_gemini_response: GeminiResponse
+) -> None:
     """Test that get_content returns just the content from the first candidate."""
     # Set up the mock to return a sample response
     mock_ask.return_value = sample_gemini_response
@@ -395,7 +405,7 @@ def test_get_content(mock_ask, gemini_client, sample_prompt, sample_gemini_respo
 
 
 @patch("pull_request_ai_agent.ai_bot.gemini.client.GeminiClient.ask")
-def test_get_content_no_candidates(mock_ask, gemini_client, sample_prompt):
+def test_get_content_no_candidates(mock_ask: Any, gemini_client: GeminiClient, sample_prompt: str) -> None:
     """Test that get_content raises IndexError when there are no candidates in the response."""
     # Create a response with no candidates
     empty_response = GeminiResponse(
@@ -414,7 +424,9 @@ def test_get_content_no_candidates(mock_ask, gemini_client, sample_prompt):
 
 
 @patch("urllib3.PoolManager.request")
-def test_ask_with_custom_model(mock_request, mock_api_key, sample_prompt, sample_gemini_response_data):
+def test_ask_with_custom_model(
+    mock_request: Any, mock_api_key: str, sample_prompt: str, sample_gemini_response_data: Dict[str, Any]
+) -> None:
     """Test that ask uses the custom model when specified."""
     # Set up the mock response
     mock_response = MagicMock(spec=HTTPResponse)
