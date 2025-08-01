@@ -57,7 +57,7 @@ coverage = "^7.10"
 # Dependency for CI
 pre-commit = "^4.2.0"
 pylint = "^3.3.7"
-mypy = "^1.17.0"
+mypy = "^1.17.1"
 
 [tool.poetry.group.docs]
 optional = true
