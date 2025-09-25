@@ -50,7 +50,7 @@ pr-ai-agent = "pull_request_ai_agent.__main__:main"
 
 [tool.poetry.group.dev.dependencies]
 # Dependency for test
-pytest = "^8.4.1"
+pytest = "^8.4.2"
 pytest-cov = "^6.2.1"
 pytest-rerunfailures = "^16.0"
 coverage = "^7.10"
